@@ -1,6 +1,5 @@
 import numpy as np
 import random as rd
-import pandas as pd
 
 
 def list_flatten(list):
@@ -15,9 +14,14 @@ def get_flattened_index(list, row, item):
     return index
 
 
-def punctate_episode(gamma, alpha, explore_chance, end_states, start_state, rewards, transitions, v_state, state_list, action_list, RPE_list, value_list):
+def successor_episode(gamma, alpha, explore_chance, end_states, start_state, rewards, transitions, num_pairs, feat, weight, state_list, action_list, RPE_list, value_list):
     time_step = 1
-    #current_state = np.random.choice(start_states) - 1
+    
+    # Initial state value (will also be zeros)
+    v_state = []
+    for k in range(num_pairs):
+        v_state.append(np.sum(weight*feat[k]))
+        
     current_state = start_state - 1
     timestep_list = []
     not_end = True
@@ -29,69 +33,68 @@ def punctate_episode(gamma, alpha, explore_chance, end_states, start_state, rewa
             break
         
         else:
-            
-            ## Determine the next state, either a random subsequent state or the highest-value one based on the exploration parameter
+            # Determine the next state, either a random subsequent state or the highest-value subsequent state, depending on the exploration parameter
             if np.random.uniform() < explore_chance:
                 next_move = np.random.randint(len(transitions[current_state]))
             else:
-                next_values = v_state[current_state]
+                next_move_index = get_flattened_index(transitions, current_state, 0)
+                next_values = v_state[next_move_index:(next_move_index+len(transitions[current_state]))]
                 next_move = np.argmax(next_values)
 
             next_state = transitions[current_state][next_move] - 1
 
+            # Determine the best action to take from the NEXT state, used to calculate the one-hot vector for updating the successor matrix
+            next_move_index = get_flattened_index(transitions, next_state, 0)
+            next_values = v_state[next_move_index:(next_move_index+len(transitions[next_state]))]
 
-            next_move = np.random.randint(len(transitions[current_state]))
-            next_state = transitions[current_state][next_move] - 1
+            # Occasionally assume a random next move as the immediate successor instead of the best next move.
+            # This way the successor matrix will reflect all possible successor states but have larger values for the highest-reward ones
+            # This is important for the policy reevaluation condition
+            best_next_move = np.argmax(next_values) + next_move_index
+            random_next_move = np.random.randint(len(transitions[next_state])) + next_move_index
+            if np.random.uniform() < explore_chance:
+                next_move_one_hot = random_next_move
+            else:
+                next_move_one_hot = best_next_move
 
             # Get reward
             reward = rewards[current_state][next_move]
+
+            weight_delta = reward - weight[get_flattened_index(rewards, current_state, next_move)]
+
+            weight[get_flattened_index(rewards, current_state, next_move)] += alpha * weight_delta
+
+            one_hot = np.zeros(num_pairs)
+
+            one_hot[get_flattened_index(transitions, current_state, next_move)] = 1
+
+            feat_delta = one_hot + gamma * feat[next_move_one_hot] - feat[get_flattened_index(transitions, current_state, next_move)]
+
+            feat[get_flattened_index(transitions, current_state, next_move)] += alpha * feat_delta
             
-            # calculate RPE and update weights and state values
-            if next_state in end_states_adjusted: # reached the goal state
-                delta = reward + 0 - v_state[current_state][next_move]
-            else:
-                delta = reward + gamma*np.max(v_state[next_state]) - v_state[current_state][next_move]
             
             # update state value
-            v_state[current_state][next_move] += alpha * delta
+            for k in range(num_pairs):
+                v_state[k] = np.sum(weight*feat[k])
             
             state_list.append(current_state + 1)
             action_list.append(next_state + 1)
-            RPE_list.append(delta)
-
-            values_flat = list_flatten(v_state)
-            for k in range(len(values_flat)):
-                value_list[k].append(values_flat[k])
+            RPE_list.append(weight_delta)
             timestep_list.append(time_step)
-
+            
+            for k in range(num_pairs):
+                value_list[k].append(v_state[k])
+            
             # Move to the next state
             current_state = next_state
             
             time_step += 1
 
-    return v_state, state_list, action_list, RPE_list, value_list, timestep_list
+    return feat, weight, state_list, action_list, RPE_list, value_list, timestep_list
 
 
-'''
-Simulates the pre-training learning phase, where the agent has access to the starting state
-Inputs:
-    gamma: the time discounting constant
-    alpha: the learning rate constant
-    explore_chance: probability that the agent will choose a random action instead of the highest-value one
-    end_states: list of states that are considered end states
-    rewards: list of rewards corresponding to each action
-    transitions: list of valid transitions from each state
-    v_state: calculated values of each state (should generally be initialized as zeroes)
-    state_list: list of states visited at each time step
-    action_list: list of actions taken at each time step
-    RPE_list: list of reward prediction error for each time step
-    phase_list: tracks the current learning phase (1 = pretraining, 2 = retraining, 3 = test)
-    epi_num_list: tracks the current episode number
-Outputs:
-    v_state: calculated state values after pretraining
-    state_list, action_list, RPE_list, epi_num_list, phase_list: with new simulation's values appended to the end
-'''
-def pretraining(gamma, alpha, explore_chance, end_states, rewards, transitions, v_state, logging_lists):
+def pretraining(gamma, alpha, explore_chance, end_states, rewards, transitions, model_parameters, logging_lists):
+    num_pairs, feat, weight = model_parameters
     state_list, action_list, RPE_list, epi_num_list, phase_list = logging_lists[0:5]
     value_list = logging_lists[5:][0]
     epi_length = []
@@ -100,8 +103,8 @@ def pretraining(gamma, alpha, explore_chance, end_states, rewards, transitions, 
     start_states= np.append(start_states, np.random.randint(1, 7, 5))
     np.random.shuffle(start_states)
     for index, k in enumerate(start_states):
-        c_v_state, c_state_list, c_action_list, c_RPE_list, c_value_list, timestep_list = \
-        punctate_episode(gamma, alpha, explore_chance, end_states, k, rewards, transitions, v_state, state_list, action_list, RPE_list, value_list)
+        c_feat, c_weight, c_state_list, c_action_list, c_RPE_list, c_value_list, timestep_list = \
+        successor_episode(gamma, alpha, explore_chance, end_states, k, rewards, transitions, num_pairs, feat, weight, state_list, action_list, RPE_list, value_list)
 
         # Update the logs that depend on the length of the current episode
         for j in range(len(timestep_list)):
@@ -109,7 +112,8 @@ def pretraining(gamma, alpha, explore_chance, end_states, rewards, transitions, 
             epi_length.append(index+1)
             phase_list.append(1)
 
-        v_state = c_v_state
+        feat = c_feat
+        weight = c_weight
         state_list = c_state_list
         action_list = c_action_list
         RPE_list = c_RPE_list
@@ -117,8 +121,10 @@ def pretraining(gamma, alpha, explore_chance, end_states, rewards, transitions, 
 
     logs_new = [c_state_list, c_action_list, c_RPE_list, epi_num_list, phase_list]
     logs_new.append(value_list)
+    new_params = [num_pairs, feat, weight]
         
-    return c_v_state, logs_new, epi_length
+    return new_params, logs_new, epi_length
+
 
 '''
 Changes the rewards and transitions for the re-learning phase, as appropriate for the condition being tested
@@ -142,7 +148,8 @@ def update_parameters(condition, rewards, transitions):
     return rewards, transitions
 
 
-def retraining(condition, gamma, alpha, explore_chance, end_states, rewards, transitions, v_state, logging_lists):
+def retraining(condition, gamma, alpha, explore_chance, end_states, rewards, transitions, model_parameters, logging_lists):
+    num_pairs, feat, weight = model_parameters
     state_list, action_list, RPE_list, epi_num_list, phase_list = logging_lists[0:5]
     value_list = logging_lists[5:][0]
     epi_length = []
@@ -152,8 +159,8 @@ def retraining(condition, gamma, alpha, explore_chance, end_states, rewards, tra
         start_states = np.array([4, 4, 4, 5, 5, 5, 6, 6, 6])
     np.random.shuffle(start_states)
     for index, k in enumerate(start_states):
-        c_v_state, c_state_list, c_action_list, c_RPE_list, c_value_list, timestep_list = \
-        punctate_episode(gamma, alpha, explore_chance, end_states, k, rewards, transitions, v_state, state_list, action_list, RPE_list, value_list)
+        c_feat, c_weight, c_state_list, c_action_list, c_RPE_list, c_value_list, timestep_list = \
+        successor_episode(gamma, alpha, explore_chance, end_states, k, rewards, transitions, num_pairs, feat, weight, state_list, action_list, RPE_list, value_list)
 
         # Update the logs that depend on the length of the current episode
         for j in range(len(timestep_list)):
@@ -161,16 +168,23 @@ def retraining(condition, gamma, alpha, explore_chance, end_states, rewards, tra
             epi_length.append(index+1)
             phase_list.append(2)
 
-        v_state = c_v_state
+        feat = c_feat
+        weight = c_weight
         state_list = c_state_list
         action_list = c_action_list
         RPE_list = c_RPE_list
         value_list = c_value_list
 
-        logs_new = [c_state_list, c_action_list, c_RPE_list, epi_num_list, phase_list, value_list]
+    logs_new = [c_state_list, c_action_list, c_RPE_list, epi_num_list, phase_list]
+    logs_new.append(value_list)
+    new_params = [num_pairs, feat, weight]
         
-    return c_v_state, logs_new, epi_length
+    return new_params, logs_new, epi_length
 
 
-def test(v_state):
-    return np.argmax(v_state[0]) + 2
+def test(model_parameters):
+    num_pairs, feat, weight = model_parameters
+    v_state = np.zeros(num_pairs)
+    for k in range(num_pairs):
+        v_state[k] = np.sum(weight*feat[k])
+    return np.argmax(v_state[0:2]) + 2
