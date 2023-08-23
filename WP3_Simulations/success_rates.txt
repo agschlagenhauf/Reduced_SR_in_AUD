@@ -1,0 +1,2 @@
+Punctate model, Reward condition:
+Successful Initial Learning: 57/100

@@ -31,16 +31,12 @@ def punctate_episode(gamma, alpha, explore_chance, end_states, start_state, rewa
         else:
             
             ## Determine the next state, either a random subsequent state or the highest-value one based on the exploration parameter
-            if np.random.uniform() < explore_chance:
+            next_values = v_state[current_state]
+            if np.random.uniform() < explore_chance or np.all([i == next_values[0] for i in next_values]):
                 next_move = np.random.randint(len(transitions[current_state]))
             else:
-                next_values = v_state[current_state]
                 next_move = np.argmax(next_values)
 
-            next_state = transitions[current_state][next_move] - 1
-
-
-            next_move = np.random.randint(len(transitions[current_state]))
             next_state = transitions[current_state][next_move] - 1
 
             # Get reward
@@ -98,6 +94,7 @@ def pretraining(gamma, alpha, explore_chance, end_states, rewards, transitions, 
     # Create the list of starting states, randomly ordered, but guaranteed a certain number of starts in each starting state
     start_states = np.array([1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 4, 4, 5, 5, 6, 6])
     start_states= np.append(start_states, np.random.randint(1, 7, 5))
+    #start_states = np.append(start_states, [1 for k in range(500)])
     np.random.shuffle(start_states)
     for index, k in enumerate(start_states):
         c_v_state, c_state_list, c_action_list, c_RPE_list, c_value_list, timestep_list = \
@@ -132,13 +129,13 @@ Outputs:
 '''
 def update_parameters(condition, rewards, transitions):
     if condition == "Reward":
-        rewards = [[0, 0], [0, 0], [0, 0], [45], [0], [30], [0], [0], [0], [0], [0], [0]]
+        rewards = [[0, 0], [0, 0], [0, 0], [45], [0], [30], [0], [0], [0], [0]]
     elif condition == "Transition":
-        transitions = [[2, 3], [5, 6], [4, 5], [7], [8], [9], [10], [11], [12], [], [], []]
+        transitions = [[2, 3], [5, 6], [4, 5], [7], [8], [9], [10], [10], [10], [11]]
     elif condition == "Policy":
-        rewards = [[0, 0], [0, 0], [0, 0], [45], [15], [30], [0], [0], [0], [0], [0], [0]]
+        rewards = [[0, 0], [0, 0], [0, 0], [45], [15], [30], [0], [0], [0], [0]]
     elif condition == "Goal":
-        rewards = [[0, 0], [0, 0], [0, 0], [15], [0], [30], [30], [0], [0], [0], [0], [0]]
+        rewards = [[0, 0], [0, 0], [0, 0], [15], [0], [30], [30], [0], [0], [0]]
     return rewards, transitions
 
 
@@ -150,6 +147,7 @@ def retraining(condition, gamma, alpha, explore_chance, end_states, rewards, tra
         start_states = np.array([2, 2, 2, 3, 3, 3, 4, 5, 6])
     else:
         start_states = np.array([4, 4, 4, 5, 5, 5, 6, 6, 6])
+    #start_states = np.append(start_states, [(k % 2) + 2 for k in range(500)])
     np.random.shuffle(start_states)
     for index, k in enumerate(start_states):
         c_v_state, c_state_list, c_action_list, c_RPE_list, c_value_list, timestep_list = \
@@ -170,6 +168,15 @@ def retraining(condition, gamma, alpha, explore_chance, end_states, rewards, tra
         logs_new = [c_state_list, c_action_list, c_RPE_list, epi_num_list, phase_list, value_list]
         
     return c_v_state, logs_new, epi_length
+
+
+def update_logs(milestone_logs, milestone_labels, sim_num, phase, v_state):
+    values_flat = list_flatten(v_state)
+    for k in range(len(values_flat)):
+        milestone_logs[k].append(values_flat[k])
+    milestone_labels[0].append(sim_num + 1)
+    milestone_labels[1].append(phase)
+    return milestone_logs, milestone_labels
 
 
 def test(v_state):

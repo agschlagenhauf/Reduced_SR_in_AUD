@@ -1,0 +1,60 @@
+Punctate model, Control condition:
+Successful Initial Learning: 50/100, 50.0%
+Successful Relearning: 50/50, 100.0%
+
+Punctate model, Reward condition:
+Successful Initial Learning: 58/100, 57.99999999999999%
+Successful Relearning: 0/58, 0.0%
+
+Punctate model, Transition condition:
+Successful Initial Learning: 54/100, 54.0%
+Successful Relearning: 0/54, 0.0%
+
+Punctate model, Policy condition:
+Successful Initial Learning: 70/100, 70.0%
+Successful Relearning: 0/70, 0.0%
+
+Punctate model, Goal condition:
+Successful Initial Learning: 51/100, 51.0%
+Successful Relearning: 0/51, 0.0%
+
+FullSR model, Control condition:
+Successful Initial Learning: 50/100, 50.0%
+Successful Relearning: 50/50, 100.0%
+
+FullSR model, Reward condition:
+Successful Initial Learning: 57/100, 56.99999999999999%
+Successful Relearning: 8/57, 14.035087719298245%
+
+FullSR model, Transition condition:
+Successful Initial Learning: 61/100, 61.0%
+Successful Relearning: 0/61, 0.0%
+
+FullSR model, Policy condition:
+Successful Initial Learning: 65/100, 65.0%
+Successful Relearning: 0/65, 0.0%
+
+FullSR model, Goal condition:
+Successful Initial Learning: 51/100, 51.0%
+Successful Relearning: 5/51, 9.803921568627452%
+
+ReducedSR model, Control condition:
+Successful Initial Learning: 47/100, 47.0%
+Successful Relearning: 47/47, 100.0%
+
+ReducedSR model, Reward condition:
+Successful Initial Learning: 61/100, 61.0%
+Successful Relearning: 8/61, 13.114754098360656%
+
+ReducedSR model, Transition condition:
+Successful Initial Learning: 66/100, 66.0%
+Successful Relearning: 0/66, 0.0%
+
+ReducedSR model, Policy condition:
+Successful Initial Learning: 56/100, 56.00000000000001%
+Successful Relearning: 0/56, 0.0%
+
+ReducedSR model, Goal condition:
+Successful Initial Learning: 52/100, 52.0%
+Successful Relearning: 0/52, 0.0%
+

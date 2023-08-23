@@ -34,11 +34,11 @@ def successor_episode(gamma, alpha, explore_chance, end_states, start_state, rew
         
         else:
             # Determine the next state, either a random subsequent state or the highest-value subsequent state, depending on the exploration parameter
-            if np.random.uniform() < explore_chance:
+            next_move_index = get_flattened_index(transitions, current_state, 0)
+            next_values = v_state[next_move_index:(next_move_index+len(transitions[current_state]))]
+            if np.random.uniform() < explore_chance or np.all([i == next_values[0] for i in next_values]):
                 next_move = np.random.randint(len(transitions[current_state]))
             else:
-                next_move_index = get_flattened_index(transitions, current_state, 0)
-                next_values = v_state[next_move_index:(next_move_index+len(transitions[current_state]))]
                 next_move = np.argmax(next_values)
 
             next_state = transitions[current_state][next_move] - 1
@@ -52,7 +52,7 @@ def successor_episode(gamma, alpha, explore_chance, end_states, start_state, rew
             # This is important for the policy reevaluation condition
             best_next_move = np.argmax(next_values) + next_move_index
             random_next_move = np.random.randint(len(transitions[next_state])) + next_move_index
-            if np.random.uniform() < explore_chance:
+            if np.random.uniform() < explore_chance or np.all([i == next_values[0] for i in next_values]):
                 next_move_one_hot = random_next_move
             else:
                 next_move_one_hot = best_next_move
@@ -101,6 +101,7 @@ def pretraining(gamma, alpha, explore_chance, end_states, rewards, transitions, 
     # Create the list of starting states, randomly ordered, but guaranteed a certain number of starts in each starting state
     start_states = np.array([1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 4, 4, 5, 5, 6, 6])
     start_states= np.append(start_states, np.random.randint(1, 7, 5))
+    #start_states = np.append(start_states, [1 for k in range(500)])
     np.random.shuffle(start_states)
     for index, k in enumerate(start_states):
         c_feat, c_weight, c_state_list, c_action_list, c_RPE_list, c_value_list, timestep_list = \
@@ -138,13 +139,13 @@ Outputs:
 '''
 def update_parameters(condition, rewards, transitions):
     if condition == "Reward":
-        rewards = [[0, 0], [0, 0], [0, 0], [45], [0], [30], [0], [0], [0], [0], [0], [0]]
+        rewards = [[0, 0], [0, 0], [0, 0], [45], [0], [30], [0], [0], [0], [0]]
     elif condition == "Transition":
-        transitions = [[2, 3], [5, 6], [4, 5], [7], [8], [9], [10], [11], [12], [], [], []]
+        transitions = [[2, 3], [5, 6], [4, 5], [7], [8], [9], [10], [10], [10], [11]]
     elif condition == "Policy":
-        rewards = [[0, 0], [0, 0], [0, 0], [45], [15], [30], [0], [0], [0], [0], [0], [0]]
+        rewards = [[0, 0], [0, 0], [0, 0], [45], [15], [30], [0], [0], [0], [0]]
     elif condition == "Goal":
-        rewards = [[0, 0], [0, 0], [0, 0], [15], [0], [30], [30], [0], [0], [0], [0], [0]]
+        rewards = [[0, 0], [0, 0], [0, 0], [15], [0], [30], [30], [0], [0], [0]]
     return rewards, transitions
 
 
@@ -157,6 +158,7 @@ def retraining(condition, gamma, alpha, explore_chance, end_states, rewards, tra
         start_states = np.array([2, 2, 2, 3, 3, 3, 4, 5, 6])
     else:
         start_states = np.array([4, 4, 4, 5, 5, 5, 6, 6, 6])
+    #start_states = np.append(start_states, [(k % 2) + 2 for k in range(500)])
     np.random.shuffle(start_states)
     for index, k in enumerate(start_states):
         c_feat, c_weight, c_state_list, c_action_list, c_RPE_list, c_value_list, timestep_list = \
@@ -188,3 +190,15 @@ def test(model_parameters):
     for k in range(num_pairs):
         v_state[k] = np.sum(weight*feat[k])
     return np.argmax(v_state[0:2]) + 2
+
+
+def update_logs(milestone_logs, milestone_labels, sim_num, phase, model_parameters):
+    num_pairs, feat, weight = model_parameters
+    for k in range(num_pairs):
+        milestone_logs[k].append(weight[k])
+    for m in range(num_pairs):
+        for n in range(num_pairs):
+            milestone_logs[m*num_pairs + n + num_pairs].append(feat[m][n])
+    milestone_labels[0].append(sim_num + 1)
+    milestone_labels[1].append(phase)
+    return milestone_logs, milestone_labels

@@ -1,0 +1,142 @@
+FullSR model, Reward condition:
+
+alpha = 0.5, epsilon = 0
+Successful Initial Learning: 493/1000, 49.3%
+Successful Relearning: 0/493, 0.0%
+
+alpha = 0.5, epsilon = 0.1
+Successful Initial Learning: 584/1000, 58.4%
+Successful Relearning: 60/584, 10.273972602739725%
+
+alpha = 0.5, epsilon = 0.25
+Successful Initial Learning: 710/1000, 71.0%
+Successful Relearning: 210/710, 29.577464788732392%
+
+alpha = 0.5, epsilon = 0.5
+Successful Initial Learning: 754/1000, 75.4%
+Successful Relearning: 315/754, 41.777188328912466%
+
+alpha = 0.5, epsilon = 0.75
+Successful Initial Learning: 745/1000, 74.5%
+Successful Relearning: 359/745, 48.18791946308725%
+
+alpha = 0.5, epsilon = 0.9
+Successful Initial Learning: 735/1000, 73.5%
+Successful Relearning: 345/735, 46.93877551020408%
+
+alpha = 0.5, epsilon = 1
+Successful Initial Learning: 704/1000, 70.39999999999999%
+Successful Relearning: 313/704, 44.46022727272727%
+
+alpha = 0.75, epsilon = 0
+Successful Initial Learning: 479/1000, 47.9%
+Successful Relearning: 0/479, 0.0%
+
+alpha = 0.75, epsilon = 0.1
+Successful Initial Learning: 589/1000, 58.9%
+Successful Relearning: 234/589, 39.72835314091681%
+
+alpha = 0.75, epsilon = 0.25
+Successful Initial Learning: 659/1000, 65.9%
+Successful Relearning: 396/659, 60.09104704097117%
+
+alpha = 0.75, epsilon = 0.5
+Successful Initial Learning: 657/1000, 65.7%
+Successful Relearning: 385/657, 58.599695585996955%
+
+alpha = 0.75, epsilon = 0.75
+Successful Initial Learning: 699/1000, 69.89999999999999%
+Successful Relearning: 388/699, 55.50786838340487%
+
+alpha = 0.75, epsilon = 0.9
+Successful Initial Learning: 680/1000, 68.0%
+Successful Relearning: 359/680, 52.794117647058826%
+
+alpha = 0.75, epsilon = 1
+Successful Initial Learning: 671/1000, 67.10000000000001%
+Successful Relearning: 323/671, 48.1371087928465%
+
+alpha = 0.9, epsilon = 0
+Successful Initial Learning: 521/1000, 52.1%
+Successful Relearning: 0/521, 0.0%
+
+alpha = 0.9, epsilon = 0.1
+Successful Initial Learning: 621/1000, 62.1%
+Successful Relearning: 264/621, 42.51207729468599%
+
+alpha = 0.9, epsilon = 0.25
+Successful Initial Learning: 669/1000, 66.9%
+Successful Relearning: 420/669, 62.78026905829597%
+
+alpha = 0.9, epsilon = 0.5
+Successful Initial Learning: 682/1000, 68.2%
+Successful Relearning: 411/682, 60.26392961876833%
+
+alpha = 0.9, epsilon = 0.75
+Successful Initial Learning: 657/1000, 65.7%
+Successful Relearning: 388/657, 59.05631659056316%
+
+alpha = 0.9, epsilon = 0.9
+Successful Initial Learning: 664/1000, 66.4%
+Successful Relearning: 349/664, 52.56024096385542%
+
+alpha = 0.9, epsilon = 1
+Successful Initial Learning: 685/1000, 68.5%
+Successful Relearning: 334/685, 48.759124087591246%
+
+alpha = 0.95, epsilon = 0
+Successful Initial Learning: 518/1000, 51.800000000000004%
+Successful Relearning: 0/518, 0.0%
+
+alpha = 0.95, epsilon = 0.1
+Successful Initial Learning: 630/1000, 63.0%
+Successful Relearning: 284/630, 45.07936507936508%
+
+alpha = 0.95, epsilon = 0.25
+Successful Initial Learning: 649/1000, 64.9%
+Successful Relearning: 400/649, 61.63328197226502%
+
+alpha = 0.95, epsilon = 0.5
+Successful Initial Learning: 674/1000, 67.4%
+Successful Relearning: 431/674, 63.94658753709199%
+
+alpha = 0.95, epsilon = 0.75
+Successful Initial Learning: 632/1000, 63.2%
+Successful Relearning: 369/632, 58.38607594936709%
+
+alpha = 0.95, epsilon = 0.9
+Successful Initial Learning: 692/1000, 69.19999999999999%
+Successful Relearning: 363/692, 52.45664739884393%
+
+alpha = 0.95, epsilon = 1
+Successful Initial Learning: 671/1000, 67.10000000000001%
+Successful Relearning: 316/671, 47.093889716840536%
+
+alpha = 0.99, epsilon = 0
+Successful Initial Learning: 486/1000, 48.6%
+Successful Relearning: 0/486, 0.0%
+
+alpha = 0.99, epsilon = 0.1
+Successful Initial Learning: 625/1000, 62.5%
+Successful Relearning: 265/625, 42.4%
+
+alpha = 0.99, epsilon = 0.25
+Successful Initial Learning: 696/1000, 69.6%
+Successful Relearning: 433/696, 62.212643678160916%
+
+alpha = 0.99, epsilon = 0.5
+Successful Initial Learning: 660/1000, 66.0%
+Successful Relearning: 418/660, 63.33333333333333%
+
+alpha = 0.99, epsilon = 0.75
+Successful Initial Learning: 656/1000, 65.60000000000001%
+Successful Relearning: 396/656, 60.36585365853659%
+
+alpha = 0.99, epsilon = 0.9
+Successful Initial Learning: 619/1000, 61.9%
+Successful Relearning: 348/619, 56.219709208400644%
+
+alpha = 0.99, epsilon = 1
+Successful Initial Learning: 665/1000, 66.5%
+Successful Relearning: 351/665, 52.78195488721804%
+
