@@ -1,9 +1,24 @@
 import numpy as np
 import random as rd
 
+
+'''
+Helper function that returns a flattened list
+Input: list: a 2-dimensional list, which can be ragged
+Output: the flattened list
+'''
 def list_flatten(list):
     return [item for row in list for item in row]
 
+
+'''
+Helper function that converts an index of a ragged 2d array into the equivalent index of the flattened array
+Inputs:
+    list: a 2 dimensional list, which can be ragged
+    row: desired row index of the list
+    item: desired item index of the given row
+Output: the corresponding index of the flattened list
+'''
 def get_flattened_index(list, row, item):
     index = 0
     for i in range(row):
@@ -11,6 +26,15 @@ def get_flattened_index(list, row, item):
     index += item
     return index
 
+
+'''
+Sets all columns of the successor matrix that don't correspond to a reward-giving action to 0, converting a full to a reduced successor matrix
+Inputs:
+    sr: the full successor matrix
+    rewards: list rewards for each state and action
+    num_pairs: the number of state-action pairs
+Outputs: sr: the reduced successor matrix
+'''
 def clear_non_goal_occupancies(sr, rewards, num_pairs):
     for i in range(len(rewards)):
         for j in range(len(rewards[i])):
@@ -19,10 +43,33 @@ def clear_non_goal_occupancies(sr, rewards, num_pairs):
     return sr
 
 
+'''
+Simulates a single episode, from the given start state until an end state is reached
+Inputs:
+    gamma: the time discounting constant
+    alpha: the learning rate constant
+    explore_chance: probability that the agent will choose a random action instead of the highest-value one
+    end_states: list of states that are considered end states
+    start_state: state that the agent starts in
+    rewards: list of rewards corresponding to each action
+    transitions: list of valid transitions from each state
+    num_pairs: the number of state-action pairs
+    feat: the successor matrix
+    weight: the weight vector
+    state_list: states visited at each time step
+    action_list: actions taken at each time step
+    RPE_list: reward prediction error for each time step
+    value_list: each state-action pair's Q-values at each time step
+Outputs:
+    feat: values updated after current episode and returned as a reduced successor matrix
+    weight: values updated after the current episode
+    state_list, action_list, RPE_list, value_list: with episode's values appended to the end
+    timestep_list: Total number of timesteps in this episode, used to pad all logs to the same length
+'''
 def reduced_successor_episode(gamma, alpha, explore_chance, end_states, start_state, rewards, transitions, num_pairs, feat, weight, state_list, action_list, RPE_list, value_list):
     time_step = 1
     
-    # Initial state value (will also be zeros)
+    # Q-values are based on dot product of weight vector and successor matrix
     v_state = []
     for k in range(num_pairs):
         v_state.append(np.sum(weight*feat[k]))
@@ -41,6 +88,7 @@ def reduced_successor_episode(gamma, alpha, explore_chance, end_states, start_st
             # Determine the next state, either a random subsequent state or the highest-value subsequent state, depending on the exploration parameter
             next_move_index = get_flattened_index(transitions, current_state, 0)
             next_values = v_state[next_move_index:(next_move_index+len(transitions[current_state]))]
+            # If the next action values are all the same we also choose randomly to avoid argmax defaulting to the first action
             if np.random.uniform() < explore_chance or np.all([i == next_values[0] for i in next_values]):
                 next_move = np.random.randint(len(transitions[current_state]))
             else:
@@ -48,39 +96,36 @@ def reduced_successor_episode(gamma, alpha, explore_chance, end_states, start_st
 
             next_state = transitions[current_state][next_move] - 1
 
-            # Determine the best action to take from the NEXT state, used to calculate the one-hot vector for updating the successor matrix
+            # Determine the action taken from the NEXT state, either the best action or a random one, depending on the exploration parameter
+            # By having a random explore chance, we ensure that the successor matrix represents all possible successor actions, but has larger values for the
+            # highest-reward ones. This is important for the policy reevaluation condition
             next_move_index = get_flattened_index(transitions, next_state, 0)
             next_values = v_state[next_move_index:(next_move_index+len(transitions[next_state]))]
 
-            # Occasionally assume a random next move as the immediate successor instead of the best next move.
-            # This way the successor matrix will reflect all possible successor states but have larger values for the highest-reward ones
-            # This is important for the policy reevaluation condition
             best_next_move = np.argmax(next_values) + next_move_index
             random_next_move = np.random.randint(len(transitions[next_state])) + next_move_index
             if np.random.uniform() < explore_chance or np.all([i == next_values[0] for i in next_values]):
-                next_move_one_hot = random_next_move
+                next_move_sr = random_next_move
             else:
-                next_move_one_hot = best_next_move
+                next_move_sr = best_next_move
 
-            # Get reward
+            # Update weights with TD learning on the reward
             reward = rewards[current_state][next_move]
-
             weight_delta = reward - weight[get_flattened_index(rewards, current_state, next_move)]
-
             weight[get_flattened_index(rewards, current_state, next_move)] += alpha * weight_delta
 
+            # An action is always considered to succeed itself
             one_hot = np.zeros(num_pairs)
-
             one_hot[get_flattened_index(transitions, current_state, next_move)] = 1
 
-            feat_delta = one_hot + gamma * feat[next_move_one_hot] - feat[get_flattened_index(transitions, current_state, next_move)]
-
+            # Update the current state's row of the successor matrix with TD learning on the occupancies
+            feat_delta = one_hot + gamma * feat[next_move_sr] - feat[get_flattened_index(transitions, current_state, next_move)]
             feat[get_flattened_index(transitions, current_state, next_move)] += alpha * feat_delta
 
+            # Convert to reduced successor matrix
             feat = clear_non_goal_occupancies(feat, rewards, num_pairs)
             
-            
-            # update state value
+        
             for k in range(num_pairs):
                 v_state[k] = np.sum(weight*feat[k])
             
@@ -100,6 +145,31 @@ def reduced_successor_episode(gamma, alpha, explore_chance, end_states, start_st
     return feat, weight, state_list, action_list, RPE_list, value_list, timestep_list
 
 
+'''
+Simulates the pre-training learning phase, where the agent has access to the starting state
+Inputs:
+    gamma: the time discounting constant
+    alpha: the learning rate constant
+    explore_chance: probability that the agent will choose a random action instead of the highest-value one
+    end_states: list of states that are considered end states
+    rewards: list of rewards corresponding to each action
+    transitions: list of valid transitions from each state
+    model_parameters: the components of a successor representation, in order:
+        num_pairs: the number of state-action pairs
+        feat: the reduced successor matrix (should generally be initialized with zeros)
+        weight: the weight vector (also generally initialized with zeros)
+    logging lists: list of various logging variables, lists in order are:
+        state_list: states visited at each time step
+        action_list: actions taken at each time step
+        RPE_list: reward prediction error for each time step
+        epi_num_list: tracks the current episode number
+        phase_list: tracks the current learning phase (1 = pretraining, 2 = retraining, 3 = test)
+        value_list: each state-action pair's Q-values at each time step
+Outputs:
+    model_parameters: calculated successor matrix and weight after pretraining
+    logging_lists: with new simulation's values appended to the end
+    epi_length: Total number of timesteps in the pretraining, used to pad all logs to the same length
+'''
 def pretraining(gamma, alpha, explore_chance, end_states, rewards, transitions, model_parameters, logging_lists):
     num_pairs, feat, weight = model_parameters
     state_list, action_list, RPE_list, epi_num_list, phase_list = logging_lists[0:5]
@@ -108,7 +178,6 @@ def pretraining(gamma, alpha, explore_chance, end_states, rewards, transitions, 
     # Create the list of starting states, randomly ordered, but guaranteed a certain number of starts in each starting state
     start_states = np.array([1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 4, 4, 5, 5, 6, 6])
     start_states= np.append(start_states, np.random.randint(1, 7, 5))
-    #start_states = np.append(start_states, [1 for k in range(500)])
     np.random.shuffle(start_states)
     for index, k in enumerate(start_states):
         c_feat, c_weight, c_state_list, c_action_list, c_RPE_list, c_value_list, timestep_list = \
@@ -156,6 +225,32 @@ def update_parameters(condition, rewards, transitions):
     return rewards, transitions
 
 
+'''
+Simulates the relearning phase, where the agent does not directly experience the starting state
+Inputs:
+    condition: string representing the relearning condition, case sensitive (needed because the Transition condition uses different starting states)
+    gamma: the time discounting constant
+    alpha: the learning rate constant
+    explore_chance: probability that the agent will choose a random action instead of the highest-value one
+    end_states: list of states that are considered end states
+    rewards: list of rewards corresponding to each action
+    transitions: list of valid transitions from each state
+    model parameters: the components of a successor representation, in order:
+        num_pairs: the number of state-action pairs
+        feat: the reduced successor matrix, held over from the pretraining
+        weight: the weight vector, held over from pretraining
+    logging lists: list of various logging variables, lists in order are:
+        state_list: states visited at each time step
+        action_list: actions taken at each time step
+        RPE_list: reward prediction error for each time step
+        epi_num_list: tracks the current episode number
+        phase_list: tracks the current learning phase (1 = pretraining, 2 = retraining, 3 = test)
+        value_list: each state-action pair's Q-values at each time step
+Outputs:
+    model_parameters: calculated successor matrix and weight after pretraining
+    logging_lists: with new simulation's values appended to the end
+    epi_length: Total number of timesteps in the pretraining, used to pad all logs to the same length
+'''
 def retraining(condition, gamma, alpha, explore_chance, end_states, rewards, transitions, model_parameters, logging_lists):
     num_pairs, feat, weight = model_parameters
     state_list, action_list, RPE_list, epi_num_list, phase_list = logging_lists[0:5]
@@ -165,7 +260,6 @@ def retraining(condition, gamma, alpha, explore_chance, end_states, rewards, tra
         start_states = np.array([2, 2, 2, 3, 3, 3, 4, 5, 6])
     else:
         start_states = np.array([4, 4, 4, 5, 5, 5, 6, 6, 6])
-    #start_states = np.append(start_states, [(k % 2) + 2 for k in range(500)])
     np.random.shuffle(start_states)
     for index, k in enumerate(start_states):
         c_feat, c_weight, c_state_list, c_action_list, c_RPE_list, c_value_list, timestep_list = \
@@ -191,14 +285,20 @@ def retraining(condition, gamma, alpha, explore_chance, end_states, rewards, tra
     return new_params, logs_new, epi_length
 
 
-def test(model_parameters):
-    num_pairs, feat, weight = model_parameters
-    v_state = np.zeros(num_pairs)
-    for k in range(num_pairs):
-        v_state[k] = np.sum(weight*feat[k])
-    return np.argmax(v_state[0:2]) + 2
-
-
+'''
+Appends the current weight vector and successor matrix and corresponding simulation and phase labels to the milestone logs
+Inputs:
+    milestone_logs: list holding each phase's learned weights and (flattened) successor matrix
+    milestone_labels: list holding the simulation number and current phase for each row
+    sim_num: Number of the current simulation
+    phase: String describing the current learning phase
+    model_parameters: the components of a successor representation, in order:
+        num_pairs: the number of state-action pairs
+        feat: the successor matrix
+        weight: the weight vector
+Outputs:
+    milestone logs, milestone labels: with new learning phase's values appended to the end
+'''
 def update_logs(milestone_logs, milestone_labels, sim_num, phase, model_parameters):
     num_pairs, feat, weight = model_parameters
     for k in range(num_pairs):
@@ -209,3 +309,20 @@ def update_logs(milestone_logs, milestone_labels, sim_num, phase, model_paramete
     milestone_labels[0].append(sim_num + 1)
     milestone_labels[1].append(phase)
     return milestone_logs, milestone_labels
+
+
+'''
+Simulates the test phase by comparing the action values of the two possible starting-state actions. The test state action is assumed to always be 
+the higher-value choice
+Input: model_parameters: the components of a successor representation, in order:
+        num_pairs: the number of state-action pairs
+        feat: the successor matrix
+        weight: the weight vector
+Output: preferred starting state action
+'''
+def test(model_parameters):
+    num_pairs, feat, weight = model_parameters
+    v_state = np.zeros(num_pairs)
+    for k in range(num_pairs):
+        v_state[k] = np.sum(weight*feat[k])
+    return np.argmax(v_state[0:2]) + 2
