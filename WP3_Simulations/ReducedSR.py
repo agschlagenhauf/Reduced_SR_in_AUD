@@ -119,8 +119,10 @@ def reduced_successor_episode(gamma, alpha, explore_chance, end_states, start_st
             one_hot[get_flattened_index(transitions, current_state, next_move)] = 1
 
             # Update the current state's row of the successor matrix with TD learning on the occupancies
+            # The learning rate for the feature vector is lower than for the weights so that the occupancies from previous episodes
+            # stay mostly intact if a different action is chosen, even with a high alpha
             feat_delta = one_hot + gamma * feat[next_move_sr] - feat[get_flattened_index(transitions, current_state, next_move)]
-            feat[get_flattened_index(transitions, current_state, next_move)] += alpha * feat_delta
+            feat[get_flattened_index(transitions, current_state, next_move)] += alpha * 0.25 * feat_delta
 
             # Convert to reduced successor matrix
             feat = clear_non_goal_occupancies(feat, rewards, num_pairs)
@@ -222,6 +224,8 @@ def update_parameters(condition, rewards, transitions):
         rewards = [[0, 0], [0, 0], [0, 0], [45], [15], [30], [0], [0], [0], [0]]
     elif condition == "Goal":
         rewards = [[0, 0], [0, 0], [0, 0], [15], [0], [30], [30], [0], [0], [0]]
+    else:
+        rewards = [[0, 0], [0, 0], [0, 0], [15], [0], [30], [0], [0], [45], [0]]
     return rewards, transitions
 
 

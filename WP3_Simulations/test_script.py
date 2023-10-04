@@ -2,8 +2,9 @@ import pandas as pd
 import numpy as np
 import Simulate
 
-num_trials = 100
-models = ["Punctate", "FullSR", "ReducedSR"]
+
+num_trials = 1000
+models = ["Punctate", "ModelBased", "FullSR", "ReducedSR"]
 conditions = ["Control", "Reward", "Transition", "Policy", "Goal"]
 
 success_rates = open("./Results/success_rates.txt", "w")

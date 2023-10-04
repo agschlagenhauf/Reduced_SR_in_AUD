@@ -169,6 +169,8 @@ def update_parameters(condition, rewards, transitions):
         rewards = [[0, 0], [0, 0], [0, 0], [45], [15], [30], [0], [0], [0], [0]]
     elif condition == "Goal":
         rewards = [[0, 0], [0, 0], [0, 0], [15], [0], [30], [30], [0], [0], [0]]
+    else:
+        rewards = [[0, 0], [0, 0], [0, 0], [15], [0], [30], [0], [0], [45], [0]]
     return rewards, transitions
 
 

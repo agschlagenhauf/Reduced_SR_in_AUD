@@ -2,7 +2,6 @@ import numpy as np
 import pandas as pd
 import importlib
 
-
 '''
 Runs a number of simulations of a given model, including the learning, relearning, and test phases, and logs the model parameters and test results after each 
 learning phase of each simulation, as well as optionally the actions taken, RPE, and current action values after each time step
@@ -21,11 +20,12 @@ def simulate(model, condition, sim_num, output_filename, full_logging=True):
     model_package = importlib.import_module(model)
 
     # Initialize the default parameters
-    alpha = 0.50
+    alpha = 0.9
     gamma = 0.95
-    explore_chance = 0.1
+    explore_chance = 0.5
     end_states = [10, 11]
     num_pairs = 13
+    num_states = 10
 
     # Initialize logging variables, each batch of simulations' logs goes in one .csv file
     # Logs are, in order: states visited, actions taken, reward prediction error, episode number, learning phase, and calculated values of each action
@@ -37,6 +37,8 @@ def simulate(model, condition, sim_num, output_filename, full_logging=True):
     milestone_labels = [[], []]
     if model == "Punctate":
         milestone_logs = [[] for k in range(num_pairs)]
+    elif model == "ModelBased":
+        milestone_logs = [[] for k in range(num_pairs * (num_states + 1))]
     else:
         milestone_logs = [[] for k in range(num_pairs * (num_pairs + 1))]
 
@@ -47,7 +49,7 @@ def simulate(model, condition, sim_num, output_filename, full_logging=True):
         transitions = [[2, 3], [4, 5], [5, 6], [7], [8], [9], [10], [10], [10], [11]]
 
         if condition == "Policy":
-            rewards = [[0, 0], [0, 0], [0, 0], [0], [15], [30], [0], [0], [0], [0]]
+            rewards = [[0, 0], [0, 0], [0, 0], [5], [15], [30], [0], [0], [0], [0]]
         else:
             rewards = [[0, 0], [0, 0], [0, 0], [15], [0], [30], [0], [0], [0], [0]]
 
@@ -59,6 +61,17 @@ def simulate(model, condition, sim_num, output_filename, full_logging=True):
                     row.append(0)
                 v_state.append(row)
             model_parameters = v_state
+        elif model == "ModelBased":
+            v_state = []
+            init_weight = []
+            for j in range(len(rewards)):
+                row = []
+                for k in range(len(rewards[j])):
+                    row.append(0)
+                v_state.append(row)
+                init_weight.append(row.copy())
+            init_t_counts = np.zeros((num_pairs, num_states))
+            model_parameters = [v_state, init_t_counts, init_weight]
         else:
             init_sr = np.zeros((num_pairs, num_pairs))
             init_weight = np.zeros(num_pairs)
@@ -90,8 +103,11 @@ def simulate(model, condition, sim_num, output_filename, full_logging=True):
     # Action name formatting: VS1A3 = action going from state 1 to state 3
     move_names = ['S' + str(index+1) + 'A' + str(i) for index, k in enumerate(transitions) for i in k]
 
-    # Occupancy name formatting: OS1A2-S2A4 = future occupancy of the S2-S4 action given the S1-S2 action
+    # Occupancy name formatting: OS1A2-S2A4 = future occupancy of the S2-A4 action given the S1-A2 action
     occupancy_names = ['O' + i + '-' + j for i in move_names for j in move_names]
+
+    # Transition name formatting: TS1A2 - S2 = probability of transitioning from state 1 to state 2 given the S1-A2 action
+    transition_names = ['T' + i + '-S' + str(j + 1) for i in move_names for j in range(num_states)]
 
     # Save the individual time-step logs
     if full_logging == True:
@@ -114,6 +130,14 @@ def simulate(model, condition, sim_num, output_filename, full_logging=True):
         for index, j in enumerate(move_names):
             values['V' + j] = milestone_logs[index]
         milestone_results = pd.concat((milestone_results, pd.DataFrame(values)), axis=1)
+    elif model == "ModelBased":
+        # The model-based model saves the weight vector and a flattened transition matrix
+        weights_and_transitions = {}
+        for index, j in enumerate(move_names):
+            weights_and_transitions["W" + j] = milestone_logs[index]
+        for index, j in enumerate(transition_names):
+            weights_and_transitions[j] = milestone_logs[index + num_pairs]
+        milestone_results = pd.concat((milestone_results, pd.DataFrame(weights_and_transitions)), axis=1)
     else:
         # The SR models save the weight vector and a flattened successor matrix
         weights_and_sr = {}

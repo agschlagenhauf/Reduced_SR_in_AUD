@@ -28,6 +28,22 @@ def get_flattened_index(list, row, item):
 
 
 '''
+Finds the probability of choosing each action of a given state under the current policy
+Inputs:
+    values: 1D list of the calculated Q-values of all actions from a single state
+    explore-chance: probability that the current policy will choose a random action
+Output: policy - the probability that each action will be chosen
+'''
+def policy(values, explore_chance):
+    if np.all([i == values[0] for i in values]):
+        policy = np.repeat((1 / len(values)), len(values))
+    else:
+        policy = np.repeat((explore_chance / len(values)), len(values))
+        policy[np.argmax(values)] += 1 - explore_chance
+    return policy
+
+
+'''
 Simulates a single episode, from the given start state until an end state is reached
 Inputs:
     gamma: the time discounting constant
@@ -49,13 +65,12 @@ Outputs:
     state_list, action_list, RPE_list, value_list: with episode's values appended to the end
     timestep_list: Total number of timesteps in this episode, used to pad all logs to the same length
 '''
-def successor_episode(gamma, alpha, explore_chance, end_states, start_state, rewards, transitions, num_pairs, feat, weight, state_list, action_list, RPE_list, value_list):
+def successor_episode(gamma, alpha, explore_chance, end_states, start_state, rewards, transitions, v_state, t_counts, weight, state_list, action_list, RPE_list, value_list):
     time_step = 1
-    
-    # Q-values are based on dot product of weight vector and successor matrix
-    v_state = []
-    for k in range(num_pairs):
-        v_state.append(np.sum(weight*feat[k]))
+
+    # Transition matrix is a normalized count of the number of times each state follows directly from each state-action pair
+    # In our case, transitions are deterministic so this effectively be a one-hot array
+    t_matrix = np.zeros((len(list_flatten(rewards)), len(rewards)))
         
     current_state = start_state - 1
     timestep_list = []
@@ -68,9 +83,8 @@ def successor_episode(gamma, alpha, explore_chance, end_states, start_state, rew
             break
         
         else:
-            # Determine the next state, either a random subsequent state or the highest-value subsequent state, depending on the exploration parameter
-            next_move_index = get_flattened_index(transitions, current_state, 0)
-            next_values = v_state[next_move_index:(next_move_index+len(transitions[current_state]))]
+            # Determine the next state, either a random subsequent state or the highest-value one based on the exploration parameter
+            next_values = v_state[current_state]
             # If the next action values are all the same we also choose randomly to avoid argmax defaulting to the first action
             if np.random.uniform() < explore_chance or np.all([i == next_values[0] for i in next_values]):
                 next_move = np.random.randint(len(transitions[current_state]))
@@ -79,52 +93,40 @@ def successor_episode(gamma, alpha, explore_chance, end_states, start_state, rew
 
             next_state = transitions[current_state][next_move] - 1
 
-            # Determine the action taken from the NEXT state, either the best action or a random one, depending on the exploration parameter
-            # By having a random explore chance, we ensure that the successor matrix represents all possible successor actions, but has larger values for the
-            # highest-reward ones. This is important for the policy reevaluation condition
-            next_move_index = get_flattened_index(transitions, next_state, 0)
-            next_values = v_state[next_move_index:(next_move_index+len(transitions[next_state]))]
-
-            best_next_move = np.argmax(next_values) + next_move_index
-            random_next_move = np.random.randint(len(transitions[next_state])) + next_move_index
-            if np.random.uniform() < explore_chance or np.all([i == next_values[0] for i in next_values]):
-                next_move_sr = random_next_move
-            else:
-                next_move_sr = best_next_move
-
-
             # Update weights with TD learning on the reward
             reward = rewards[current_state][next_move]
-            weight_delta = reward - weight[get_flattened_index(rewards, current_state, next_move)]
-            weight[get_flattened_index(rewards, current_state, next_move)] += alpha * weight_delta
+            weight_delta = reward - weight[current_state][next_move]
+            weight[current_state][next_move] += alpha * weight_delta
 
-            # An action is always considered to succeed itself
-            one_hot = np.zeros(num_pairs)
-            one_hot[get_flattened_index(transitions, current_state, next_move)] = 1
-
-            # Update the current state's row of the successor matrix with TD learning on the occupancies
-            # The learning rate for the feature vector is lower than for the weights so that the occupancies from previous episodes
-            # stay mostly intact if a different action is chosen, even with a high alpha
-            feat_delta = one_hot + gamma * feat[next_move_sr] - feat[get_flattened_index(transitions, current_state, next_move)]
-            feat[get_flattened_index(transitions, current_state, next_move)] += alpha * 0.25 * feat_delta
+            # Update transition counts and re-normalize
+            t_counts[get_flattened_index(rewards, current_state, next_move), next_state] += 1
+            for index, row in enumerate(t_counts):
+                if np.sum(row) == 0:
+                    t_matrix[index] = np.zeros(len(rewards))
+                else:
+                    t_matrix[index] = row / np.sum(row)
             
-            for k in range(num_pairs):
-                v_state[k] = np.sum(weight*feat[k])
+            # Update the Q-Values according to the Bellman Equation
+            next_state_values = [np.sum(v_state[state] * policy(v_state[state], explore_chance)) for state in range(len(rewards))]
+            for i in range(len(rewards)):
+                for j in range(len(rewards[i])):
+                    v_state[i][j] = weight[i][j] + gamma * np.sum(t_matrix[get_flattened_index(rewards, i, j)] * next_state_values)
 
             state_list.append(current_state + 1)
             action_list.append(next_state + 1)
             RPE_list.append(weight_delta)
             timestep_list.append(time_step)
             
-            for k in range(num_pairs):
-                value_list[k].append(v_state[k])
+            values_flat = list_flatten(v_state)
+            for k in range(len(values_flat)):
+                value_list[k].append(values_flat[k])
             
             # Move to the next state
             current_state = next_state
             
             time_step += 1
 
-    return feat, weight, state_list, action_list, RPE_list, value_list, timestep_list
+    return v_state, t_counts, weight, state_list, action_list, RPE_list, value_list, timestep_list
 
 
 '''
@@ -154,7 +156,7 @@ Outputs:
 '''
 def pretraining(gamma, alpha, explore_chance, end_states, rewards, transitions, model_parameters, logging_lists):
     # Unpack logging_lists and model parameters into component variables
-    num_pairs, feat, weight = model_parameters
+    v_state, t_counts, weight = model_parameters
     state_list, action_list, RPE_list, epi_num_list, phase_list = logging_lists[0:5]
     value_list = logging_lists[5:][0]
     epi_length = []
@@ -163,8 +165,8 @@ def pretraining(gamma, alpha, explore_chance, end_states, rewards, transitions, 
     start_states= np.append(start_states, np.random.randint(1, 7, 5))
     np.random.shuffle(start_states)
     for index, k in enumerate(start_states):
-        c_feat, c_weight, c_state_list, c_action_list, c_RPE_list, c_value_list, timestep_list = \
-        successor_episode(gamma, alpha, explore_chance, end_states, k, rewards, transitions, num_pairs, feat, weight, state_list, action_list, RPE_list, value_list)
+        c_v_state, c_t_counts, c_weight, c_state_list, c_action_list, c_RPE_list, c_value_list, timestep_list = \
+        successor_episode(gamma, alpha, explore_chance, end_states, k, rewards, transitions, v_state, t_counts, weight, state_list, action_list, RPE_list, value_list)
 
         # Update the logs that depend on the length of the current episode
         for j in range(len(timestep_list)):
@@ -172,7 +174,8 @@ def pretraining(gamma, alpha, explore_chance, end_states, rewards, transitions, 
             epi_length.append(index+1)
             phase_list.append(1)
 
-        feat = c_feat
+        v_state = c_v_state
+        t_counts = c_t_counts
         weight = c_weight
         state_list = c_state_list
         action_list = c_action_list
@@ -181,7 +184,7 @@ def pretraining(gamma, alpha, explore_chance, end_states, rewards, transitions, 
 
     logs_new = [c_state_list, c_action_list, c_RPE_list, epi_num_list, phase_list]
     logs_new.append(value_list)
-    new_params = [num_pairs, feat, weight]
+    new_params = [v_state, t_counts, weight]
         
     return new_params, logs_new, epi_length
 
@@ -238,26 +241,28 @@ Outputs:
 '''
 def retraining(condition, gamma, alpha, explore_chance, end_states, rewards, transitions, model_parameters, logging_lists):
     # Unpack logging_lists and model parameters into component variables
-    num_pairs, feat, weight = model_parameters
+    v_state, t_counts, weight = model_parameters
     state_list, action_list, RPE_list, epi_num_list, phase_list = logging_lists[0:5]
     value_list = logging_lists[5:][0]
     epi_length = []
+    # Create the list of starting states, randomly ordered, but guaranteed a certain number of starts in each starting state
     if condition == "Transition":
         start_states = np.array([2, 2, 2, 3, 3, 3, 4, 5, 6])
     else:
         start_states = np.array([4, 4, 4, 5, 5, 5, 6, 6, 6])
     np.random.shuffle(start_states)
     for index, k in enumerate(start_states):
-        c_feat, c_weight, c_state_list, c_action_list, c_RPE_list, c_value_list, timestep_list = \
-        successor_episode(gamma, alpha, explore_chance, end_states, k, rewards, transitions, num_pairs, feat, weight, state_list, action_list, RPE_list, value_list)
+        c_v_state, c_t_counts, c_weight, c_state_list, c_action_list, c_RPE_list, c_value_list, timestep_list = \
+        successor_episode(gamma, alpha, explore_chance, end_states, k, rewards, transitions, v_state, t_counts, weight, state_list, action_list, RPE_list, value_list)
 
         # Update the logs that depend on the length of the current episode
         for j in range(len(timestep_list)):
             epi_num_list.append(index+1)
             epi_length.append(index+1)
-            phase_list.append(2)
+            phase_list.append(1)
 
-        feat = c_feat
+        v_state = c_v_state
+        t_counts = c_t_counts
         weight = c_weight
         state_list = c_state_list
         action_list = c_action_list
@@ -266,7 +271,7 @@ def retraining(condition, gamma, alpha, explore_chance, end_states, rewards, tra
 
     logs_new = [c_state_list, c_action_list, c_RPE_list, epi_num_list, phase_list]
     logs_new.append(value_list)
-    new_params = [num_pairs, feat, weight]
+    new_params = [v_state, t_counts, weight]
         
     return new_params, logs_new, epi_length
 
@@ -286,12 +291,16 @@ Outputs:
     milestone logs, milestone labels: with new learning phase's values appended to the end
 '''
 def update_logs(milestone_logs, milestone_labels, sim_num, phase, model_parameters):
-    num_pairs, feat, weight = model_parameters
+    num_pairs = 13
+    num_states = 10
+    v_state, t_counts, weight = model_parameters
+    weights_flat = list_flatten(weight)
+
     for k in range(num_pairs):
-        milestone_logs[k].append(weight[k])
+        milestone_logs[k].append(weights_flat[k])
     for m in range(num_pairs):
-        for n in range(num_pairs):
-            milestone_logs[m*num_pairs + n + num_pairs].append(feat[m][n])
+        for n in range(int(len(milestone_logs) / num_pairs) - 1):
+            milestone_logs[m*(int(len(milestone_logs) / num_pairs) - 1) + n + num_pairs].append(t_counts[m][n])
     milestone_labels[0].append(sim_num + 1)
     milestone_labels[1].append(phase)
     return milestone_logs, milestone_labels
@@ -307,8 +316,5 @@ Input: model_parameters: the components of a successor representation, in order:
 Output: preferred starting state action
 '''
 def test(model_parameters):
-    num_pairs, feat, weight = model_parameters
-    v_state = np.zeros(num_pairs)
-    for k in range(num_pairs):
-        v_state[k] = np.sum(weight*feat[k])
-    return np.argmax(v_state[0:2]) + 2
+    v_state, t_counts, weight = model_parameters
+    return np.argmax(v_state[0]) + 2
