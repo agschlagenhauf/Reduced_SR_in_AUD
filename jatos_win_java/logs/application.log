@@ -1,0 +1,219 @@
+2024-02-08 15:29:57,330 [INFO] - a.e.s.Slf4jLogger - Slf4jLogger started
+2024-02-08 15:29:57,841 [INFO] - p.a.d.DefaultDBApi - Database [default] initialized
+2024-02-08 15:29:57,855 [INFO] - application - Creating Pool for datasource 'default'
+2024-02-08 15:29:57,887 [INFO] - c.z.h.HikariDataSource - HikariPool-1 - Starting...
+2024-02-08 15:29:57,924 [INFO] - c.z.h.HikariDataSource - HikariPool-1 - Start completed.
+2024-02-08 15:29:57,984 [INFO] - p.a.d.HikariCPConnectionPool - datasource [default] bound to JNDI as DefaultDS
+2024-02-08 15:29:59,588 [INFO] - o.h.j.i.u.LogHelper - HHH000204: Processing PersistenceUnitInfo [name: mysqlPersistenceUnit]
+2024-02-08 15:29:59,609 [INFO] - g.c.Common - Path to study assets directory is C:\Users\Lyo Tonio Cooper\Nichtsynchronisierter Ordner\jatos_win_java\study_assets_root
+2024-02-08 15:29:59,609 [INFO] - g.c.Common - Path to study logs directory is C:\Users\Lyo Tonio Cooper\Nichtsynchronisierter Ordner\jatos_win_java\study_logs
+2024-02-08 15:29:59,609 [INFO] - g.c.Common - Path to uploads directory is C:\Users\Lyo Tonio Cooper\Nichtsynchronisierter Ordner\jatos_win_java\result_uploads
+2024-02-08 15:29:59,713 [INFO] - o.h.Version - HHH000412: Hibernate ORM core version 5.4.24.Final
+2024-02-08 15:29:59,997 [INFO] - o.h.a.c.Version - HCANN000001: Hibernate Commons Annotations {5.1.2.Final}
+2024-02-08 15:30:00,422 [INFO] - o.h.d.Dialect - HHH000400: Using dialect: org.hibernate.dialect.MySQL8Dialect
+2024-02-08 15:30:00,967 [INFO] - g.c.Common - Path to logs directory is C:\Users\Lyo Tonio Cooper\Nichtsynchronisierter Ordner\jatos_win_java\logs
+2024-02-08 15:30:00,967 [INFO] - g.c.Common - Path to tmp directory is C:\Users\LYOTON~1\AppData\Local\Temp\\jatos
+2024-02-08 15:30:01,287 [INFO] - o.h.v.i.u.Version - HV000001: Hibernate Validator 6.0.16.Final
+2024-02-08 15:30:02,446 [INFO] - o.h.e.t.j.p.i.JtaPlatformInitiator - HHH000490: Using JtaPlatform implementation: [org.hibernate.engine.transaction.jta.platform.internal.NoJtaPlatform]
+2024-02-08 15:30:04,032 [INFO] - p.a.Play - Application started (Prod) (no global state)
+2024-02-08 15:30:05,185 [INFO] - p.c.s.AkkaHttpServer - Listening for HTTP on /127.0.0.1:9000
+2024-02-08 15:30:16,780 [INFO] - gui_access - GET /jatos/login (unknown)
+2024-02-08 15:30:21,506 [INFO] - gui_access - POST /jatos/login (unknown)
+2024-02-08 15:30:21,842 [INFO] - gui_access - GET /jatos (admin)
+2024-02-08 15:30:22,202 [INFO] - gui_access - GET /jatos/branding (admin)
+2024-02-08 15:30:22,259 [INFO] - gui_access - GET /jatos/sidebarStudyList (admin)
+2024-02-08 15:30:24,984 [INFO] - gui_access - GET /jatos/1 (admin)
+2024-02-08 15:30:25,178 [INFO] - gui_access - GET /jatos/sidebarStudyList (admin)
+2024-02-08 15:30:25,211 [INFO] - gui_access - GET /jatos/1/componentsTableData?_=1707402625042 (admin)
+2024-02-08 15:30:27,456 [INFO] - gui_access - GET /jatos/33 (admin)
+2024-02-08 15:30:27,554 [INFO] - gui_access - GET /jatos/sidebarStudyList (admin)
+2024-02-08 15:30:27,597 [INFO] - gui_access - GET /jatos/33/componentsTableData?_=1707402627492 (admin)
+2024-02-08 15:30:28,992 [INFO] - gui_access - GET /jatos/33/33/run (admin)
+2024-02-08 15:30:29,024 [INFO] - publix_access - GET /publix/vcxJmYSMhV3
+2024-02-08 15:30:29,024 [INFO] - c.p.PublixInterceptor - .run: studyCode vcxJmYSMhV3
+2024-02-08 15:30:29,108 [INFO] - c.p.w.JatosPublix - .startStudy: studyCode vcxJmYSMhV3, studyResultId193, studyId 33, batchId 33, logged-in username admin, workerId 1
+2024-02-08 15:30:29,157 [INFO] - publix_access - GET /publix/229a20a1-4a30-4cb8-95ca-eb601ff92aba/ad0885dc-3b8f-4fad-ba75-41540501593c/start
+2024-02-08 15:30:29,174 [INFO] - c.p.PublixInterceptor - .startComponent: studyResultId 193, componentId 33
+2024-02-08 15:30:29,675 [INFO] - publix_access - GET /publix/229a20a1-4a30-4cb8-95ca-eb601ff92aba/ad0885dc-3b8f-4fad-ba75-41540501593c/initData
+2024-02-08 15:30:29,690 [INFO] - c.p.PublixInterceptor - .getInitData: studyResultId 193, componentId 33
+2024-02-08 15:30:29,800 [INFO] - publix_access - POST /publix/229a20a1-4a30-4cb8-95ca-eb601ff92aba/heartbeat
+2024-02-08 15:30:29,808 [INFO] - c.p.PublixInterceptor - .heartbeat: studyResultId 193
+2024-02-08 15:30:30,158 [INFO] - c.p.JatosBatchChannel - .open: studyResult 193
+2024-02-08 15:30:33,539 [INFO] - publix_access - PUT /publix/229a20a1-4a30-4cb8-95ca-eb601ff92aba/ad0885dc-3b8f-4fad-ba75-41540501593c/resultData
+2024-02-08 15:30:33,539 [INFO] - c.p.PublixInterceptor - .submitOrAppendResultData: studyResultId 193, componentId 33
+2024-02-08 15:30:33,573 [INFO] - publix_access - GET /publix/229a20a1-4a30-4cb8-95ca-eb601ff92aba/end
+2024-02-08 15:30:33,573 [INFO] - c.p.PublixInterceptor - .finishStudy: studyResultId 193, successful true
+2024-02-08 15:30:33,628 [INFO] - gui_access - GET /jatos/33 (admin)
+2024-02-08 15:30:33,722 [INFO] - gui_access - GET /jatos/sidebarStudyList (admin)
+2024-02-08 15:30:33,782 [INFO] - gui_access - GET /jatos/33/componentsTableData?_=1707402633668 (admin)
+2024-02-08 15:32:09,940 [INFO] - gui_access - GET /jatos/33/33/run (admin)
+2024-02-08 15:32:09,973 [INFO] - publix_access - GET /publix/vcxJmYSMhV3
+2024-02-08 15:32:09,973 [INFO] - c.p.PublixInterceptor - .run: studyCode vcxJmYSMhV3
+2024-02-08 15:32:10,030 [INFO] - c.p.w.JatosPublix - .startStudy: studyCode vcxJmYSMhV3, studyResultId194, studyId 33, batchId 33, logged-in username admin, workerId 1
+2024-02-08 15:32:10,075 [INFO] - publix_access - GET /publix/cd055d84-01f0-4bef-b24a-3a6e3570352b/ad0885dc-3b8f-4fad-ba75-41540501593c/start
+2024-02-08 15:32:10,085 [INFO] - c.p.PublixInterceptor - .startComponent: studyResultId 194, componentId 33
+2024-02-08 15:32:11,008 [INFO] - publix_access - GET /publix/cd055d84-01f0-4bef-b24a-3a6e3570352b/ad0885dc-3b8f-4fad-ba75-41540501593c/initData
+2024-02-08 15:32:11,060 [INFO] - c.p.PublixInterceptor - .getInitData: studyResultId 194, componentId 33
+2024-02-08 15:32:11,094 [INFO] - publix_access - POST /publix/cd055d84-01f0-4bef-b24a-3a6e3570352b/heartbeat
+2024-02-08 15:32:11,140 [INFO] - c.p.PublixInterceptor - .heartbeat: studyResultId 194
+2024-02-08 15:32:11,531 [INFO] - c.p.JatosBatchChannel - .open: studyResult 194
+2024-02-08 15:32:15,498 [INFO] - publix_access - PUT /publix/cd055d84-01f0-4bef-b24a-3a6e3570352b/ad0885dc-3b8f-4fad-ba75-41540501593c/resultData
+2024-02-08 15:32:15,508 [INFO] - c.p.PublixInterceptor - .submitOrAppendResultData: studyResultId 194, componentId 33
+2024-02-08 15:32:15,593 [INFO] - publix_access - GET /publix/cd055d84-01f0-4bef-b24a-3a6e3570352b/end
+2024-02-08 15:32:15,598 [INFO] - c.p.PublixInterceptor - .finishStudy: studyResultId 194, successful true
+2024-02-08 15:32:15,701 [INFO] - gui_access - GET /jatos/33 (admin)
+2024-02-08 15:32:15,930 [INFO] - gui_access - GET /jatos/sidebarStudyList (admin)
+2024-02-08 15:32:16,083 [INFO] - gui_access - GET /jatos/33/componentsTableData?_=1707402735797 (admin)
+2024-02-08 15:32:49,935 [INFO] - gui_access - GET /jatos/33/33/results (admin)
+2024-02-08 15:32:50,112 [INFO] - gui_access - GET /jatos/sidebarStudyList (admin)
+2024-02-08 15:32:50,344 [INFO] - gui_access - GET /jatos/componentResults/tableData?componentId=33&_=1707402770030 (admin)
+2024-02-08 15:36:50,890 [INFO] - gui_access - GET /jatos/33 (admin)
+2024-02-08 15:36:51,180 [INFO] - gui_access - GET /jatos/sidebarStudyList (admin)
+2024-02-08 15:36:51,318 [INFO] - gui_access - GET /jatos/33/componentsTableData?_=1707403010991 (admin)
+2024-02-08 15:41:26,865 [INFO] - gui_access - GET /jatos/33/33/run (admin)
+2024-02-08 15:41:26,888 [INFO] - publix_access - GET /publix/vcxJmYSMhV3
+2024-02-08 15:41:26,888 [INFO] - c.p.PublixInterceptor - .run: studyCode vcxJmYSMhV3
+2024-02-08 15:41:26,909 [INFO] - c.p.w.JatosPublix - .startStudy: studyCode vcxJmYSMhV3, studyResultId195, studyId 33, batchId 33, logged-in username admin, workerId 1
+2024-02-08 15:41:26,955 [INFO] - publix_access - GET /publix/d502fbb8-d5c3-4e3e-a80c-3e02f7fb41f7/ad0885dc-3b8f-4fad-ba75-41540501593c/start
+2024-02-08 15:41:26,968 [INFO] - c.p.PublixInterceptor - .startComponent: studyResultId 195, componentId 33
+2024-02-08 15:41:27,721 [INFO] - publix_access - GET /publix/d502fbb8-d5c3-4e3e-a80c-3e02f7fb41f7/ad0885dc-3b8f-4fad-ba75-41540501593c/initData
+2024-02-08 15:41:27,733 [INFO] - c.p.PublixInterceptor - .getInitData: studyResultId 195, componentId 33
+2024-02-08 15:41:27,866 [INFO] - publix_access - POST /publix/d502fbb8-d5c3-4e3e-a80c-3e02f7fb41f7/heartbeat
+2024-02-08 15:41:27,872 [INFO] - c.p.PublixInterceptor - .heartbeat: studyResultId 195
+2024-02-08 15:41:28,151 [INFO] - c.p.JatosBatchChannel - .open: studyResult 195
+2024-02-08 15:43:19,982 [INFO] - publix_access - PUT /publix/d502fbb8-d5c3-4e3e-a80c-3e02f7fb41f7/ad0885dc-3b8f-4fad-ba75-41540501593c/resultData
+2024-02-08 15:43:19,990 [INFO] - c.p.PublixInterceptor - .submitOrAppendResultData: studyResultId 195, componentId 33
+2024-02-08 15:43:20,040 [INFO] - publix_access - GET /publix/d502fbb8-d5c3-4e3e-a80c-3e02f7fb41f7/end
+2024-02-08 15:43:20,044 [INFO] - c.p.PublixInterceptor - .finishStudy: studyResultId 195, successful true
+2024-02-08 15:43:20,138 [INFO] - gui_access - GET /jatos/33 (admin)
+2024-02-08 15:43:20,512 [INFO] - gui_access - GET /jatos/sidebarStudyList (admin)
+2024-02-08 15:43:20,581 [INFO] - gui_access - GET /jatos/33/componentsTableData?_=1707403400271 (admin)
+2024-02-08 15:43:22,311 [INFO] - gui_access - GET /jatos/33/33/run (admin)
+2024-02-08 15:43:22,328 [INFO] - publix_access - GET /publix/vcxJmYSMhV3
+2024-02-08 15:43:22,328 [INFO] - c.p.PublixInterceptor - .run: studyCode vcxJmYSMhV3
+2024-02-08 15:43:22,343 [INFO] - c.p.w.JatosPublix - .startStudy: studyCode vcxJmYSMhV3, studyResultId196, studyId 33, batchId 33, logged-in username admin, workerId 1
+2024-02-08 15:43:22,367 [INFO] - publix_access - GET /publix/b5d6c842-f0a8-45a0-88e7-c567c7238425/ad0885dc-3b8f-4fad-ba75-41540501593c/start
+2024-02-08 15:43:22,374 [INFO] - c.p.PublixInterceptor - .startComponent: studyResultId 196, componentId 33
+2024-02-08 15:43:22,858 [INFO] - publix_access - GET /publix/b5d6c842-f0a8-45a0-88e7-c567c7238425/ad0885dc-3b8f-4fad-ba75-41540501593c/initData
+2024-02-08 15:43:22,873 [INFO] - c.p.PublixInterceptor - .getInitData: studyResultId 196, componentId 33
+2024-02-08 15:43:22,993 [INFO] - publix_access - POST /publix/b5d6c842-f0a8-45a0-88e7-c567c7238425/heartbeat
+2024-02-08 15:43:23,008 [INFO] - c.p.PublixInterceptor - .heartbeat: studyResultId 196
+2024-02-08 15:43:23,291 [INFO] - c.p.JatosBatchChannel - .open: studyResult 196
+2024-02-08 15:45:23,039 [INFO] - publix_access - POST /publix/b5d6c842-f0a8-45a0-88e7-c567c7238425/heartbeat
+2024-02-08 15:45:23,039 [INFO] - c.p.PublixInterceptor - .heartbeat: studyResultId 196
+2024-02-08 15:47:23,068 [INFO] - publix_access - POST /publix/b5d6c842-f0a8-45a0-88e7-c567c7238425/heartbeat
+2024-02-08 15:47:23,069 [INFO] - c.p.PublixInterceptor - .heartbeat: studyResultId 196
+2024-02-08 15:48:27,668 [INFO] - publix_access - PUT /publix/b5d6c842-f0a8-45a0-88e7-c567c7238425/ad0885dc-3b8f-4fad-ba75-41540501593c/resultData
+2024-02-08 15:48:27,677 [INFO] - c.p.PublixInterceptor - .submitOrAppendResultData: studyResultId 196, componentId 33
+2024-02-08 15:48:27,719 [INFO] - publix_access - GET /publix/b5d6c842-f0a8-45a0-88e7-c567c7238425/end
+2024-02-08 15:48:27,724 [INFO] - c.p.PublixInterceptor - .finishStudy: studyResultId 196, successful true
+2024-02-08 15:48:27,785 [INFO] - gui_access - GET /jatos/33 (admin)
+2024-02-08 15:48:28,041 [INFO] - gui_access - GET /jatos/sidebarStudyList (admin)
+2024-02-08 15:48:28,228 [INFO] - gui_access - GET /jatos/33/componentsTableData?_=1707403707907 (admin)
+2024-02-08 15:48:44,859 [INFO] - gui_access - GET /jatos/33/33/properties (admin)
+2024-02-08 15:48:51,829 [INFO] - gui_access - POST /jatos/33/33/properties (admin)
+2024-02-08 15:48:51,995 [INFO] - gui_access - GET /jatos/sidebarStudyList (admin)
+2024-02-08 15:48:51,998 [INFO] - gui_access - GET /jatos/33/componentsTableData?_=1707403707908 (admin)
+2024-02-08 15:48:54,363 [INFO] - gui_access - GET /jatos/33/properties (admin)
+2024-02-08 15:50:00,157 [INFO] - gui_access - GET /jatos/33/33/properties (admin)
+2024-02-08 15:50:28,825 [INFO] - gui_access - POST /jatos/33/33/properties (admin)
+2024-02-08 15:50:28,841 [INFO] - gui_access - GET /jatos/sidebarStudyList (admin)
+2024-02-08 15:50:28,845 [INFO] - gui_access - GET /jatos/33/componentsTableData?_=1707403707909 (admin)
+2024-02-08 15:50:38,018 [INFO] - gui_access - GET /jatos/33/33/properties (admin)
+2024-02-08 15:50:42,127 [INFO] - gui_access - POST /jatos/33/33/properties (admin)
+2024-02-08 15:50:42,151 [INFO] - gui_access - GET /jatos/sidebarStudyList (admin)
+2024-02-08 15:50:42,156 [INFO] - gui_access - GET /jatos/33/componentsTableData?_=1707403707910 (admin)
+2024-02-08 15:51:05,176 [INFO] - gui_access - GET /jatos/33/33/properties (admin)
+2024-02-08 15:51:25,241 [INFO] - gui_access - GET /jatos/33/properties (admin)
+2024-02-08 15:51:27,692 [INFO] - gui_access - POST /jatos/33/properties (admin)
+2024-02-08 15:51:27,723 [INFO] - gui_access - GET /jatos/sidebarStudyList (admin)
+2024-02-08 15:58:29,577 [INFO] - a.e.s.Slf4jLogger - Slf4jLogger started
+2024-02-08 15:58:29,818 [INFO] - p.a.d.DefaultDBApi - Database [default] initialized
+2024-02-08 15:58:29,831 [INFO] - application - Creating Pool for datasource 'default'
+2024-02-08 15:58:29,850 [INFO] - c.z.h.HikariDataSource - HikariPool-1 - Starting...
+2024-02-08 15:58:29,887 [INFO] - c.z.h.HikariDataSource - HikariPool-1 - Start completed.
+2024-02-08 15:58:29,937 [INFO] - p.a.d.HikariCPConnectionPool - datasource [default] bound to JNDI as DefaultDS
+2024-02-08 15:58:33,662 [INFO] - o.h.j.i.u.LogHelper - HHH000204: Processing PersistenceUnitInfo [name: mysqlPersistenceUnit]
+2024-02-08 15:58:33,827 [INFO] - g.c.Common - Path to study assets directory is C:\Users\Lyo Tonio Cooper\Nichtsynchronisierter Ordner\jatos_win_java\study_assets_root
+2024-02-08 15:58:33,827 [INFO] - o.h.Version - HHH000412: Hibernate ORM core version 5.4.24.Final
+2024-02-08 15:58:33,827 [INFO] - g.c.Common - Path to study logs directory is C:\Users\Lyo Tonio Cooper\Nichtsynchronisierter Ordner\jatos_win_java\study_logs
+2024-02-08 15:58:33,828 [INFO] - g.c.Common - Path to uploads directory is C:\Users\Lyo Tonio Cooper\Nichtsynchronisierter Ordner\jatos_win_java\result_uploads
+2024-02-08 15:58:34,217 [INFO] - o.h.a.c.Version - HCANN000001: Hibernate Commons Annotations {5.1.2.Final}
+2024-02-08 15:58:34,767 [INFO] - o.h.d.Dialect - HHH000400: Using dialect: org.hibernate.dialect.MySQL8Dialect
+2024-02-08 15:58:36,238 [INFO] - o.h.v.i.u.Version - HV000001: Hibernate Validator 6.0.16.Final
+2024-02-08 15:58:36,266 [INFO] - g.c.Common - Path to logs directory is C:\Users\Lyo Tonio Cooper\Nichtsynchronisierter Ordner\jatos_win_java\logs
+2024-02-08 15:58:36,267 [INFO] - g.c.Common - Path to tmp directory is C:\Users\LYOTON~1\AppData\Local\Temp\\jatos
+2024-02-08 15:58:39,485 [INFO] - o.h.e.t.j.p.i.JtaPlatformInitiator - HHH000490: Using JtaPlatform implementation: [org.hibernate.engine.transaction.jta.platform.internal.NoJtaPlatform]
+2024-02-08 15:58:41,891 [INFO] - p.a.Play - Application started (Prod) (no global state)
+2024-02-08 15:58:42,809 [INFO] - p.c.s.AkkaHttpServer - Listening for HTTP on /127.0.0.1:9000
+2024-02-08 15:58:50,356 [INFO] - gui_access - GET / (admin)
+2024-02-08 15:58:51,102 [INFO] - gui_access - GET /jatos/branding (admin)
+2024-02-08 15:58:51,180 [INFO] - gui_access - GET /jatos/sidebarStudyList (admin)
+2024-02-08 15:58:55,672 [INFO] - gui_access - GET /jatos/admin (admin)
+2024-02-08 15:58:55,809 [INFO] - gui_access - GET /jatos/sidebarStudyList (admin)
+2024-02-08 15:58:55,815 [INFO] - gui_access - GET /jatos/status (admin)
+2024-02-08 15:58:55,913 [INFO] - gui_access - GET /jatos/releaseInfo? (admin)
+2024-02-08 15:58:58,330 [INFO] - g.c.JatosUpdater - Checked GitHub for latest release of JATOS: v3.8.5
+2024-02-08 15:59:05,552 [INFO] - gui_access - GET /jatos (admin)
+2024-02-08 15:59:05,650 [INFO] - gui_access - GET /jatos/branding (admin)
+2024-02-08 15:59:05,665 [INFO] - gui_access - GET /jatos/sidebarStudyList (admin)
+2024-02-08 15:59:08,319 [INFO] - gui_access - GET /jatos/33 (admin)
+2024-02-08 15:59:08,446 [INFO] - gui_access - GET /jatos/sidebarStudyList (admin)
+2024-02-08 15:59:08,529 [INFO] - gui_access - GET /jatos/33/componentsTableData?_=1707404348388 (admin)
+2024-02-08 16:00:11,841 [INFO] - api_access - GET /jatos/api/v1/studies/33 (admin)
+2024-02-08 16:01:21,390 [INFO] - gui_access - GET /jatos/33 (admin)
+2024-02-08 16:01:21,893 [INFO] - gui_access - GET /jatos/sidebarStudyList (admin)
+2024-02-08 16:01:22,051 [INFO] - gui_access - GET /jatos/33/componentsTableData?_=1707404481671 (admin)
+2024-02-08 16:01:23,284 [INFO] - gui_access - GET /jatos/33/33/results (admin)
+2024-02-08 16:01:23,428 [INFO] - gui_access - GET /jatos/sidebarStudyList (admin)
+2024-02-08 16:01:23,580 [INFO] - gui_access - GET /jatos/componentResults/tableData?componentId=33&_=1707404483365 (admin)
+2024-02-08 16:01:51,523 [INFO] - gui_access - GET /jatos/33 (admin)
+2024-02-08 16:01:51,649 [INFO] - gui_access - GET /jatos/sidebarStudyList (admin)
+2024-02-08 16:01:51,794 [INFO] - gui_access - GET /jatos/33/componentsTableData?_=1707404511571 (admin)
+2024-02-08 16:01:52,711 [INFO] - gui_access - GET /jatos/33/33/run (admin)
+2024-02-08 16:01:52,787 [INFO] - publix_access - GET /publix/vcxJmYSMhV3
+2024-02-08 16:01:52,789 [INFO] - c.p.PublixInterceptor - .run: studyCode vcxJmYSMhV3
+2024-02-08 16:01:52,947 [INFO] - c.p.w.JatosPublix - .startStudy: studyCode vcxJmYSMhV3, studyResultId225, studyId 33, batchId 33, logged-in username admin, workerId 1
+2024-02-08 16:01:53,052 [INFO] - publix_access - GET /publix/d38e302b-81f7-4d2f-8768-033e393daac3/ad0885dc-3b8f-4fad-ba75-41540501593c/start
+2024-02-08 16:01:53,088 [INFO] - c.p.PublixInterceptor - .startComponent: studyResultId 225, componentId 33
+2024-02-08 16:01:54,193 [INFO] - publix_access - GET /publix/d38e302b-81f7-4d2f-8768-033e393daac3/ad0885dc-3b8f-4fad-ba75-41540501593c/initData
+2024-02-08 16:01:54,229 [INFO] - c.p.PublixInterceptor - .getInitData: studyResultId 225, componentId 33
+2024-02-08 16:01:54,707 [INFO] - publix_access - POST /publix/d38e302b-81f7-4d2f-8768-033e393daac3/heartbeat
+2024-02-08 16:01:54,718 [INFO] - c.p.PublixInterceptor - .heartbeat: studyResultId 225
+2024-02-08 16:01:55,238 [INFO] - c.p.JatosBatchChannel - .open: studyResult 225
+2024-02-08 16:01:57,318 [INFO] - publix_access - PUT /publix/d38e302b-81f7-4d2f-8768-033e393daac3/ad0885dc-3b8f-4fad-ba75-41540501593c/resultData
+2024-02-08 16:01:57,336 [INFO] - c.p.PublixInterceptor - .submitOrAppendResultData: studyResultId 225, componentId 33
+2024-02-08 16:01:57,452 [INFO] - publix_access - GET /publix/d38e302b-81f7-4d2f-8768-033e393daac3/end
+2024-02-08 16:01:57,459 [INFO] - c.p.PublixInterceptor - .finishStudy: studyResultId 225, successful true
+2024-02-08 16:01:57,588 [INFO] - gui_access - GET /jatos/33 (admin)
+2024-02-08 16:01:57,849 [INFO] - gui_access - GET /jatos/sidebarStudyList (admin)
+2024-02-08 16:01:58,053 [INFO] - gui_access - GET /jatos/33/componentsTableData?_=1707404517709 (admin)
+2024-02-08 16:01:59,525 [INFO] - gui_access - GET /jatos/33/33/results (admin)
+2024-02-08 16:01:59,688 [INFO] - gui_access - GET /jatos/sidebarStudyList (admin)
+2024-02-08 16:01:59,805 [INFO] - gui_access - GET /jatos/componentResults/tableData?componentId=33&_=1707404519605 (admin)
+2024-02-08 16:02:08,802 [INFO] - gui_access - GET /jatos/33 (admin)
+2024-02-08 16:02:08,923 [INFO] - gui_access - GET /jatos/sidebarStudyList (admin)
+2024-02-08 16:02:09,107 [INFO] - gui_access - GET /jatos/33/componentsTableData?_=1707404528855 (admin)
+2024-02-08 16:02:10,674 [INFO] - gui_access - GET /jatos (admin)
+2024-02-08 16:02:10,793 [INFO] - gui_access - GET /jatos/branding (admin)
+2024-02-08 16:02:10,806 [INFO] - gui_access - GET /jatos/sidebarStudyList (admin)
+2024-02-08 16:03:14,246 [INFO] - gui_access - GET /jatos/33/33/properties (admin)
+2024-02-08 16:03:30,092 [INFO] - api_access - GET /jatos/api/v1/studies/33 (admin)
+2024-02-08 16:05:31,680 [INFO] - gui_access - GET /jatos/2 (admin)
+2024-02-08 16:05:31,895 [INFO] - gui_access - GET /jatos/sidebarStudyList (admin)
+2024-02-08 16:05:32,079 [INFO] - gui_access - GET /jatos/2/componentsTableData?_=1707404731780 (admin)
+2024-02-08 16:05:47,638 [INFO] - gui_access - DELETE /jatos/2 (admin)
+2024-02-08 16:05:47,988 [INFO] - gui_access - GET /jatos (admin)
+2024-02-08 16:05:48,107 [INFO] - gui_access - GET /jatos/branding (admin)
+2024-02-08 16:05:48,139 [INFO] - gui_access - GET /jatos/sidebarStudyList (admin)
+2024-02-08 16:05:49,545 [INFO] - gui_access - GET /jatos/1 (admin)
+2024-02-08 16:05:49,647 [INFO] - gui_access - GET /jatos/sidebarStudyList (admin)
+2024-02-08 16:05:49,707 [INFO] - gui_access - GET /jatos/1/componentsTableData?_=1707404749590 (admin)
+2024-02-08 16:05:53,169 [INFO] - gui_access - DELETE /jatos/1 (admin)
+2024-02-08 16:05:53,311 [INFO] - gui_access - GET /jatos (admin)
+2024-02-08 16:05:53,399 [INFO] - gui_access - GET /jatos/branding (admin)
+2024-02-08 16:05:53,401 [INFO] - gui_access - GET /jatos/sidebarStudyList (admin)
+2024-02-08 16:05:54,517 [INFO] - gui_access - GET /jatos/33 (admin)
+2024-02-08 16:05:54,622 [INFO] - gui_access - GET /jatos/sidebarStudyList (admin)
+2024-02-08 16:05:54,685 [INFO] - gui_access - GET /jatos/33/componentsTableData?_=1707404754568 (admin)
+2024-02-08 16:05:57,861 [INFO] - gui_access - GET /jatos/33/33/properties (admin)

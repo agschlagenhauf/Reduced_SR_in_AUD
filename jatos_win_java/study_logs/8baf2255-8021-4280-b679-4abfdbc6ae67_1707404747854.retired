@@ -1,0 +1,14 @@
+
+{"msg":"Initial entry","timestamp":1706803142155,"studyUuid":"8baf2255-8021-4280-b679-4abfdbc6ae67","serversMac":"00-09-0F-AA-00-01","hashFunction":"SHA-256"}
+{"msg":"Created study","userName":"Admin","timestamp":1706803142170}
+{"msg":"Study description changed","studyDescriptionHash":"24cf7760c2f7c78b173033f2707ab3348eae7942f1e3be1752b1a5d08962e4a2","userName":"Admin","timestamp":1706803142170}
+{"msg":"Started study run with Jatos worker","batchId":2,"studyCode":"jJGpqH90rOb","workerId":1,"timestamp":1706803184369}
+{"msg":"Started study run with Jatos worker","batchId":2,"studyCode":"jJGpqH90rOb","workerId":1,"timestamp":1706803224826}
+{"msg":"Appended component result data","componentUuid":"8b952997-cb2e-4212-bbaf-855e005403ca","workerId":1,"dataHash":"58c7f95999618353c27a7310833c726b90a2f9cd94d2b4dc95645ebe1dfc7aac","timestamp":1706803227784}
+{"msg":"Started study run with Jatos worker","batchId":2,"studyCode":"jJGpqH90rOb","workerId":1,"timestamp":1706805845377}
+{"msg":"Finish abandoned study","workerId":1,"timestamp":1706881689347}
+{"msg":"Started study run with Jatos worker","batchId":2,"studyCode":"jJGpqH90rOb","workerId":1,"timestamp":1707142517431}
+{"msg":"Removed result data and files","userName":"Admin","timestamp":1707404747670}
+{"msg":"Removed batch","batchId":2,"userName":"Admin","timestamp":1707404747690}
+{"msg":"Removed study","userName":"Admin","timestamp":1707404747845}
+{"msg":"Last entry of the study log","studyUuid":"8baf2255-8021-4280-b679-4abfdbc6ae67","timestamp":1707404747854}
