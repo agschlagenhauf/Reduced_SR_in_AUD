@@ -1,3 +1,5 @@
+
+# Simulating agent's behavior in our task environment
 This code runs simulations of the AUD decision-making task on various RL models.
 
 
