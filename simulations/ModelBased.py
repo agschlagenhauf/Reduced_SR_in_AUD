@@ -65,13 +65,15 @@ Outputs:
     state_list, action_list, RPE_list, value_list: with episode's values appended to the end
     timestep_list: Total number of timesteps in this episode, used to pad all logs to the same length
 '''
-def successor_episode(gamma, alpha, explore_chance, end_states, start_state, rewards, transitions, v_state, t_counts, weight, state_list, action_list, RPE_list, value_list):
+def modelbased_episode(gamma, alpha, explore_chance, end_states, start_state, rewards, transitions, v_state, t_counts, weight, state_list, action_list, RPE_list, value_list):
     time_step = 1
 
     # Transition matrix is a normalized count of the number of times each state follows directly from each state-action pair
     # In our case, transitions are deterministic so this effectively be a one-hot array
+    # Normlaized means: no absoolute counts (stored in t_counts), but relative probability
     t_matrix = np.zeros((len(list_flatten(rewards)), len(rewards)))
-        
+
+    # initialize
     current_state = start_state - 1
     timestep_list = []
     not_end = True
@@ -95,8 +97,8 @@ def successor_episode(gamma, alpha, explore_chance, end_states, start_state, rew
 
             # Update weights with TD learning on the reward
             reward = rewards[current_state][next_move]
-            weight_delta = reward - weight[current_state][next_move]
-            weight[current_state][next_move] += alpha * weight_delta
+            weight_delta = reward - weight[current_state][next_move] # prediction error for weight
+            weight[current_state][next_move] += alpha * weight_delta # update weight
 
             # Update transition counts and re-normalize
             t_counts[get_flattened_index(rewards, current_state, next_move), next_state] += 1
@@ -167,7 +169,7 @@ def pretraining(gamma, alpha, explore_chance, end_states, rewards, transitions, 
     np.random.shuffle(start_states)
     for index, k in enumerate(start_states):
         c_v_state, c_t_counts, c_weight, c_state_list, c_action_list, c_RPE_list, c_value_list, timestep_list = \
-        successor_episode(gamma, alpha, explore_chance, end_states, k, rewards, transitions, v_state, t_counts, weight, state_list, action_list, RPE_list, value_list)
+        modelbased_episode(gamma, alpha, explore_chance, end_states, k, rewards, transitions, v_state, t_counts, weight, state_list, action_list, RPE_list, value_list)
 
         # Update the logs that depend on the length of the current episode
         for j in range(len(timestep_list)):
@@ -255,7 +257,7 @@ def retraining(condition, gamma, alpha, explore_chance, end_states, rewards, tra
     np.random.shuffle(start_states)
     for index, k in enumerate(start_states):
         c_v_state, c_t_counts, c_weight, c_state_list, c_action_list, c_RPE_list, c_value_list, timestep_list = \
-        successor_episode(gamma, alpha, explore_chance, end_states, k, rewards, transitions, v_state, t_counts, weight, state_list, action_list, RPE_list, value_list)
+        modelbased_episode(gamma, alpha, explore_chance, end_states, k, rewards, transitions, v_state, t_counts, weight, state_list, action_list, RPE_list, value_list)
 
         # Update the logs that depend on the length of the current episode
         for j in range(len(timestep_list)):

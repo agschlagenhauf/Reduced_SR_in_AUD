@@ -1,80 +1,80 @@
 Punctate model, Control condition:
-Successful Initial Learning: 954/1000, 95.39999999999999%
-Successful Relearning: 954/954, 100.0%
+Successful Initial Learning: 915/1000, 91.5%
+Successful Relearning: 915/915, 100.0%
 
 Punctate model, Reward condition:
-Successful Initial Learning: 958/1000, 95.8%
-Successful Relearning: 0/958, 0.0%
+Successful Initial Learning: 927/1000, 92.7%
+Successful Relearning: 0/927, 0.0%
 
 Punctate model, Transition condition:
-Successful Initial Learning: 951/1000, 95.1%
-Successful Relearning: 0/951, 0.0%
+Successful Initial Learning: 919/1000, 91.9%
+Successful Relearning: 0/919, 0.0%
 
 Punctate model, Policy condition:
-Successful Initial Learning: 931/1000, 93.10000000000001%
-Successful Relearning: 0/931, 0.0%
+Successful Initial Learning: 863/1000, 86.3%
+Successful Relearning: 0/863, 0.0%
 
 Punctate model, Goal condition:
-Successful Initial Learning: 946/1000, 94.6%
-Successful Relearning: 0/946, 0.0%
+Successful Initial Learning: 920/1000, 92.0%
+Successful Relearning: 0/920, 0.0%
 
 ModelBased model, Control condition:
-Successful Initial Learning: 992/1000, 99.2%
-Successful Relearning: 992/992, 100.0%
+Successful Initial Learning: 990/1000, 99.0%
+Successful Relearning: 990/990, 100.0%
 
 ModelBased model, Reward condition:
-Successful Initial Learning: 988/1000, 98.8%
-Successful Relearning: 981/988, 99.2914979757085%
+Successful Initial Learning: 999/1000, 99.9%
+Successful Relearning: 997/999, 99.7997997997998%
 
 ModelBased model, Transition condition:
-Successful Initial Learning: 995/1000, 99.5%
-Successful Relearning: 26/995, 2.613065326633166%
+Successful Initial Learning: 996/1000, 99.6%
+Successful Relearning: 118/996, 11.847389558232932%
 
 ModelBased model, Policy condition:
-Successful Initial Learning: 957/1000, 95.7%
-Successful Relearning: 925/957, 96.65621734587252%
+Successful Initial Learning: 964/1000, 96.39999999999999%
+Successful Relearning: 935/964, 96.99170124481327%
 
 ModelBased model, Goal condition:
-Successful Initial Learning: 989/1000, 98.9%
-Successful Relearning: 983/989, 99.3933265925177%
+Successful Initial Learning: 994/1000, 99.4%
+Successful Relearning: 990/994, 99.59758551307847%
 
 FullSR model, Control condition:
-Successful Initial Learning: 699/1000, 69.89999999999999%
-Successful Relearning: 699/699, 100.0%
+Successful Initial Learning: 540/1000, 54.0%
+Successful Relearning: 540/540, 100.0%
 
 FullSR model, Reward condition:
-Successful Initial Learning: 662/1000, 66.2%
-Successful Relearning: 151/662, 22.80966767371601%
+Successful Initial Learning: 571/1000, 57.099999999999994%
+Successful Relearning: 19/571, 3.327495621716287%
 
 FullSR model, Transition condition:
-Successful Initial Learning: 680/1000, 68.0%
-Successful Relearning: 0/680, 0.0%
+Successful Initial Learning: 526/1000, 52.6%
+Successful Relearning: 0/526, 0.0%
 
 FullSR model, Policy condition:
-Successful Initial Learning: 690/1000, 69.0%
-Successful Relearning: 84/690, 12.173913043478262%
+Successful Initial Learning: 573/1000, 57.3%
+Successful Relearning: 19/573, 3.315881326352531%
 
 FullSR model, Goal condition:
-Successful Initial Learning: 680/1000, 68.0%
-Successful Relearning: 81/680, 11.911764705882351%
+Successful Initial Learning: 532/1000, 53.2%
+Successful Relearning: 48/532, 9.022556390977442%
 
 ReducedSR model, Control condition:
-Successful Initial Learning: 692/1000, 69.19999999999999%
-Successful Relearning: 692/692, 100.0%
+Successful Initial Learning: 536/1000, 53.6%
+Successful Relearning: 536/536, 100.0%
 
 ReducedSR model, Reward condition:
-Successful Initial Learning: 678/1000, 67.80000000000001%
-Successful Relearning: 150/678, 22.123893805309734%
+Successful Initial Learning: 556/1000, 55.60000000000001%
+Successful Relearning: 15/556, 2.697841726618705%
 
 ReducedSR model, Transition condition:
-Successful Initial Learning: 650/1000, 65.0%
-Successful Relearning: 0/650, 0.0%
+Successful Initial Learning: 526/1000, 52.6%
+Successful Relearning: 0/526, 0.0%
 
 ReducedSR model, Policy condition:
-Successful Initial Learning: 707/1000, 70.7%
-Successful Relearning: 83/707, 11.73974540311174%
+Successful Initial Learning: 545/1000, 54.50000000000001%
+Successful Relearning: 16/545, 2.9357798165137616%
 
 ReducedSR model, Goal condition:
-Successful Initial Learning: 685/1000, 68.5%
-Successful Relearning: 0/685, 0.0%
+Successful Initial Learning: 556/1000, 55.60000000000001%
+Successful Relearning: 0/556, 0.0%
 
