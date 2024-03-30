@@ -4,14 +4,17 @@ import Simulate
 
 
 num_trials = 1000
-models = ["Punctate", "ModelBased", "FullSR", "ReducedSR"]
-conditions = ["Control", "Reward", "Transition", "Policy", "Goal"]
+models = ["Punctate", "ModelBased", "FullSR", "ReducedSR"] # "Punctate", "ModelBased", "FullSR", "ReducedSR"
+conditions = ["Control", "Reward", "Transition", "Policy", "Goal"] # "Control", "Reward", "Transition", "Policy", "Goal"
 
 success_rates = open("./Results/success_rates.txt", "w")
 
 # Runs several simulations of each model/condition combination and writes the overall success rate of each to a text file
 for model in models:
     for condition in conditions:
+      
+        print(f"Running model {model} in condition {condition}...")
+        
         milestone_results = Simulate.simulate(model, condition, num_trials, "./Results/" + model + "_" + condition + ".csv", full_logging=False)
         success_rates.write(model + " model, " + condition + " condition:\n")
 

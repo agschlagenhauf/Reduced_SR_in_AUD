@@ -161,7 +161,8 @@ def pretraining(gamma, alpha, explore_chance, end_states, rewards, transitions, 
     value_list = logging_lists[5:][0]
     epi_length = []
     # Create the list of starting states, randomly ordered, but guaranteed a certain number of starts in each starting state
-    start_states = np.array([1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 4, 4, 5, 5, 6, 6])
+    #start_states = np.array([1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 4, 4, 5, 5, 6, 6])
+    start_states = np.array([1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1])
     start_states= np.append(start_states, np.random.randint(1, 7, 5))
     np.random.shuffle(start_states)
     for index, k in enumerate(start_states):
@@ -201,15 +202,15 @@ Outputs:
 '''
 def update_parameters(condition, rewards, transitions):
     if condition == "Reward":
-        rewards = [[0, 0], [0, 0], [0, 0], [45], [0], [30], [0], [0], [0], [0]]
+        rewards = [[0, 0], [0, 0], [0, 0], [0], [0], [0], [40], [0], [30], [0]]
     elif condition == "Transition":
         transitions = [[2, 3], [5, 6], [4, 5], [7], [8], [9], [10], [10], [10], [11]]
     elif condition == "Policy":
-        rewards = [[0, 0], [0, 0], [0, 0], [45], [15], [30], [0], [0], [0], [0]]
+        rewards = [[0, 0], [0, 0], [0, 0], [0], [0], [0], [40], [20], [30], [0]]
     elif condition == "Goal":
-        rewards = [[0, 0], [0, 0], [0, 0], [15], [0], [30], [30], [0], [0], [0]]
+        rewards = [[0, 0], [0, 0], [0, 0], [20], [0], [0], [20], [0], [30], [0]]
     else:
-        rewards = [[0, 0], [0, 0], [0, 0], [15], [0], [30], [0], [0], [45], [0]]
+        rewards = [[0, 0], [0, 0], [0, 0], [0], [0], [0], [20], [0], [40], [0]]
     return rewards, transitions
 
 
@@ -247,9 +248,10 @@ def retraining(condition, gamma, alpha, explore_chance, end_states, rewards, tra
     epi_length = []
     # Create the list of starting states, randomly ordered, but guaranteed a certain number of starts in each starting state
     if condition == "Transition":
-        start_states = np.array([2, 2, 2, 3, 3, 3, 4, 5, 6])
+        #start_states = np.array([2, 2, 2, 3, 3, 3, 4, 5, 6])
+        start_states = np.array([2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3])
     else:
-        start_states = np.array([4, 4, 4, 5, 5, 5, 6, 6, 6])
+        start_states = np.array([4, 4, 4, 4, 5, 5, 5, 5, 6, 6, 6, 6])
     np.random.shuffle(start_states)
     for index, k in enumerate(start_states):
         c_v_state, c_t_counts, c_weight, c_state_list, c_action_list, c_RPE_list, c_value_list, timestep_list = \

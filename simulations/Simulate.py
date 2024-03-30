@@ -16,6 +16,7 @@ Outputs:
         and test result
 '''
 def simulate(model, condition, sim_num, output_filename, full_logging=True):
+  
     # Select the module we want to simulate on
     model_package = importlib.import_module(model)
 
@@ -24,7 +25,7 @@ def simulate(model, condition, sim_num, output_filename, full_logging=True):
     gamma = 0.95
     explore_chance = 0.5
     end_states = [10, 11]
-    num_pairs = 13
+    num_pairs = 13 # state action pairs
     num_states = 10
 
     # Initialize logging variables, each batch of simulations' logs goes in one .csv file
@@ -49,9 +50,9 @@ def simulate(model, condition, sim_num, output_filename, full_logging=True):
         transitions = [[2, 3], [4, 5], [5, 6], [7], [8], [9], [10], [10], [10], [11]]
 
         if condition == "Policy":
-            rewards = [[0, 0], [0, 0], [0, 0], [5], [15], [30], [0], [0], [0], [0]]
+            rewards = [[0, 0], [0, 0], [0, 0], [0], [0], [0], [10], [20], [30], [0]]
         else:
-            rewards = [[0, 0], [0, 0], [0, 0], [15], [0], [30], [0], [0], [0], [0]]
+            rewards = [[0, 0], [0, 0], [0, 0], [0], [0], [0], [20], [0], [30], [0]]
 
         if model == "Punctate":
             v_state = []
