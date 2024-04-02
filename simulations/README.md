@@ -1,5 +1,5 @@
 
-# Simulating agents' behavior in our sequential sedicion-making task environment
+# Simulating agents' behavior in sequential decision-making task
 This code runs simulations of the AUD decision-making task on various RL models.
 
 
