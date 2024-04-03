@@ -1,0 +1,58 @@
+Herzlich willkommen zum Computerspiel! Lesen Sie sich die Spielregeln auf den nächsten Seiten bitte aufmerksam durch.
+
+---
+
+Stellen Sie sich vor: Sie sind in der Urlaubsbranche angestellt und verwalten ein Ferienhaus. Mit zu Ihren Aufgaben gehört es, nach jedem Gast zu prüfen, ob die Wohnung sich in akzeptablem Zustand befindet und ob nichts zurückgelassen wurde. Erst dann kann gereinigt und an die nächsten Gäste vermietet werden.
+
+---
+
+In solchen Ferienhäusern kommt es regelmäßig vor, dass Gäste etwas Trinkgeld liegen lassen - oder manchmal auch Geld vergessen. Sie haben sich mit Ihrem Chef glücklicherweise darauf geeinigt, dass sie das Geld, das in den Wohnungen hinterlassen wird, selbst behalten dürfen. Auch die Gäste erklären sich mit dieser Regelung vertraglich einverstanden.
+
+---
+
+Die Orte, an denen die Gäste Geld hinterlassen, sind auf den ersten Blick wirklich überraschend. Jedoch haben Sie mittlerweile eine Strategie für die Abreisetage entwickelt: Manche Räume schauen Sie sich nur an und entscheiden sich dann für einen weiteren Weg. In anderen Räumen schauen Sie an den vielversprechendsten Stellen nach und gehen dann zum nächsten Raum.
+
+---
+
+Welche Handlungsmöglichkeiten Sie in jedem Raum haben, wird Ihnen nach kurzer Zeit durch Highlights angezeigt. 
+
+Möchten Sie die linke Option wählen, drücken Sie die linke Pfeiltaste.
+Möchten Sie die rechte Option wählen, drücken Sie die rechte Pfeiltaste.
+Gibt es nur eine Option, drücken Sie die Pfeiltaste nach oben.
+
+Entscheiden Sie sich bitte so schnell wie möglich für eine Handlung.
+
+---
+
+Es gibt zwar gewisse Räume, in denen eine Zeit lang regelmäßig Geld hinterlassen wird, doch es lohnt sich trotzdem, an jedem Abreisetag wieder aufmerksam zu sein: Manchmal ändern sich die Geldbeträge, die hinterlassen werden, manchmal die Räume, in denen sie hinterlassen werden, und manchmal nimmt ihr Chef sogar unangekündigt Änderungen am Grundriss des Ferienhauses vor.
+
+---
+
+Um Zeit zu sparen, besuchen Sie nie alle Räume des Ferienhauses an einem Abreisetag. Stattdessen entscheiden Sie sich für bestimmte Wege durch das Haus und starten in verschiedenen Räumen.
+
+Ihr Ziel dabei ist es, so viel Geld wie möglich zu finden. Um herauszufinden, in welchen Räumen aktuell besonders viel Geld hinterlassen wird, sollten Sie jedoch alle Wege regelmäßig ausprobieren. 
+
+Um einen guten Job zu machen, prägen Sie sich die Räume und den Grundriss des Ferienhauses gleichzeitig so gut es geht ein. Schließlich ist es ihre Aufgabe, den Überblick zu behalten und festzustellen, ob die Gäste die Wohnung in gutem Zustand hinterlassen haben. Außerdem stellt Ihr Chef manchmal unangekündigte Fragen zum Ferienhaus.
+
+---
+
+Nun üben wir das Ganze einmal anhand eines Probe-Ferienhauses. Probieren Sie bitte, alle Räume des Ferienhauses zumindest einmal zu besuchen.
+
+---
+
+[Probedurchgang mit 4 Trials von State 1 aus]
+
+---
+
+Super. Nun werden Sie mit Ihrem ersten echten Ferienhaus beauftragt. Als Erinnerung:
+
+- Sammeln Sie so viel Geld wie möglich!
+- Probieren Sie regelmäßig aus, in welchen Räumen die Gäste aktuell am meisten Geld hinterlassen und ob Ihr Chef Umbauten am Grundriss des Ferienhauses vorgenommen hat!
+- Prägen Sie sich die Räume und den Grundriss des Ferienhauses so gut es geht ein - Ihr Chef stellt manchmal unangekündigte Fragen!
+
+Entscheiden Sie sich so schnell wie möglich für eine Handlung:
+linke Handlung - linke Pfeiltaste
+rechte Handlung - rechte Pfeiltaste
+nur eine Handlung möglich - Leertaste
+
+Viel Erfolg!
