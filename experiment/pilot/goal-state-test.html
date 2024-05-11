@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+
+<!-- Start of HTML Document -->
+<html>
+    <head>
+        <!-- Load Style -->
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <link href="https://fonts.googleapis.com/css?family=Open Sans" rel="stylesheet">
+        <link rel="stylesheet" href="css/main.css">
+
+        <!-- Load Jatos -->
+        <script src="js/main.js"></script>
+        <script src="jatos.js"></script>
+
+        <script>
+            jatos.onLoad(function() {
+                loadStudySessionData(jatos);
+
+                document.onkeydown = function(event) {
+                    handleComponentInput(jatos, event);
+                };
+            });
+        </script>
+    </head>
+
+    <!-- Start of Page Content (Visible on Screen) -->
+    <body>
+
+        <!-- <img class="full_screen_image"/> -->
+
+        <div id="message" class="full_screen_message">
+            Goal State Test    
+        </div>
+
+    </body>
+</html>
