@@ -1,0 +1,55 @@
+/*
+ * main.css
+ */
+
+/*
+ * Colors
+ */
+:root {
+  --background-color: #000000;
+  --text-color: #FFFFFF;
+}
+
+/*
+ * Body Styling
+ */
+body {
+  background-color: var(--background-color);
+  margin-top: 0pt;
+  margin-bottom: 0pt;
+  margin-left: 0pt;
+  margin-right: 0pt;
+}
+
+/*
+ * Text Styling
+ */
+.full_screen_message {
+  font-family: "Open Sans", Arial, Helvetica, sans-serif;
+  font-size: 18pt;
+  color: var(--text-color);
+  text-align: left;
+  line-height: 1.5;
+  width: 60%;
+  height: auto;
+  margin-top: 10%;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/*
+ * Image Styling
+ */
+.full_screen_image {
+  max-width: 100%;
+  max-height: 100%;
+  bottom: 0;
+  left: 0;
+  margin: auto;
+  overflow: auto;
+  position: fixed;
+  right: 0;
+  top: 0;
+  -o-object-fit: contain;
+  object-fit: contain;
+}

@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+
+<!-- Start of HTML Document -->
+<html>
+    <head>
+        <!-- Load Style -->
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <link href="https://fonts.googleapis.com/css?family=Open Sans" rel="stylesheet">
+        <link rel="stylesheet" href="css/main.css">
+
+        <!-- Load Jatos -->
+        <script src="js/main.js"></script>
+        <script src="jatos.js"></script>
+
+        <script>
+            jatos.onLoad(function() {
+                loadStudySessionData(jatos);
+
+                document.onkeydown = function(event) {
+                    if (event.key == Keyboard.RightArrow) {
+                        endComponentFlow(jatos);
+                    }
+                };
+            });
+        </script>
+    </head>
+
+    <!-- Start of Page Content (Visible on Screen) -->
+    <body>
+
+        <div class="full_screen_message">
+            Sehr gut, Sie haben es geschafft! Das Computerspiel ist nun beendet.
+            <br>
+            <br>
+            Dank Ihres Suchtalents zahlen wir Ihnen einen Bonus von 2 Pound zusätzlich zu Ihrem Prolific-Stundensatz aus.
+            <br>
+            <br>
+            Sie werden nun weitergeleitet zu den abschließenden Fragebögen.
+            <br>
+            <br>
+            Vielen Dank!
+        </div>
+
+    </body>
+</html>
