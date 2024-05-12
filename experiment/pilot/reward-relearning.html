@@ -11,6 +11,12 @@
         <!-- Load Jatos -->
         <script src="js/main.js"></script>
         <script src="jatos.js"></script>
+    </head>
+
+    <!-- Start of Page Content (Visible on Screen) -->
+    <body>
+
+        <img id="image" class="full_screen_image">
 
         <script>
             loadComponent(jatos, function() {
@@ -24,16 +30,14 @@
                 const initialStateNumbers = shuffle([7, 8, 9]);
 
                 runTrials(initialStateNumbers, states, [], function(aggregateResults) {
-                    showNextComponent(jatos, aggregateResults);
+                    const image = document.getElementById("image");
+
+                    fadeOut(image, function() {
+                        showNextComponent(jatos, aggregateResults);
+                    });
                 });
             });
         </script>
-    </head>
-
-    <!-- Start of Page Content (Visible on Screen) -->
-    <body>
-
-        <img id="image" class="full_screen_image" src="">
 
     </body>
 </html>

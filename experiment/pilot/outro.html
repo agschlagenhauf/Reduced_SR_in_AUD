@@ -11,14 +11,6 @@
         <!-- Load Jatos -->
         <script src="js/main.js"></script>
         <script src="jatos.js"></script>
-
-        <script>
-            loadComponent(jatos, function() {
-                enableOneChoiceInput(function() {
-                    endComponentFlow(jatos);
-                });
-            });
-        </script>
     </head>
 
     <!-- Start of Page Content (Visible on Screen) -->
@@ -36,6 +28,14 @@
             <br>
             Vielen Dank!
         </div>
+
+        <script>
+            loadComponent(jatos, function() {
+                enableOneChoiceInput(function() {
+                    endComponentFlow(jatos);
+                });
+            });
+        </script>
 
     </body>
 </html>

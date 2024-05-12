@@ -53,3 +53,20 @@ body {
   -o-object-fit: contain;
   object-fit: contain;
 }
+
+@keyframes fade_out {
+  0% {
+    opacity: 1.0;
+  }
+
+  100% {
+    opacity: 0.0;
+  }
+}
+
+.fade_out {
+  animation-name: fade_out;
+  animation-duration: 0.5s;
+  animation-direction: normal;
+  animation-fill-mode: forwards;
+}

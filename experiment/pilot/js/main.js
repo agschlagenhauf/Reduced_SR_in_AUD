@@ -243,6 +243,11 @@ function disableInput() {
 /*
  * Utilities
  */
+function fadeOut(element, callback) {
+    element.classList.add("fade_out");
+    doAfter(0.5, callback);
+}
+
 function setImageFromEnvironment(jatos, id, imageName) { // set image to show based on environment mapping
     document.getElementById(id).src = `${getEnvironmentPath(jatos)}/${imageName}.png`;
 }
