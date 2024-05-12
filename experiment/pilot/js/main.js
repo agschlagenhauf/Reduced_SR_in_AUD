@@ -244,8 +244,7 @@ function disableInput() {
  * Utilities
  */
 function setImageFromEnvironment(jatos, id, imageName) { // set image to show based on environment mapping
-    const imagePath = `${getEnvironmentPath(jatos)}/${imageName}.png`;
-    document.getElementById(id).src = src;
+    document.getElementById(id).src = `${getEnvironmentPath(jatos)}/${imageName}.png`;
 }
 
 function getEnvironmentPath(jatos) { // get path for component images
