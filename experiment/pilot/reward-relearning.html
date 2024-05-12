@@ -20,7 +20,7 @@
         <img id="reward" class="reward_image">
 
         <script>
-            loadComponent(jatos, function() {
+            loadComponent(function() {
 
                 const shuffledStage4 = jatos.studySessionData["reward"]["shuffled_stage_4"]; // read shuffled image order defined in learning phase
 
@@ -37,7 +37,7 @@
                     const image = document.getElementById("image");
 
                     fadeOut(image, function() {
-                        showNextComponent(jatos, aggregateResults);
+                        showNextComponent(aggregateResults);
                     });
                 });
             });

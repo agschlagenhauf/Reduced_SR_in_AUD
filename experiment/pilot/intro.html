@@ -21,7 +21,7 @@
 
         <script>
             jatos.onLoad(function() {
-                prepareComponentFlow(jatos);
+                prepareComponentFlow();
                 
                 let paragraphIndex = 0;
                 document.getElementById("message").innerHTML = paragraphs[paragraphIndex];
@@ -38,7 +38,7 @@
                             document.getElementById("message").innerHTML = paragraphs[paragraphIndex];
                         }
                         else { // once we reach last paragraph, right arrow leads to start of first condition
-                            startComponentFlow(jatos);
+                            startComponentFlow();
                         }
                     }
                 };

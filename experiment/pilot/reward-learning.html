@@ -20,7 +20,7 @@
         <img id="reward" class="reward_image"> <!-- place holder for money images with its own css class -->
 
         <script>
-            loadComponent(jatos, function() { // load study session data and wait for JATOS (see main)
+            loadComponent(function() { // load study session data and wait for JATOS (see main)
 
                 const shuffledStage2 = shuffle(["room2", "room3"]);
                 const shuffledStage3 = shuffle(["room4", "room5", "room6"]);
@@ -54,7 +54,7 @@
                     const image = document.getElementById("image");
 
                     fadeOut(image, function() {
-                        showNextComponent(jatos, aggregateResults);
+                        showNextComponent(aggregateResults);
                     });
                 });
             });

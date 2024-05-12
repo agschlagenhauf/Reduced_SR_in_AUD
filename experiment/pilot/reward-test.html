@@ -19,7 +19,7 @@
         <img id="image" class="full_screen_image">
 
         <script>
-            loadComponent(jatos, function() {
+            loadComponent(function() {
                 const states = [
                     new TestState(1, "room1", 1.0, 2.5, 2.0, 2, 3)
                 ];
@@ -30,7 +30,7 @@
                     const image = document.getElementById("image");
 
                     fadeOut(image, function() {
-                        showNextComponent(jatos, aggregateResults);
+                        showNextComponent(aggregateResults);
                     });
                 });
             });

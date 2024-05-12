@@ -14,7 +14,7 @@ let componentIndex = 0; // current component index
 /*
  * Component Flow
  */
-function prepareComponentFlow(jatos) { // prepare list of what we should show
+function prepareComponentFlow() { // prepare list of what we should show
     participantID = 25; // get from JATOS
 
     componentFlow.push(StaticComponents.Intro); // add StaticComponents to componentFlow array
@@ -49,11 +49,11 @@ function prepareComponentFlow(jatos) { // prepare list of what we should show
     };
 }
 
-function startComponentFlow(jatos) { // start flow
-    showNextComponent(jatos, null);
+function startComponentFlow() { // start flow
+    showNextComponent(null);
 }
 
-function showNextComponent(jatos, results) { // move through elements of componentFlow list
+function showNextComponent(results) { // move through elements of componentFlow list
     componentIndex += 1;
     jatos.studySessionData["component_index"] = componentIndex;
 
@@ -61,7 +61,7 @@ function showNextComponent(jatos, results) { // move through elements of compone
     jatos.startComponentByTitle(componentTitle, results); // tell JATOS to start new component & log results from current component
 }
 
-function loadStudySessionData(jatos) {
+function loadStudySessionData() {
     participantID = jatos.studySessionData["participant_id"];
     variationID = jatos.studySessionData["variation_id"];
     environmentMap = jatos.studySessionData["environment_map"];
@@ -69,14 +69,14 @@ function loadStudySessionData(jatos) {
     componentIndex = jatos.studySessionData["component_index"];
 }
 
-function loadComponent(jatos, callback) { // load study session data abd wait fir JATOS
+function loadComponent(callback) { // load study session data abd wait fir JATOS
     jatos.onLoad(function() {
-        loadStudySessionData(jatos);
+        loadStudySessionData();
         callback();
     });
 }
 
-function endComponentFlow(jatos) { // end flow (called in outro)
+function endComponentFlow() { // end flow (called in outro)
 
     // TODO: - Redirect to RedCap
 
@@ -155,10 +155,10 @@ function configure(stateNumber, states, trialResults, trialResultHandler) {
         return state.number == stateNumber;
     });
     
-    setImageFromEnvironment(jatos, "image", state.imageName); // set initial image for current state
+    setImageFromEnvironment("image", state.imageName); // set initial image for current state
 
     doAfter(state.preChoiceTime, function() { // after delay defined per state, do...
-        setImageFromEnvironment(jatos, "image", `${state.imageName}_highlighted`); // show same image with highlighted options
+        setImageFromEnvironment("image", `${state.imageName}_highlighted`); // show same image with highlighted options
 
         let didMakeChoice = false; // no choice made yet
 
@@ -166,17 +166,17 @@ function configure(stateNumber, states, trialResults, trialResultHandler) {
         if (state instanceof OneChoiceState) { 
             enableOneChoiceInput(function() {
                 didMakeChoice = true; // valid choice made
-                setImageFromEnvironment(jatos, "image", `${state.imageName}_selected`); // set selected image
+                setImageFromEnvironment("image", `${state.imageName}_selected`); // set selected image
 
                 // rewarded trial
                 if (state.reward) {
                     let rewardImage = document.getElementById("reward"); // we want to write sth into reward_image in body
-                    rewardImage.src = `${getImagesPath(jatos)}/${state.reward}_euro.png`; // get image according to reward
+                    rewardImage.src = `${getImagesPath()}/${state.reward}_euro.png`; // get image according to reward
                     rewardImage.style.opacity = 1; // set transparency (opacity 1 = transparency 0)
 
                     doAfter(state.afterChoiceTimeReward, function() { // after reward offset
                         rewardImage.style.opacity = 0; // hide image
-                        rewardImage.src = `${getImagesPath(jatos)}/blank.png`;
+                        rewardImage.src = `${getImagesPath()}/blank.png`;
 
                         if (state.nextState == null) {
                             trialResultHandler(trialResults, true);
@@ -208,14 +208,14 @@ function configure(stateNumber, states, trialResults, trialResultHandler) {
                 didMakeChoice = true; // valid choice made
 
                 if (input == TwoChoiceInput.Left) {
-                    setImageFromEnvironment(jatos, "image", `${state.imageName}_left`); // set selected image
+                    setImageFromEnvironment("image", `${state.imageName}_left`); // set selected image
 
                     doAfter(state.afterChoiceTime, function() {
                         configure(state.nextStateLeft, states, trialResults, trialResultHandler); // move to next state's image
                     });
                 }
                 else if (input == TwoChoiceInput.Right) {
-                    setImageFromEnvironment(jatos, "image", `${state.imageName}_right`);
+                    setImageFromEnvironment("image", `${state.imageName}_right`);
 
                     doAfter(state.afterChoiceTime, function() {
                         configure(state.nextStateRight, states, trialResults, trialResultHandler);
@@ -230,11 +230,11 @@ function configure(stateNumber, states, trialResults, trialResultHandler) {
                 didMakeChoice = true; // valid choice made
 
                 if (input == TwoChoiceInput.Left) {
-                    setImageFromEnvironment(jatos, "image", `${state.imageName}_left`); // set selected image
+                    setImageFromEnvironment("image", `${state.imageName}_left`); // set selected image
                     trialResults.push(state.nextStateLeft); // save next state (not shown)
                 }
                 else if (input == TwoChoiceInput.Right) {
-                    setImageFromEnvironment(jatos, "image", `${state.imageName}_right`);
+                    setImageFromEnvironment("image", `${state.imageName}_right`);
                     trialResults.push(state.nextStateRight); // save next state (not shown)
                 }
 
@@ -261,6 +261,7 @@ function configure(stateNumber, states, trialResults, trialResultHandler) {
                 jatos.showOverlay({
                     text: "Zu langsam!",
                     showImg: false
+                    // style: "display: inline; background-color: red; color: white; line-height: 24pt; font-size: 18pt; padding: 20pt; opacity: 1;"
                 });
 
                 doAfter(overlayTime, function() {
@@ -341,8 +342,8 @@ function disableInput() {
 /*
  * Utilities
  */
-function setImageFromEnvironment(jatos, id, imageName) { // set image to show based on environment mapping
-    document.getElementById(id).src = `${getEnvironmentPath(jatos)}/${imageName}.png`;
+function setImageFromEnvironment(id, imageName) { // set image to show based on environment mapping
+    document.getElementById(id).src = `${getEnvironmentPath()}/${imageName}.png`;
 }
 
 function fadeOut(element, callback) {
@@ -350,14 +351,14 @@ function fadeOut(element, callback) {
     doAfter(0.5, callback);
 }
 
-function getEnvironmentPath(jatos) { // get path for component images
+function getEnvironmentPath() { // get path for component images
     const component = componentFlow[componentIndex];
     const environment = environmentMap[component]; // what color for current comnponent?
 
-    return `${getImagesPath(jatos)}/${environment}`;
+    return `${getImagesPath()}/${environment}`;
 }
 
-function getImagesPath(jatos) {
+function getImagesPath() {
     return jatos.studyJsonInput["images_path"];
 }
 
