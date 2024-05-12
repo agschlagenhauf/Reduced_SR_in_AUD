@@ -13,14 +13,10 @@
         <script src="jatos.js"></script>
 
         <script>
-            jatos.onLoad(function() {
-                loadStudySessionData(jatos);
-
-                document.onkeydown = function(event) {
-                    if (event.key == Keyboard.RightArrow) {
-                        endComponentFlow(jatos);
-                    }
-                };
+            loadComponent(jatos, function() {
+                enableOneChoiceInput(function() {
+                    endComponentFlow(jatos);
+                });
             });
         </script>
     </head>

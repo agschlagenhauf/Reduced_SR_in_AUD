@@ -13,12 +13,8 @@
         <script src="jatos.js"></script>
 
         <script>
-            jatos.onLoad(function() {
-                loadStudySessionData(jatos);
+            loadComponent(jatos, function() {
 
-                document.onkeydown = function(event) {
-                    handleComponentInput(jatos, event);
-                };
             });
         </script>
     </head>

@@ -16,17 +16,15 @@
             jatos.onLoad(function() {
                 prepareComponentFlow(jatos);
                 
-                var paragraphIndex = 0;
-                document.getElementById("message").innerHTML = paragraphs[paragraphIndex]; // show message (see body) filled with respective paragraph
+                let paragraphIndex = 0;
+                document.getElementById("message").innerHTML = paragraphs[paragraphIndex];
                 
                 document.onkeydown = function(event) { // navigation through intro
-                    switch (event.key) {
-                    case Keyboard.LeftArrow:
+                    if (event.key == Keyboard.LeftArrow) {
                         paragraphIndex = Math.max(0, paragraphIndex - 1);
                         document.getElementById("message").innerHTML = paragraphs[paragraphIndex];
-
-                        break;
-                    case Keyboard.RightArrow:
+                    }
+                    else if (event.key == Keyboard.RightArrow) {
                         paragraphIndex += 1;
 
                         if (paragraphIndex < paragraphs.length) {    
@@ -35,8 +33,6 @@
                         else { // once we reach last paragraph, right arrow leads to start of first condition
                             startComponentFlow(jatos);
                         }
-
-                        break;
                     }
                 };
             });

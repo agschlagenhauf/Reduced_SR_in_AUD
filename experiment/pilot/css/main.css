@@ -6,7 +6,7 @@
  * Colors
  */
 :root {
-  --background-color: #000000;
+  --background-color: #444444;
   --text-color: #FFFFFF;
 }
 
@@ -26,7 +26,7 @@ body {
  */
 .full_screen_message {
   font-family: "Open Sans", Arial, Helvetica, sans-serif;
-  font-size: 18pt;
+  font-size: 16pt;
   color: var(--text-color);
   text-align: left;
   line-height: 1.5;
@@ -41,15 +41,15 @@ body {
  * Image Styling
  */
 .full_screen_image {
-  max-width: 100%;
-  max-height: 100%;
+  max-width: 90%;
+  max-height: 90%;
+  top: 0;
   bottom: 0;
   left: 0;
+  right: 0;
   margin: auto;
   overflow: auto;
   position: fixed;
-  right: 0;
-  top: 0;
   -o-object-fit: contain;
   object-fit: contain;
 }

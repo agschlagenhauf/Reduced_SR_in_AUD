@@ -13,12 +13,19 @@
         <script src="jatos.js"></script>
 
         <script>
-            jatos.onLoad(function() {
-                loadStudySessionData(jatos);
+            loadComponent(jatos, function() {
+                const states = [
+                    new OneChoiceState(7, "room7", 2.0, 40, 10),
+                    new OneChoiceState(8, "room8", 2.0, 0, 10),
+                    new OneChoiceState(9, "room9", 2.0, 30, 10),
+                    new OneChoiceState(10, "room10", 2.0, 0, null)
+                ];
 
-                document.onkeydown = function(event) {
-                    handleComponentInput(jatos, event);
-                };
+                const initialStateNumbers = shuffle([7, 8, 9]);
+
+                runTrials(initialStateNumbers, states, [], function(aggregateResults) {
+                    showNextComponent(jatos, aggregateResults);
+                });
             });
         </script>
     </head>
@@ -26,11 +33,7 @@
     <!-- Start of Page Content (Visible on Screen) -->
     <body>
 
-        <!-- <img class="full_screen_image"/> -->
-
-        <div id="message" class="full_screen_message">
-            Reward Relearning    
-        </div>
+        <img id="image" class="full_screen_image" src="">
 
     </body>
 </html>
