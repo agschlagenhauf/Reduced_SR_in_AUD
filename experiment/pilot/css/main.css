@@ -6,7 +6,7 @@
  * Colors
  */
 :root {
-  --background-color: #444444;
+  --background-color: #222222;
   --text-color: #FFFFFF;
 }
 
@@ -43,15 +43,30 @@ body {
 .full_screen_image {
   max-width: 90%;
   max-height: 90%;
-  top: 0;
-  bottom: 0;
-  left: 0;
-  right: 0;
+  position: fixed;
+  top: 0pt;
+  bottom: 0pt;
+  left: 0pt;
+  right: 0pt;
   margin: auto;
   overflow: auto;
-  position: fixed;
   -o-object-fit: contain;
   object-fit: contain;
+}
+
+.reward_image {
+  max-width: 20%;
+  max-height: 20%;
+  position: fixed;
+  top: 0pt;
+  bottom: 0pt;
+  left: 0pt;
+  right: 0pt;
+  margin: auto;
+  overflow: auto;
+  -o-object-fit: contain;
+  object-fit: contain;
+  opacity: 0;
 }
 
 @keyframes fade_out {

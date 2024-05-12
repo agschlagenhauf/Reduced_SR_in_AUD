@@ -20,7 +20,19 @@
 
         <script>
             loadComponent(jatos, function() {
+                const states = [
+                    new TestState(1, "room1", 1.0, 2.5, 2.0, 2, 3)
+                ];
 
+                const initialStateNumbers = [1]; // always one trial starting from state 1
+
+                runTrials(initialStateNumbers, states, [], function(aggregateResults) {
+                    const image = document.getElementById("image");
+
+                    fadeOut(image, function() {
+                        showNextComponent(jatos, aggregateResults);
+                    });
+                });
             });
         </script>
 

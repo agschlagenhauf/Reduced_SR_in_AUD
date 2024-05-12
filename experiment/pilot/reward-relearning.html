@@ -17,17 +17,21 @@
     <body>
 
         <img id="image" class="full_screen_image">
+        <img id="reward" class="reward_image">
 
         <script>
             loadComponent(jatos, function() {
+
+                const shuffledStage4 = jatos.studySessionData["reward"]["shuffled_stage_4"]; // read shuffled image order defined in learning phase
+
                 const states = [
-                    new OneChoiceState(7, "room7", 2.0, 40, 10),
-                    new OneChoiceState(8, "room8", 2.0, 0, 10),
-                    new OneChoiceState(9, "room9", 2.0, 30, 10),
-                    new OneChoiceState(10, "room10", 2.0, 0, null)
+                    new OneChoiceState(7, shuffledStage4[0], 1.0, 1.5, 2.0, 2.5, 40, 10),
+                    new OneChoiceState(8, shuffledStage4[1], 1.0, 1.5, 2.0, 2.5, null, 10),
+                    new OneChoiceState(9, shuffledStage4[2], 1.0, 1.5, 2.0, 2.5, 30, 10),
+                    new OneChoiceState(10, "room10", 1.0, 1.5, 2.0, 2.5, null, null)
                 ];
 
-                const initialStateNumbers = shuffle([7, 8, 9]);
+                const initialStateNumbers = shuffle([7, 7, 7, 7, 8, 8, 8, 8, 9, 9, 9, 9]);
 
                 runTrials(initialStateNumbers, states, [], function(aggregateResults) {
                     const image = document.getElementById("image");

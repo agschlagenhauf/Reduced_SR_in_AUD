@@ -90,15 +90,20 @@ function endComponentFlow(jatos) { // end flow (called in outro)
 // input
 // number = state number
 // imageName = eg room1
-// highlightTimeDelay = delay btw. cue onset & highlight in sec
+// preChoiceTime = delay btw. cue onset & highlight in sec
+// maxChoiceTime = time from highlight onset - latest key acceptance
+// afterChoiceTime = reward onset - reward offset (depending on reward or no reward)
 // reward = in euro, null if nothing happens
 // nextState = number of next state
 class OneChoiceState {
 
-    constructor(number, imageName, highlightTimeDelay, reward, nextState) {
+    constructor(number, imageName, preChoiceTime, maxChoiceTime, afterChoiceTimeNoReward, afterChoiceTimeReward, reward, nextState) {
         this.number = number;
         this.imageName = imageName;
-        this.highlightTimeDelay = highlightTimeDelay;
+        this.preChoiceTime = preChoiceTime;
+        this.maxChoiceTime = maxChoiceTime;
+        this.afterChoiceTimeNoReward = afterChoiceTimeNoReward;
+        this.afterChoiceTimeReward = afterChoiceTimeReward;
         this.reward = reward;
         this.nextState = nextState;
     }
@@ -110,10 +115,28 @@ class OneChoiceState {
 // nextStateRight = number of next state after right choice
 class TwoChoiceState {
 
-    constructor(number, imageName, highlightTimeDelay, nextStateLeft, nextStateRight) {
+    constructor(number, imageName, preChoiceTime, maxChoiceTime, afterChoiceTime, nextStateLeft, nextStateRight) {
         this.number = number;
         this.imageName = imageName;
-        this.highlightTimeDelay = highlightTimeDelay;
+        this.preChoiceTime = preChoiceTime;
+        this.maxChoiceTime = maxChoiceTime;
+        this.afterChoiceTime = afterChoiceTime;
+        this.nextStateLeft = nextStateLeft;
+        this.nextStateRight = nextStateRight;
+    }
+}
+
+// test state: no successive state
+// input
+// same as twoChoiceState 
+class TestState {
+
+    constructor(number, imageName, preChoiceTime, maxChoiceTime, afterChoiceTime, nextStateLeft, nextStateRight) {
+        this.number = number;
+        this.imageName = imageName;
+        this.preChoiceTime = preChoiceTime;
+        this.maxChoiceTime = maxChoiceTime;
+        this.afterChoiceTime = afterChoiceTime;
         this.nextStateLeft = nextStateLeft;
         this.nextStateRight = nextStateRight;
     }
@@ -132,48 +155,120 @@ function configure(stateNumber, states, trialResults, trialResultHandler) {
         return state.number == stateNumber;
     });
     
-    setImageFromEnvironment(jatos, "image", state.imageName); // set image for current state
+    setImageFromEnvironment(jatos, "image", state.imageName); // set initial image for current state
 
-    doAfter(state.highlightTimeDelay, function() { // after delay defined per state, do...
+    doAfter(state.preChoiceTime, function() { // after delay defined per state, do...
         setImageFromEnvironment(jatos, "image", `${state.imageName}_highlighted`); // show same image with highlighted options
 
-        if (state instanceof OneChoiceState) {
+        let didMakeChoice = false; // no choice made yet
+
+        // one choice states
+        if (state instanceof OneChoiceState) { 
             enableOneChoiceInput(function() {
+                didMakeChoice = true; // valid choice made
+                setImageFromEnvironment(jatos, "image", `${state.imageName}_selected`); // set selected image
 
-                // TODO: - Show reward
-
+                // rewarded trial
                 if (state.reward) {
-                    console.log(`Reward: ${state.reward}`);
+                    let rewardImage = document.getElementById("reward"); // we want to write sth into reward_image in body
+                    rewardImage.src = `${getImagesPath(jatos)}/${state.reward}_euro.png`; // get image according to reward
+                    rewardImage.style.opacity = 1; // set transparency (opacity 1 = transparency 0)
+
+                    doAfter(state.afterChoiceTimeReward, function() { // after reward offset
+                        rewardImage.style.opacity = 0; // hide image
+                        rewardImage.src = `${getImagesPath(jatos)}/blank.png`;
+
+                        if (state.nextState == null) {
+                            trialResultHandler(trialResults, true);
+                        }
+                        else {
+                            configure(state.nextState, states, trialResults, trialResultHandler);
+                        }
+
+                    });
                 }
 
-                doAfter(1.0, function() { // when last state per trial reached: handle results
-                    if (state.nextState == null) {
-                        trialResultHandler(trialResults);
-                    }
-                    else {
-                        configure(state.nextState, states, trialResults, trialResultHandler); // as long as last state not reached yet: call configure again
-                    }
+                // non-rewarded trial
+                else {
+                    doAfter(state.afterChoiceTimeNoReward, function() { // when last state per trial reached: handle results
+                        if (state.nextState == null) {
+                            trialResultHandler(trialResults, true);
+                        }
+                        else {
+                            configure(state.nextState, states, trialResults, trialResultHandler); // as long as last state not reached yet: call configure again
+                        }
+                    });
+                }
+            });
+        }
+
+        // two choice states
+        else if (state instanceof TwoChoiceState) {
+            enableTwoChoiceInput(function(input) {
+                didMakeChoice = true; // valid choice made
+
+                if (input == TwoChoiceInput.Left) {
+                    setImageFromEnvironment(jatos, "image", `${state.imageName}_left`); // set selected image
+
+                    doAfter(state.afterChoiceTime, function() {
+                        configure(state.nextStateLeft, states, trialResults, trialResultHandler); // move to next state's image
+                    });
+                }
+                else if (input == TwoChoiceInput.Right) {
+                    setImageFromEnvironment(jatos, "image", `${state.imageName}_right`);
+
+                    doAfter(state.afterChoiceTime, function() {
+                        configure(state.nextStateRight, states, trialResults, trialResultHandler);
+                    });
+                }
+            });
+        }
+
+        // test state
+        else if (state instanceof TestState) {
+            enableTwoChoiceInput(function(input) {
+                didMakeChoice = true; // valid choice made
+
+                if (input == TwoChoiceInput.Left) {
+                    setImageFromEnvironment(jatos, "image", `${state.imageName}_left`); // set selected image
+                    trialResults.push(state.nextStateLeft); // save next state (not shown)
+                }
+                else if (input == TwoChoiceInput.Right) {
+                    setImageFromEnvironment(jatos, "image", `${state.imageName}_right`);
+                    trialResults.push(state.nextStateRight); // save next state (not shown)
+                }
+
+                doAfter(state.afterChoiceTime, function() {
+                    trialResultHandler(trialResults, true);
                 });
             });
         }
-        else if (state instanceof TwoChoiceState) {
-            enableTwoChoiceInput(function(input) {
-                if (input == TwoChoiceInput.Left) {
-                    //setImageFromEnvironment(jatos, "image", `${state.imageName}_left`);
 
-                    //doAfter(1.0, function() {
-                        configure(state.nextStateLeft, states, trialResults, trialResultHandler);
-                    //});
-                }
-                else if (input == TwoChoiceInput.Right) {
-                    //setImageFromEnvironment(jatos, "image", `${state.imageName}_right`);
+        // define time to show warning message
+        const overlayTime = function() {
+            if (state instanceof OneChoiceState) {
+                return state.afterChoiceTimeNoReward;
+            }
+            else {
+                return state.afterChoiceTime;
+            }
+        }(); // add brackets to call function immediately
 
-                    //doAfter(1.0, function() {
-                        configure(state.nextStateRight, states, trialResults, trialResultHandler);
-                    //});
-                }
-            });
-        }
+        doAfter(state.maxChoiceTime, function() {
+            if (!didMakeChoice) { // if no valid choice recorded in time
+                disableInput(); // disable any further input
+
+                jatos.showOverlay({
+                    text: "Zu langsam!",
+                    showImg: false
+                });
+
+                doAfter(overlayTime, function() {
+                    jatos.removeOverlay();
+                    trialResultHandler(trialResults, false);
+                });
+            }
+        });
     });
 }
 
@@ -185,9 +280,12 @@ function configure(stateNumber, states, trialResults, trialResultHandler) {
 // aggreagateResultHandler = what to do after all trials finished (usually showNextComponent)
 function runTrials(initialStateNumbers, states, aggregateResults, aggregateResultHandler) { 
 
-    configure(initialStateNumbers[0], states, [], function(trialResults) {
-        aggregateResults.push(trialResults);
-        initialStateNumbers.shift(); // remove first element
+    configure(initialStateNumbers[0], states, [], function(trialResults, successfulTrial) {
+
+        if (successfulTrial) {
+            aggregateResults.push(trialResults);
+            initialStateNumbers.shift(); // remove first element
+        }
 
         if (initialStateNumbers.length > 0) { // if more trials to run, call runTrial again
             runTrials(initialStateNumbers, states, aggregateResults, aggregateResultHandler);
@@ -243,21 +341,24 @@ function disableInput() {
 /*
  * Utilities
  */
+function setImageFromEnvironment(jatos, id, imageName) { // set image to show based on environment mapping
+    document.getElementById(id).src = `${getEnvironmentPath(jatos)}/${imageName}.png`;
+}
+
 function fadeOut(element, callback) {
     element.classList.add("fade_out");
     doAfter(0.5, callback);
 }
 
-function setImageFromEnvironment(jatos, id, imageName) { // set image to show based on environment mapping
-    document.getElementById(id).src = `${getEnvironmentPath(jatos)}/${imageName}.png`;
-}
-
 function getEnvironmentPath(jatos) { // get path for component images
     const component = componentFlow[componentIndex];
     const environment = environmentMap[component]; // what color for current comnponent?
-    const imagesPath = jatos.studyJsonInput["images_path"];
 
-    return `${imagesPath}/${environment}`;
+    return `${getImagesPath(jatos)}/${environment}`;
+}
+
+function getImagesPath(jatos) {
+    return jatos.studyJsonInput["images_path"];
 }
 
 function doAfter(timeInterval, callback) { // execute function defined by callback after delay
@@ -303,7 +404,25 @@ const Phases = [
 /*
  * Learning Phase Start States
  */
-const LearningPhaseStartStates = [1];
+const LearningPhaseStartStates = function() { // define how many trials start in which state  (not shuffled yet)
+    let startStates = [
+        Array(15).fill(1),
+        Array(3).fill(2),
+        Array(3).fill(3),
+        Array(1).fill(4),
+        Array(1).fill(5),
+        Array(1).fill(6),
+        Array(1).fill(7),
+        Array(1).fill(8),
+        Array(1).fill(9)
+    ];
+
+    let flattenedStartStates = [].concat.apply([], startStates); // flatten: 1,1,1,1,1,1,1,1,1,1,2,2,2,2,3,3,3,4,4,4,5,5,5 etc.
+
+    let shuffledStartStates = shuffle(flattenedStartStates);
+
+    return shuffledStartStates;
+}();
 
 /*
  * Variations

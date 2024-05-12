@@ -16,7 +16,8 @@
     <!-- Start of Page Content (Visible on Screen) -->
     <body>
 
-        <img id="image" class="full_screen_image">
+        <img id="image" class="full_screen_image"> <!-- place holder for room images with its own css class -->
+        <img id="reward" class="reward_image"> <!-- place holder for money images with its own css class -->
 
         <script>
             loadComponent(jatos, function() { // load study session data and wait for JATOS (see main)
@@ -25,20 +26,31 @@
                 const shuffledStage3 = shuffle(["room4", "room5", "room6"]);
                 const shuffledStage4 = shuffle(["room7", "room8", "room9"]);
 
+                // save shuffled image order into study session data
+                jatos.studySessionData["reward"] = {
+                    "shuffled_stage_4": shuffledStage4
+                };
+
+                // OneChoiceState(number, imageName, preChoiceTime, maxChoiceTime, afterChoiceTimeNoReward, afterChoiceTimeReward, reward, nextState)
+                // TwoChoiceState(number, imageName, preChoiceTime, maxChoiceTime, afterChoiceTime, nextStateLeft, nextStateRight)
+
                 const states = [ // define states
-                    new TwoChoiceState(1, "room1", 1.0, 2, 3),
-                    new TwoChoiceState(2, shuffledStage2[0], 1.0, 4, 5),
-                    new TwoChoiceState(3, shuffledStage2[1], 1.0, 5, 6),
-                    new OneChoiceState(4, shuffledStage3[0], 1.0, null, 7),
-                    new OneChoiceState(5, shuffledStage3[1], 1.0, null, 8),
-                    new OneChoiceState(6, shuffledStage3[2], 1.0, null, 9),
-                    new OneChoiceState(7, shuffledStage4[0], 1.0, 20, 10),
-                    new OneChoiceState(8, shuffledStage4[1], 1.0, null, 10),
-                    new OneChoiceState(9, shuffledStage4[2], 1.0, 30, 10),
-                    new OneChoiceState(10, "room10", 1.0, null, null)
+                    new TwoChoiceState(1, "room1", 1.0, 2.0, 2.0, 2, 3),
+                    new TwoChoiceState(2, shuffledStage2[0], 1.0, 2.0, 2.0, 4, 5),
+                    new TwoChoiceState(3, shuffledStage2[1], 1.0, 2.0, 2.0, 5, 6),
+                    new OneChoiceState(4, shuffledStage3[0], 1.0, 1.5, 2.0, 2.5, null, 7),
+                    new OneChoiceState(5, shuffledStage3[1], 1.0, 1.5, 2.0, 2.5, null, 8),
+                    new OneChoiceState(6, shuffledStage3[2], 1.0, 1.5, 2.0, 2.5, null, 9),
+                    new OneChoiceState(7, shuffledStage4[0], 1.0, 1.5, 2.0, 2.5, 20, 10),
+                    new OneChoiceState(8, shuffledStage4[1], 1.0, 1.5, 2.0, 2.5, null, 10),
+                    new OneChoiceState(9, shuffledStage4[2], 1.0, 1.5, 2.0, 2.5, 30, 10),
+                    new OneChoiceState(10, "room10", 1.0, 1.5, 2.0, 2.5, null, null)
                 ];
 
-                runTrials(LearningPhaseStartStates, states, [], function(aggregateResults) {
+                const initialStateNumbers = LearningPhaseStartStates;
+                console.log(initialStateNumbers);
+
+                runTrials(initialStateNumbers, states, [], function(aggregateResults) {
                     const image = document.getElementById("image");
 
                     fadeOut(image, function() {
