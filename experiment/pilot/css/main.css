@@ -25,14 +25,14 @@ body {
  * Text Styling
  */
 .full_screen_message {
-  font-family: "Open Sans", Arial, Helvetica, sans-serif;
-  font-size: 16pt;
+  font-family: "Open Sans", Helvetica, sans-serif;
+  font-size: 14pt;
   color: var(--text-color);
   text-align: left;
   line-height: 1.5;
-  width: 60%;
+  width: 75%;
   height: auto;
-  margin-top: 5%;
+  margin-top: 8%;
   margin-left: auto;
   margin-right: auto;
 }
@@ -81,7 +81,7 @@ body {
 
 .fade_out {
   animation-name: fade_out;
-  animation-duration: 0.5s;
+  animation-duration: 0.3s;
   animation-direction: normal;
   animation-fill-mode: forwards;
 }

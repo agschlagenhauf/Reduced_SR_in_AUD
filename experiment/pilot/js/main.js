@@ -47,10 +47,12 @@ function prepareComponentFlow() { // prepare list of what we should show
         "component_flow": componentFlow,
         "component_index": componentIndex
     };
+
+    preloadImages();
 }
 
 function startComponentFlow() { // start flow
-    showNextComponent(null);
+    showNextComponent(null); // no results to log yet from intro, so pass null
 }
 
 function showNextComponent(results) { // move through elements of componentFlow list
@@ -155,7 +157,9 @@ function configure(stateNumber, states, trialResults, trialResultHandler) {
         return state.number == stateNumber;
     });
     
-    setImageFromEnvironment("image", state.imageName); // set initial image for current state
+    const image = document.getElementById("image");
+    setImageFromEnvironment("image", state.imageName);
+    image.style.opacity = 1;
 
     doAfter(state.preChoiceTime, function() { // after delay defined per state, do...
         setImageFromEnvironment("image", `${state.imageName}_highlighted`); // show same image with highlighted options
@@ -179,12 +183,13 @@ function configure(stateNumber, states, trialResults, trialResultHandler) {
                         rewardImage.src = `${getImagesPath()}/blank.png`;
 
                         if (state.nextState == null) {
-                            trialResultHandler(trialResults, true);
+                            fadeOut(image, function() {
+                                trialResultHandler(trialResults, true);
+                            });
                         }
                         else {
                             configure(state.nextState, states, trialResults, trialResultHandler);
                         }
-
                     });
                 }
 
@@ -192,7 +197,9 @@ function configure(stateNumber, states, trialResults, trialResultHandler) {
                 else {
                     doAfter(state.afterChoiceTimeNoReward, function() { // when last state per trial reached: handle results
                         if (state.nextState == null) {
-                            trialResultHandler(trialResults, true);
+                            fadeOut(image, function() {
+                                trialResultHandler(trialResults, true);
+                            });
                         }
                         else {
                             configure(state.nextState, states, trialResults, trialResultHandler); // as long as last state not reached yet: call configure again
@@ -239,7 +246,9 @@ function configure(stateNumber, states, trialResults, trialResultHandler) {
                 }
 
                 doAfter(state.afterChoiceTime, function() {
-                    trialResultHandler(trialResults, true);
+                    fadeOut(image, function() {
+                        trialResultHandler(trialResults, true);
+                    });
                 });
             });
         }
@@ -260,13 +269,26 @@ function configure(stateNumber, states, trialResults, trialResultHandler) {
 
                 jatos.showOverlay({
                     text: "Zu langsam!",
-                    showImg: false
-                    // style: "display: inline; background-color: red; color: white; line-height: 24pt; font-size: 18pt; padding: 20pt; opacity: 1;"
+                    showImg: false,
+                    style: `
+                        font-family: "Open Sans", Helvetica, sans-serif;
+                        font-size: 20pt;
+                        padding: 1em;
+                        padding-top: 0.8em;
+                        opacity: 1;
+                        color: white;
+                        background-color: rgba(208, 52, 44, 0.9);
+                        border-radius: 3pt;
+                        text-shadow: none;
+                    `
                 });
 
                 doAfter(overlayTime, function() {
                     jatos.removeOverlay();
-                    trialResultHandler(trialResults, false);
+
+                    fadeOut(image, function() {
+                        trialResultHandler(trialResults, false);
+                    });
                 });
             }
         });
@@ -342,13 +364,31 @@ function disableInput() {
 /*
  * Utilities
  */
-function setImageFromEnvironment(id, imageName) { // set image to show based on environment mapping
-    document.getElementById(id).src = `${getEnvironmentPath()}/${imageName}.png`;
+function preloadImages() {
+    const rootImageNames = jatos.studyJsonInput["root_image_names"];
+
+    rootImageNames.forEach(function(imageName) {
+        const image = new Image();
+        image.src = `${getImagesPath()}/${imageName}.png`;
+    });
+
+    const environmentImageNames = jatos.studyJsonInput["environment_image_names"];
+
+    environmentImageNames.forEach(function(imageName) {
+        Environments.forEach(function(environment) {
+            const image = new Image();
+            image.src = `${getImagesPath()}/${environment}/${imageName}.png`;
+        });
+    });
 }
 
-function fadeOut(element, callback) {
-    element.classList.add("fade_out");
-    doAfter(0.5, callback);
+function setImageFromEnvironment(id, imageName) { // set image to show based on environment mapping
+    const image = document.getElementById(id);
+    image.src = `${getEnvironmentPath()}/${imageName}.png`;
+}
+
+function getImagesPath() {
+    return jatos.studyJsonInput["images_path"];
 }
 
 function getEnvironmentPath() { // get path for component images
@@ -358,12 +398,25 @@ function getEnvironmentPath() { // get path for component images
     return `${getImagesPath()}/${environment}`;
 }
 
-function getImagesPath() {
-    return jatos.studyJsonInput["images_path"];
-}
-
 function doAfter(timeInterval, callback) { // execute function defined by callback after delay
     setTimeout(callback, timeInterval * 1000);
+}
+
+function fadeOut(element, callback) {
+    element.classList.add("fade_out");
+
+    doAfter(0.4, function() {
+        element.classList.remove("fade_out");
+        element.style.opacity = 0;
+
+        if (element instanceof HTMLImageElement) {
+            element.src = `${getImagesPath()}/blank.png`;
+        }
+
+        doAfter(0.1, function() {
+            callback();
+        });
+    });
 }
 
 function shuffle(array) { // returns randomly shuffled elements
@@ -381,10 +434,6 @@ function shuffle(array) { // returns randomly shuffled elements
     return arrayCopy;
 }
 
-function pickRandom(array) {
-    return array[Math.floor(Math.random() * array.length)];
-}
-
 /*
  * Static Components
  */
@@ -392,6 +441,17 @@ const StaticComponents = {
     Intro: "intro",
     Outro: "outro"
 };
+
+/*
+ * Environments
+ */
+const Environments = [
+    "light_blue",
+    "messy_green",
+    "orange_tile",
+    "red_brown",
+    "white_modern"
+];
 
 /*
  * Phases
@@ -402,12 +462,11 @@ const Phases = [
     "test"
 ];
 
-/*
- * Learning Phase Start States
- */
 const LearningPhaseStartStates = function() { // define how many trials start in which state  (not shuffled yet)
-    let startStates = [
-        Array(15).fill(1),
+    let startStatesFirstSection = Array(5).fill(1);
+
+    let startStatesSecondSection = [
+        Array(10).fill(1),
         Array(3).fill(2),
         Array(3).fill(3),
         Array(1).fill(4),
@@ -418,11 +477,12 @@ const LearningPhaseStartStates = function() { // define how many trials start in
         Array(1).fill(9)
     ];
 
-    let flattenedStartStates = [].concat.apply([], startStates); // flatten: 1,1,1,1,1,1,1,1,1,1,2,2,2,2,3,3,3,4,4,4,5,5,5 etc.
+    let flattenedStartStatesSecondSection = [].concat.apply([], startStatesSecondSection); // flatten: 1,1,1,1,1,1,1,1,1,1,2,2,2,2,3,3,3,4,4,4,5,5,5 etc.
+    let shuffledStartStatesSecondSection = shuffle(flattenedStartStatesSecondSection);
 
-    let shuffledStartStates = shuffle(flattenedStartStates);
+    let allStartStates = startStatesFirstSection.concat(shuffledStartStatesSecondSection);
 
-    return shuffledStartStates;
+    return allStartStates;
 }();
 
 /*

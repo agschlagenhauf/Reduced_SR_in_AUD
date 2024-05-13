@@ -51,11 +51,7 @@
                 console.log(initialStateNumbers);
 
                 runTrials(initialStateNumbers, states, [], function(aggregateResults) {
-                    const image = document.getElementById("image");
-
-                    fadeOut(image, function() {
-                        showNextComponent(aggregateResults);
-                    });
+                    showNextComponent(aggregateResults);
                 });
             });
         </script>

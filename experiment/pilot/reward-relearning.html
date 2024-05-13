@@ -34,11 +34,7 @@
                 const initialStateNumbers = shuffle([7, 7, 7, 7, 8, 8, 8, 8, 9, 9, 9, 9]);
 
                 runTrials(initialStateNumbers, states, [], function(aggregateResults) {
-                    const image = document.getElementById("image");
-
-                    fadeOut(image, function() {
-                        showNextComponent(aggregateResults);
-                    });
+                    showNextComponent(aggregateResults);
                 });
             });
         </script>

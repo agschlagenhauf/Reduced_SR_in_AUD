@@ -22,23 +22,27 @@
         <script>
             jatos.onLoad(function() {
                 prepareComponentFlow();
-                
+
                 let paragraphIndex = 0;
-                document.getElementById("message").innerHTML = paragraphs[paragraphIndex];
+
+                const message = document.getElementById("message");
+                message.innerHTML = paragraphs[paragraphIndex];
                 
                 document.onkeydown = function(event) { // navigation through intro
                     if (event.key == Keyboard.LeftArrow) {
                         paragraphIndex = Math.max(0, paragraphIndex - 1);
-                        document.getElementById("message").innerHTML = paragraphs[paragraphIndex];
+                        message.innerHTML = paragraphs[paragraphIndex];
                     }
                     else if (event.key == Keyboard.RightArrow) {
                         paragraphIndex += 1;
 
                         if (paragraphIndex < paragraphs.length) {    
-                            document.getElementById("message").innerHTML = paragraphs[paragraphIndex];
+                            message.innerHTML = paragraphs[paragraphIndex];
                         }
                         else { // once we reach last paragraph, right arrow leads to start of first condition
-                            startComponentFlow();
+                            fadeOut(message, function() {
+                                startComponentFlow();
+                            });
                         }
                     }
                 };
