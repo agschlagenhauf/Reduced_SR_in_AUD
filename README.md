@@ -9,7 +9,7 @@ Jatos online study with five conditions:
 1) Goal state revaluation
 1) Control
 
-See the `pilot/` directory for Jatos assets:
+See the `experiment/pilot` directory for Jatos assets:
 - HTML components
 - CSS stylesheets
 - JS code
