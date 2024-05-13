@@ -1,16 +1,7 @@
 # Reduced SR in AUD
-A study to investigate reduced successor representation.
 
-## Guide to the study structure
-Jatos online study with five conditions:
-1) Reward revaluation
-1) Transition revaluation
-1) Policy revaluation
-1) Goal state revaluation
-1) Control
+Code repository for sudy 'Reduced Successor Representation in AUD' (TRR265 B01 WP3).
 
-See the `experiment/pilot` directory for Jatos assets:
-- HTML components
-- CSS stylesheets
-- JS code
-- Images
+## Content
+Experiment: JavaScript/HTML/CSS code for pilot and final online studies.
+Simulation: Python code to simulate behavior of MB, MF, SR, reduced SR algorithms in task.
