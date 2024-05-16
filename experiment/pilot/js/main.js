@@ -30,7 +30,7 @@ let runningID = null; // running ID generated in RedCap
 let backCode = null; // code leading back to individual RedCap questionnaires when appended to RedCap backLink
 let variationID = null; // which condition order and matching of condition and environment (see 'variations' at bottom of main.js)
 let environmentMap = {
-    "tutorial": "light_blue"
+    "tutorial": "messy_green"
 }; // mapping btw component & environment; environment of tutorial is always the same
 let componentFlow = []; // list of component titles (reward learning etc.)
 let componentIndex = 0; // current component index
@@ -647,12 +647,13 @@ const StaticComponents = {
  * Environments
  */
 
-const Environments = [
+const Environments = [ // all envs incl tutorial env
     "light_blue",
     "messy_green",
     "orange_tile",
     "red_brown",
-    "white_modern"
+    "white_modern",
+    "blue_floral"
 ];
 
 
@@ -678,7 +679,7 @@ const Variations = [
     {
         "A1": [
             {"reward":      "light_blue"},
-            {"transition":  "messy_green"},
+            {"transition":  "blue_floral"},
             {"policy":      "orange_tile"},
             {"goal-state":  "red_brown"},
             {"control":     "white_modern"}
@@ -686,7 +687,7 @@ const Variations = [
     },
     {
         "A2": [
-            {"reward":      "messy_green"},
+            {"reward":      "blue_floral"},
             {"transition":  "orange_tile"},
             {"policy":      "red_brown"},
             {"goal-state":  "white_modern"},
@@ -699,7 +700,7 @@ const Variations = [
             {"transition":  "red_brown"},
             {"policy":      "white_modern"},
             {"goal-state":  "light_blue"},
-            {"control":     "messy_green"}
+            {"control":     "blue_floral"}
         ]
     },
     {
@@ -707,7 +708,7 @@ const Variations = [
             {"reward":      "red_brown"},
             {"transition":  "white_modern"},
             {"policy":      "light_blue"},
-            {"goal-state":  "messy_green"},
+            {"goal-state":  "blue_floral"},
             {"control":     "orange_tile"}
         ]
     },
@@ -715,7 +716,7 @@ const Variations = [
         "A5": [
             {"reward":      "white_modern"},
             {"transition":  "light_blue"},
-            {"policy":      "messy_green"},
+            {"policy":      "blue_floral"},
             {"goal-state":  "orange_tile"},
             {"control":     "red_brown"}
         ]
@@ -723,7 +724,7 @@ const Variations = [
     {
         "B1": [
             {"transition":  "light_blue"},
-            {"policy":      "messy_green"},
+            {"policy":      "blue_floral"},
             {"goal-state":  "orange_tile"},
             {"control":     "red_brown"},
             {"reward":      "white_modern"}
@@ -731,7 +732,7 @@ const Variations = [
     },
     {
         "B2": [
-            {"transition":  "messy_green"},
+            {"transition":  "blue_floral"},
             {"policy":      "orange_tile"},
             {"goal-state":  "red_brown"},
             {"control":     "white_modern"},
@@ -744,7 +745,7 @@ const Variations = [
             {"policy":      "red_brown"},
             {"goal-state":  "white_modern"},
             {"control":     "light_blue"},
-            {"reward":      "messy_green"}
+            {"reward":      "blue_floral"}
         ]
     },
     {
@@ -752,7 +753,7 @@ const Variations = [
             {"transition":  "red_brown"},
             {"policy":      "white_modern"},
             {"goal-state":  "light_blue"},
-            {"control":     "messy_green"},
+            {"control":     "blue_floral"},
             {"reward":      "orange_tile"}
         ]
     },
@@ -760,7 +761,7 @@ const Variations = [
         "B5": [
             {"transition":  "white_modern"},
             {"policy":      "light_blue"},
-            {"goal-state":  "messy_green"},
+            {"goal-state":  "blue_floral"},
             {"control":     "orange_tile"},
             {"reward":      "red_brown"}
         ]
@@ -768,7 +769,7 @@ const Variations = [
     {
         "C1": [
             {"policy":      "light_blue"},
-            {"goal-state":  "messy_green"},
+            {"goal-state":  "blue_floral"},
             {"control":     "orange_tile"},
             {"reward":      "red_brown"},
             {"transition":  "white_modern"}
@@ -776,7 +777,7 @@ const Variations = [
     },
     {
         "C2": [
-            {"policy":      "messy_green"},
+            {"policy":      "blue_floral"},
             {"goal-state":  "orange_tile"},
             {"control":     "red_brown"},
             {"reward":      "white_modern"},
@@ -789,7 +790,7 @@ const Variations = [
             {"goal-state":  "red_brown"},
             {"control":     "white_modern"},
             {"reward":      "light_blue"},
-            {"transition":  "messy_green"}
+            {"transition":  "blue_floral"}
         ]
     },
     {
@@ -797,7 +798,7 @@ const Variations = [
             {"policy":      "red_brown"},
             {"goal-state":  "white_modern"},
             {"control":     "light_blue"},
-            {"reward":      "messy_green"},
+            {"reward":      "blue_floral"},
             {"transition":  "orange_tile"}
         ]
     },
@@ -805,7 +806,7 @@ const Variations = [
         "C5": [
             {"policy":      "white_modern"},
             {"goal-state":  "light_blue"},
-            {"control":     "messy_green"},
+            {"control":     "blue_floral"},
             {"reward":      "orange_tile"},
             {"transition":  "red_brown"}
         ]
@@ -813,7 +814,7 @@ const Variations = [
     {
         "D1": [
             {"goal-state":  "light_blue"},
-            {"control":     "messy_green"},
+            {"control":     "blue_floral"},
             {"reward":      "orange_tile"},
             {"transition":  "red_brown"},
             {"policy":      "white_modern"}
@@ -821,7 +822,7 @@ const Variations = [
     },
     {
         "D2": [
-            {"goal-state":  "messy_green"},
+            {"goal-state":  "blue_floral"},
             {"control":     "orange_tile"},
             {"reward":      "red_brown"},
             {"transition":  "white_modern"},
@@ -834,7 +835,7 @@ const Variations = [
             {"control":     "red_brown"},
             {"reward":      "white_modern"},
             {"transition":  "light_blue"},
-            {"policy":      "messy_green"}
+            {"policy":      "blue_floral"}
         ]
     },
     {
@@ -842,7 +843,7 @@ const Variations = [
             {"goal-state":  "red_brown"},
             {"control":     "white_modern"},
             {"reward":      "light_blue"},
-            {"transition":  "messy_green"},
+            {"transition":  "blue_floral"},
             {"policy":      "orange_tile"}
         ]
     },
@@ -850,7 +851,7 @@ const Variations = [
         "D5": [
             {"goal-state":  "white_modern"},
             {"control":     "light_blue"},
-            {"reward":      "messy_green"},
+            {"reward":      "blue_floral"},
             {"transition":  "orange_tile"},
             {"policy":      "red_brown"}
         ]
@@ -858,7 +859,7 @@ const Variations = [
     {
         "E1": [
             {"control":     "light_blue"},
-            {"reward":      "messy_green"},
+            {"reward":      "blue_floral"},
             {"transition":  "orange_tile"},
             {"policy":      "red_brown"},
             {"goal-state":  "white_modern"}
@@ -866,7 +867,7 @@ const Variations = [
     },
     {
         "E2": [
-            {"control":     "messy_green"},
+            {"control":     "blue_floral"},
             {"reward":      "orange_tile"},
             {"transition":  "red_brown"},
             {"policy":      "white_modern"},
@@ -879,7 +880,7 @@ const Variations = [
             {"reward":      "red_brown"},
             {"transition":  "white_modern"},
             {"policy":      "light_blue"},
-            {"goal-state":  "messy_green"}
+            {"goal-state":  "blue_floral"}
         ]
     },
     {
@@ -887,7 +888,7 @@ const Variations = [
             {"control":     "red_brown"},
             {"reward":      "white_modern"},
             {"transition":  "light_blue"},
-            {"policy":      "messy_green"},
+            {"policy":      "blue_floral"},
             {"goal-state":  "orange_tile"}
         ]
     },
@@ -895,7 +896,7 @@ const Variations = [
         "E5": [
             {"control":     "white_modern"},
             {"reward":      "light_blue"},
-            {"transition":  "messy_green"},
+            {"transition":  "blue_floral"},
             {"policy":      "orange_tile"},
             {"goal-state":  "red_brown"}
         ]
