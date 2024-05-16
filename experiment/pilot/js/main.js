@@ -2,24 +2,68 @@
  * main.js
  */
 
+
+
+
+/*
+ * Timing variables
+ */
+
+const preChoiceTime = 0.5; // time in state without highlighted choice options
+const maxOneChoiceTime = 2.0; // max time in one choice state with highlighted choice option - ended as soon as valid key pressed
+const maxTwoChoiceTime = 3.0; // max time in two choice state with highlighted choice option - ended as soon as valid key pressed
+const maxTestChoiceTime = 10.0; // max time with highlighted options in test phase
+const afterChoiceTimeNoReward = 2.0; // time after valid choice with no reward
+const afterChoiceTimeReward = 2.5; // time after valid choice with reward presentation
+const fadeoutTime = 0.5; // fadeout duration after each trial (and intro/outro component)
+const ITI = 0.5; // inter trial interval
+
+
+
 /*
  * Study Session Data
  */
-let participantID = null;
-let variationID = null;
-let environmentMap = {}; // mapping btw component & environment
+
+// globally available
+let participantID = null; // participant ID generated in RedCap
+let runningID = null; // running ID generated in RedCap
+let backCode = null; // code leading back to individual RedCap questionnaires when appended to RedCap backLink
+let variationID = null; // which condition order and matching of condition and environment (see 'variations' at bottom of main.js)
+let environmentMap = {
+    "tutorial": "light_blue"
+}; // mapping btw component & environment; environment of tutorial is always the same
 let componentFlow = []; // list of component titles (reward learning etc.)
 let componentIndex = 0; // current component index
+let componentOnset = null; // onset time for each component
+
+
 
 /*
  * Component Flow
  */
+
 function prepareComponentFlow() { // prepare list of what we should show
-    participantID = 25; // get from JATOS
 
-    componentFlow.push(StaticComponents.Intro); // add StaticComponents to componentFlow array
+    // read out link components
+    //example link: http://127.0.0.1:9000/publix/xJoZc2UPD10?participant=30620126hqIHzHP2GhTvxYt
+    //let urlQuery = jatos.urlQueryParameters.participant;
+    let urlQuery = '30620126hqIHzHP2GhTvxYt';
+    participantID = Number(urlQuery.substr(0,4)); 
+    runningID = Number(urlQuery.substr(4,3));
+    console.log(runningID);
+    backCode = urlQuery.substr(7,urlQuery.length-7);
+    //participantID = 25; // get from JATOS
 
-    const variation = Variations[participantID % Variations.length]; // get element of Variations based on participantID
+    componentFlow.push( // add StaticComponents to componentFlow array
+        StaticComponents.Intro1, 
+        StaticComponents.Tutorial, 
+        StaticComponents.Intro2, 
+        StaticComponents.Quiz, 
+        StaticComponents.Intro3
+    ); 
+
+
+    const variation = Variations[runningID % Variations.length]; // get element of Variations based on participantID
     variationID = Object.keys(variation)[0]; // get e.g. A1, A2 etc. key
     const entries = variation[variationID]; // get content of variation element e.g. A1
 
@@ -42,6 +86,8 @@ function prepareComponentFlow() { // prepare list of what we should show
 
     jatos.studySessionData = { // save session data to pass to other components
         "participant_id": participantID,
+        "running_id": runningID,
+        "back_code": backCode,
         "variation_id": variationID,
         "environment_map": environmentMap,
         "component_flow": componentFlow,
@@ -49,41 +95,56 @@ function prepareComponentFlow() { // prepare list of what we should show
     };
 
     preloadImages();
+
+    componentOnset = performance.now();
 }
 
-function startComponentFlow() { // start flow
-    showNextComponent(null); // no results to log yet from intro, so pass null
-}
-
-function showNextComponent(results) { // move through elements of componentFlow list
-    componentIndex += 1;
-    jatos.studySessionData["component_index"] = componentIndex;
-
-    const componentTitle = componentFlow[componentIndex]; // get component title
-    jatos.startComponentByTitle(componentTitle, results); // tell JATOS to start new component & log results from current component
-}
+//function startComponentFlow(componentData) { // start flow
+//    showNextComponent(componentData); 
+//}
 
 function loadStudySessionData() {
     participantID = jatos.studySessionData["participant_id"];
+    runningID = jatos.studySessionData["running_id"];
+    backCode = jatos.studySessionData["back_code"];
     variationID = jatos.studySessionData["variation_id"];
     environmentMap = jatos.studySessionData["environment_map"];
     componentFlow = jatos.studySessionData["component_flow"];
     componentIndex = jatos.studySessionData["component_index"];
 }
 
-function loadComponent(callback) { // load study session data abd wait fir JATOS
+function loadComponent(callback) { // load study session data and wait for JATOS
     jatos.onLoad(function() {
+        componentOnset = performance.now();
         loadStudySessionData();
         callback();
     });
 }
 
-function endComponentFlow() { // end flow (called in outro)
+function showNextComponent(componentData) { // move through elements of componentFlow list
+    
+    const componentOffset = performance.now();
+    const componentDuration = componentOffset - componentOnset;
+    componentData['component_duration'] = componentDuration;
 
-    // TODO: - Redirect to RedCap
+    componentIndex += 1;
+    jatos.studySessionData["component_index"] = componentIndex;
 
-    jatos.endStudy();
+    const componentTitle = componentFlow[componentIndex]; // get component title
+    jatos.startComponentByTitle(componentTitle, componentData); // tell JATOS to start new component & log results from current component
 }
+
+function endComponentFlow(componentData) { // end flow (called in outro)
+
+    const componentOffset = performance.now();
+    const componentDuration = componentOffset - componentOnset;
+    componentData['component_duration'] = componentDuration;
+
+    // Redirect to RedCap
+    let backLink = `https://redcap.zih.tu-dresden.de/redcap/surveys/?s=${backCode}`
+    jatos.endStudyAndRedirect(backLink, componentData);
+}
+
 
 /*
  * State Configuration
@@ -144,6 +205,41 @@ class TestState {
     }
 }
 
+// define how many trials start in which state  (not shuffled yet)
+const LearningPhaseStartStates = function() { 
+    let startStatesFirstSection = Array(1).fill(1);
+
+    
+    let startStatesSecondSection = [
+        /*
+        Array(10).fill(1),
+        Array(3).fill(2),
+        Array(3).fill(3),
+        Array(1).fill(4),
+        Array(1).fill(5),
+        Array(1).fill(6),
+        Array(1).fill(7),
+        Array(1).fill(8),
+        Array(1).fill(9)
+        */
+    ];
+    
+
+    let flattenedStartStatesSecondSection = [].concat.apply([], startStatesSecondSection); // flatten: 1,1,1,1,1,1,1,1,1,1,2,2,2,2,3,3,3,4,4,4,5,5,5 etc.
+    let shuffledStartStatesSecondSection = shuffle(flattenedStartStatesSecondSection);
+
+    let allStartStates = startStatesFirstSection.concat(shuffledStartStatesSecondSection);
+
+    return allStartStates;
+}();
+
+
+
+
+/*
+ * Run experiment
+ */
+
 // within trial: function to draw screen for a state
 // input
 // stateNumber = state to be shown
@@ -151,7 +247,6 @@ class TestState {
 // trialResults = empty array to append results onto
 // trialResultHandler = what to do after single trial finished
 function configure(stateNumber, states, trialResults, trialResultHandler) {
-    trialResults.push(stateNumber); // log current state number
 
     const state = states.find(function (state) { // find state number in list of states (according to number not position)
         return state.number == stateNumber;
@@ -161,14 +256,16 @@ function configure(stateNumber, states, trialResults, trialResultHandler) {
     setImageFromEnvironment("image", state.imageName);
     image.style.opacity = 1;
 
+    // wait for a choice to be made
     doAfter(state.preChoiceTime, function() { // after delay defined per state, do...
+
         setImageFromEnvironment("image", `${state.imageName}_highlighted`); // show same image with highlighted options
 
         let didMakeChoice = false; // no choice made yet
 
         // one choice states
         if (state instanceof OneChoiceState) { 
-            enableOneChoiceInput(function() {
+            enableOneChoiceInput(function(RT) {
                 didMakeChoice = true; // valid choice made
                 setImageFromEnvironment("image", `${state.imageName}_selected`); // set selected image
 
@@ -205,13 +302,17 @@ function configure(stateNumber, states, trialResults, trialResultHandler) {
                             configure(state.nextState, states, trialResults, trialResultHandler); // as long as last state not reached yet: call configure again
                         }
                     });
+
                 }
+
+                trialResults.push({'state':stateNumber, 'valid_choice':didMakeChoice, 'RT':RT}); // log results
+
             });
         }
 
         // two choice states
         else if (state instanceof TwoChoiceState) {
-            enableTwoChoiceInput(function(input) {
+            enableTwoChoiceInput(function(input, RT) {
                 didMakeChoice = true; // valid choice made
 
                 if (input == TwoChoiceInput.Left) {
@@ -228,12 +329,15 @@ function configure(stateNumber, states, trialResults, trialResultHandler) {
                         configure(state.nextStateRight, states, trialResults, trialResultHandler);
                     });
                 }
+
+                trialResults.push({'state':stateNumber, 'valid_choice':didMakeChoice, 'choice':input, 'RT':RT}); // log results
+
             });
         }
 
         // test state
         else if (state instanceof TestState) {
-            enableTwoChoiceInput(function(input) {
+            enableTwoChoiceInput(function(input, RT) {
                 didMakeChoice = true; // valid choice made
 
                 if (input == TwoChoiceInput.Left) {
@@ -250,6 +354,9 @@ function configure(stateNumber, states, trialResults, trialResultHandler) {
                         trialResultHandler(trialResults, true);
                     });
                 });
+
+                trialResults.push({'state':stateNumber, 'valid_choice':didMakeChoice, 'choice':input, 'RT':RT});
+
             });
         }
 
@@ -264,6 +371,9 @@ function configure(stateNumber, states, trialResults, trialResultHandler) {
         }(); // add brackets to call function immediately
 
         doAfter(state.maxChoiceTime, function() {
+
+            jatos.removeOverlay(); //remove wrong key overlay if present
+
             if (!didMakeChoice) { // if no valid choice recorded in time
                 disableInput(); // disable any further input
 
@@ -289,10 +399,17 @@ function configure(stateNumber, states, trialResults, trialResultHandler) {
                     fadeOut(image, function() {
                         trialResultHandler(trialResults, false);
                     });
+
                 });
+
+                trialResults.push({'state':stateNumber, 'valid_choice':didMakeChoice}); // log results
+
             }
+
         });
+
     });
+
 }
 
 // function to run trials per component
@@ -301,33 +418,44 @@ function configure(stateNumber, states, trialResults, trialResultHandler) {
 // states = list of states defined in component
 // aggregateResults = empty array to append results onto
 // aggreagateResultHandler = what to do after all trials finished (usually showNextComponent)
-function runTrials(initialStateNumbers, states, aggregateResults, aggregateResultHandler) { 
+function runTrials(trialIndex, initialStateNumbers, states, aggregateResults, aggregateResultHandler) { 
 
-    configure(initialStateNumbers[0], states, [], function(trialResults, successfulTrial) {
+    configure(initialStateNumbers[trialIndex-1], states, [], function(trialResults, successfulTrial) {
 
+        aggregateResults.push({'trial':trialIndex, trialResults}); // push trial results no matter if successful or not
+    
         if (successfulTrial) {
-            aggregateResults.push(trialResults);
-            initialStateNumbers.shift(); // remove first element
+            trialIndex += 1;
         }
 
-        if (initialStateNumbers.length > 0) { // if more trials to run, call runTrial again
-            runTrials(initialStateNumbers, states, aggregateResults, aggregateResultHandler);
-        }
-        else {
-            aggregateResultHandler(aggregateResults);
-        }
+        doAfter(ITI, function() {
+            if (trialIndex-1 < initialStateNumbers.length) { // if more trials to run, call runTrial again
+                runTrials(trialIndex, initialStateNumbers, states, aggregateResults, aggregateResultHandler);
+            }
+            else {
+                aggregateResultHandler();
+            }
+
+        });
+        
     });
+
 }
+
+
+
 
 /*
  * User Input
  */
+
 const Keyboard = { // allows to use Keyboard.F etc.
     F: "f",
     J: "j",
     LeftArrow: "ArrowLeft",
     RightArrow: "ArrowRight",
-    Space: " "
+    Space: " ",
+    Enter: "Enter"
 };
 
 const TwoChoiceInput = { // left and right choice, independent of which keys are used
@@ -336,23 +464,80 @@ const TwoChoiceInput = { // left and right choice, independent of which keys are
 };
 
 function enableOneChoiceInput(callback) { // allowed keys for 1-choice states
+    
+    const cueOnset = performance.now(); // log time at cue onset
+
     document.onkeydown = function(event) {
         if (event.key == Keyboard.Space) { // change input key here
+            const responseOnset = performance.now();
+            const RT = responseOnset - cueOnset;
             disableInput(); // disable any further input
-            callback(); // call what I put in as callback function
+            jatos.removeOverlay(); // remove wrong key overlay if present
+            callback(RT); // call what I put in as callback function
+        }
+        else {
+            jatos.showOverlay({
+                text: "Nur Leerzeichen gültig!",
+                showImg: false,
+                style: `
+                    font-family: "Open Sans", Helvetica, sans-serif;
+                    font-size: 20pt;
+                    padding: 1em;
+                    padding-top: 0.8em;
+                    opacity: 1;
+                    color: white;
+                    background-color: rgba(208, 52, 44, 0.9);
+                    border-radius: 3pt;
+                    text-shadow: none;
+                `
+            });
+
+            doAfter(0.8, function() {
+                jatos.removeOverlay();
+            });
         }
     };
 }
 
 function enableTwoChoiceInput(callback) { // allowed keys for 2-choice states
+
+    const cueOnset = performance.now(); // log time at cue onset
+
     document.onkeydown = function(event) {
-        if (event.key == Keyboard.LeftArrow) { // change input key here
+        if (event.key == Keyboard.F) { // change input key here
+            const responseOnset = performance.now();
+            const RT = responseOnset - cueOnset;
             disableInput(); // disable any further input
-            callback(TwoChoiceInput.Left); // execute function defined as callback function with input TwoChoioceInput.Left
+            jatos.removeOverlay(); // remove wrong key overlay if present
+            callback(TwoChoiceInput.Left, RT); // execute function defined as callback function with input TwoChoioceInput.Left
         }
-        else if (event.key == Keyboard.RightArrow) { // change input key here
+        else if (event.key == Keyboard.J) { // change input key here
+            const responseOnset = performance.now();
+            const RT = responseOnset - cueOnset;
             disableInput(); // disable any further input
-            callback(TwoChoiceInput.Right); // execute function defined as callback function with input TwoChoioceInput.Right
+            jatos.removeOverlay(); // remove wrong key overlay if present
+            callback(TwoChoiceInput.Right, RT); // execute function defined as callback function with input TwoChoioceInput.Right
+        }
+        else {
+            jatos.showOverlay({
+                text: "Nur F oder J gültig!",
+                showImg: false,
+                style: `
+                    font-family: "Open Sans", Helvetica, sans-serif;
+                    font-size: 20pt;
+                    padding: 1em;
+                    padding-top: 0.8em;
+                    opacity: 1;
+                    color: white;
+                    background-color: rgba(208, 52, 44, 0.9);
+                    border-radius: 3pt;
+                    text-shadow: none;
+                `
+            });
+
+            doAfter(0.8, function() {
+                jatos.removeOverlay();
+            });
         }
     };
 }
@@ -361,10 +546,13 @@ function disableInput() {
     document.onkeydown = null;
 }
 
+
+
+
 /*
  * Utilities
  */
-function preloadImages() {
+function preloadImages() { // preload images so that there are no delays 
     const rootImageNames = jatos.studyJsonInput["root_image_names"];
 
     rootImageNames.forEach(function(imageName) {
@@ -402,10 +590,13 @@ function doAfter(timeInterval, callback) { // execute function defined by callba
     setTimeout(callback, timeInterval * 1000);
 }
 
-function fadeOut(element, callback) {
+function fadeOut(element, callback) { // fadeout
+    const root = document.documentElement;
+    root.style.setProperty('--fadeout-time', `${fadeoutTime-0.2}s`);
+
     element.classList.add("fade_out");
 
-    doAfter(0.4, function() {
+    doAfter(fadeoutTime-0.1, function() {
         element.classList.remove("fade_out");
         element.style.opacity = 0;
 
@@ -434,17 +625,28 @@ function shuffle(array) { // returns randomly shuffled elements
     return arrayCopy;
 }
 
+
+
+
 /*
  * Static Components
  */
 const StaticComponents = {
-    Intro: "intro",
+    Intro1: "intro1",
+    Tutorial: "tutorial",
+    Intro2: "intro2",
+    Quiz: "quiz",
+    Intro3: "intro3",
     Outro: "outro"
 };
+
+
+
 
 /*
  * Environments
  */
+
 const Environments = [
     "light_blue",
     "messy_green",
@@ -453,37 +655,21 @@ const Environments = [
     "white_modern"
 ];
 
+
+
+
 /*
  * Phases
  */
+
 const Phases = [
     "learning",
     "relearning",
     "test"
 ];
 
-const LearningPhaseStartStates = function() { // define how many trials start in which state  (not shuffled yet)
-    let startStatesFirstSection = Array(5).fill(1);
 
-    let startStatesSecondSection = [
-        Array(10).fill(1),
-        Array(3).fill(2),
-        Array(3).fill(3),
-        Array(1).fill(4),
-        Array(1).fill(5),
-        Array(1).fill(6),
-        Array(1).fill(7),
-        Array(1).fill(8),
-        Array(1).fill(9)
-    ];
 
-    let flattenedStartStatesSecondSection = [].concat.apply([], startStatesSecondSection); // flatten: 1,1,1,1,1,1,1,1,1,1,2,2,2,2,3,3,3,4,4,4,5,5,5 etc.
-    let shuffledStartStatesSecondSection = shuffle(flattenedStartStatesSecondSection);
-
-    let allStartStates = startStatesFirstSection.concat(shuffledStartStatesSecondSection);
-
-    return allStartStates;
-}();
 
 /*
  * Variations

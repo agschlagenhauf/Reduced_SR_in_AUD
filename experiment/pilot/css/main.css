@@ -8,6 +8,7 @@
 :root {
   --background-color: #222222;
   --text-color: #FFFFFF;
+  --fadeout-time: 0.0s;
 }
 
 /*
@@ -26,7 +27,7 @@ body {
  */
 .full_screen_message {
   font-family: "Open Sans", Helvetica, sans-serif;
-  font-size: 14pt;
+  font-size: 18pt;
   color: var(--text-color);
   text-align: left;
   line-height: 1.5;
@@ -36,6 +37,55 @@ body {
   margin-left: auto;
   margin-right: auto;
 }
+
+.quiz_question {
+  font-family: "Open Sans", Helvetica, sans-serif;
+  font-size: 18pt;
+  color: var(--text-color);
+  text-align: center;
+  line-height: 1.5;
+  width: 75%;
+  height: auto;
+  margin-top: 8%;
+  margin-left: auto;
+  margin-right: auto;
+  margin-bottom: 15%;
+}
+
+.quiz_option_outer_container {
+  width: 75%;
+  height: auto;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.quiz_option_inner_container {
+  width: 50%;
+  height: auto;
+  float: left;
+  padding: 0;
+  margin: 0;
+}
+
+.quiz_option {
+  font-family: "Open Sans", Helvetica, sans-serif;
+  font-size: 16pt;
+  color: var(--text-color);
+  background-color: none;
+  text-align: center;
+  line-height: 1.5;
+  width: auto;
+  height: auto;
+  padding: 20pt;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.quiz_option_selected {
+  color: var(--text-color);
+  background-color: #408140;
+}
+
 
 /*
  * Image Styling
@@ -81,7 +131,7 @@ body {
 
 .fade_out {
   animation-name: fade_out;
-  animation-duration: 0.3s;
+  animation-duration: var(--fadeout-time);
   animation-direction: normal;
   animation-fill-mode: forwards;
 }

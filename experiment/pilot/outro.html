@@ -16,14 +16,14 @@
     <!-- Start of Page Content (Visible on Screen) -->
     <body>
 
-        <div class="full_screen_message">
-            Sehr gut, Sie haben es geschafft! Das Computerspiel ist nun beendet.
+        <div id="message" class="full_screen_message">
+            Sehr gut, Sie haben das Computerspiel beendet!
             <br>
             <br>
             Dank Ihres Suchtalents zahlen wir Ihnen einen Bonus von 2 Pound zusätzlich zu Ihrem Prolific-Stundensatz aus.
             <br>
             <br>
-            Sie werden nun weitergeleitet zu den abschließenden Fragebögen.
+            Bevor Sie zu Prolific zurückzukehren, werden Sie zu den abschließenden Fragebögen weitergeleitet. Drücken Sie dazu bitte die rechte Pfeiltaste.
             <br>
             <br>
             Vielen Dank!
@@ -31,11 +31,30 @@
 
         <script>
             loadComponent(function() {
-                enableOneChoiceInput(function() {
-                    endComponentFlow();
-                });
+
+                let componentData = {
+                    'participant_ID':participantID, 
+                    'running_ID':runningID,
+                    'back_code':backCode,
+                    'variation':variationID, 
+                    'component':componentFlow[componentIndex]
+                };
+
+                const message = document.getElementById("message");
+                document.onkeydown = function(event) { // navigation through intro
+                    if (event.key == Keyboard.RightArrow) {
+                        
+                        disableInput();
+                        fadeOut(message, function() {
+                            endComponentFlow(componentData);
+                        });
+                    }
+                };
+                
+                
             });
         </script>
 
     </body>
 </html>
+
