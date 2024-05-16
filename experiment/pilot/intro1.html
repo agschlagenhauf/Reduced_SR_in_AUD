@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+
+<!-- Start of HTML Document -->
+<html>
+    <head>
+        <!-- Load Style -->
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <link href="https://fonts.googleapis.com/css?family=Open Sans" rel="stylesheet">
+        <link rel="stylesheet" href="css/main.css">
+
+        <!-- Load Jatos -->
+        <script src="js/main.js"></script>
+        <script src="jatos.js"></script>
+    </head>
+
+    <!-- Start of Page Content (Visible on Screen) -->
+    <body>
+
+        <div id="message" class="full_screen_message">
+        </div>
+
+        <script>
+            jatos.onLoad(function() { // load JATOS for the very first time
+
+                prepareComponentFlow();
+
+                let componentData = {
+                    'participant_ID':participantID, 
+                    'running_ID':runningID,
+                    'back_code': backCode,
+                    'variation':variationID, 
+                    'component':componentFlow[componentIndex]
+                };
+
+                let paragraphIndex = 0;
+
+                const message = document.getElementById("message");
+                message.innerHTML = paragraphs[paragraphIndex];
+                
+                document.onkeydown = function(event) { // navigation through intro
+                    if (event.key == Keyboard.LeftArrow) {
+                        paragraphIndex = Math.max(0, paragraphIndex - 1);
+                        message.innerHTML = paragraphs[paragraphIndex];
+                    }
+                    else if (event.key == Keyboard.RightArrow) {
+                        paragraphIndex += 1;
+
+                        if (paragraphIndex < paragraphs.length) {    
+                            message.innerHTML = paragraphs[paragraphIndex];
+                        }
+                        else { // once we reach last paragraph, right arrow leads to start of first condition
+                            disableInput(); // disable any further input
+                            fadeOut(message, function() {
+                                showNextComponent(componentData);
+                            });
+                        }
+                    }
+                };
+            });
+
+            const paragraphs = [
+                `Herzlich willkommen zum Computerspiel! 
+                <br>
+                <br>
+                Das Spiel wird ungefähr 1 Stunde dauern. Machen Sie es sich bequem und lesen Sie sich die Spielregeln auf den nächsten Seiten bitte aufmerksam durch.
+                <br>
+                <br>
+                --> rechte Pfeiltaste = weiter
+                <br>
+                <-- linke Pfeiltaste = zurück zur vorigen Seite`,
+
+
+                `Stellen Sie sich vor: Regelmäßig Freitagsabends gehen Sie mit guten Freunden und Freundinnen essen. 
+                <br>
+                <br>
+                Ihr Stammlokal nimmt leider keine Kartenzahlung an, das heißt: Sie brauchen Bargeld.`,
+
+
+                `Im Stress der Arbeitswoche vergessen Sie oft, für Freitag Geld abzuheben. 
+                <br>
+                <br>
+                Der nächste Bankautomat ist von Ihnen zu Hause leider eine halbe Stunde entfernt. 
+                <br>
+                <br>
+                Regelmäßig stehen Sie Freitags also vor der Frage: Wo treibe ich schnell noch etwas Bargeld auf, um entspannt essenzugehen?`,
+
+
+                `Glücklicherweise haben Sie es sich zur Routine gemacht, Bargeld unter der Woche an Ihren Geheimverstecken zu hinterlegen - für den Notfall sozusagen. 
+                <br>
+                <br>
+                In welchen Zimmern Sie wie viel hinterlegt haben, vergessen Sie in der Hektik des Alltags aber oft.
+                <br>
+                <br>
+                Freitags suchen Sie daher regelmäßig kurz vor Aufbruch zum Restaurant Ihr Haus an den altbewährten Stellen ab.`,
+
+
+                `Da Sie es kurz vor Aufbruch zum Restaurant eilig haben, suchen Sie nie alle Räume an allen Stellen ab. 
+                <br>
+                <br>
+                In manchen Räumen entscheiden Sie sich nur, welchen Weg durch die Wohnung Sie einschlagen. 
+                <br>
+                <br>
+                In allen anderen suchen Sie nur an einer bestimmten Stelle nach Bargeld, bevor Sie zum Schluss durch die Garage ihr Haus verlassen.`,
+
+
+                `Sobald Sie einen neuen Raum betreten haben, leuchten Ihre Handlungsoptionen nach kurzer Zeit auf.
+                <br>
+                <br>
+                - Möchten Sie die linke Option wählen, drücken Sie die Taste 'F'.
+                <br>
+                - Möchten Sie die rechte Option wählen, drücken Sie die Taste 'J'.
+                <br>
+                - Gibt es nur eine Option, drücken Sie die 'Leertaste'.
+                <br>
+                <br>
+                Entscheiden Sie sich bitte immer so schnell wie möglich für eine Handlung. Sollten Sie einmal zu langsam sein, erscheint eine Meldung und Sie werden zurück zu dem Raum geleitet, in dem Sie mit der Suche begonnen haben.`,
+
+
+                `Ihr Ziel ist es jeden Freitag, so viel Bargeld wie möglich zu finden. 
+                <br>
+                <br>
+                Glücklicherweise hinterlegen Sie Ihr Bargeld eine Zeit lang immer in den selben Räumen. Prägen Sie sich also gut ein, welchen Weg Sie durch die Wohnung gehen müssen, um zu diesen Räumen zu gelangen.
+                <br>
+                <br>
+                Es lohnt sich dennoch, an manchen Freitagen neue Wege durch die Wonung zu gehen und neue Räume abzusuchen, denn
+                <br>
+                <br>
+                - manchmal ändern sich die Geldbeträge, die Sie hinterlegt haben, 
+                <br>
+                - manchmal die Räume, in denen Sie sie hinterlegt haben, 
+                <br>
+                - und manchmal hat Ihr Vermieter in der Zwischenzeit sogar Änderungen am Grundriss Ihres Hauses vorgenommen.`,
+
+            
+                `Nun spielen wir zur Übung einmal zwei Freitage durch. Es handelt sich noch nicht um Ihr tatsächliches Haus. 
+                <br>
+                <br>
+                - Möchten Sie die linke Option wählen, drücken Sie die Taste 'F'.
+                <br>
+                - Möchten Sie die rechte Option wählen, drücken Sie die Taste 'J'.
+                <br>
+                - Gibt es nur eine Option, drücken Sie die 'Leertaste'.
+                <br>
+                <br>
+                Los geht's!`
+            ];
+        </script>
+
+    </body>
+</html>
+

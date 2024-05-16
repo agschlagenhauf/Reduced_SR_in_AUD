@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+
+<!-- Start of HTML Document -->
+<html>
+    <head>
+        <!-- Load Style -->
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <link href="https://fonts.googleapis.com/css?family=Open Sans" rel="stylesheet">
+        <link rel="stylesheet" href="css/main.css">
+
+        <!-- Load Jatos -->
+        <script src="js/main.js"></script>
+        <script src="jatos.js"></script>
+    </head>
+
+    <!-- Start of Page Content (Visible on Screen) -->
+    <body>
+
+        <div id="message" class="full_screen_message">
+        </div>
+
+        <script>
+            loadComponent(function() {
+
+                let componentData = {
+                    'participant_ID':participantID, 
+                    'running_ID':runningID,
+                    'back_code': backCode,
+                    'variation':variationID, 
+                    'component':componentFlow[componentIndex]
+                };
+
+                let paragraphIndex = 0;
+
+                const message = document.getElementById("message");
+                message.innerHTML = paragraphs[paragraphIndex];
+                
+                document.onkeydown = function(event) { // navigation through intro
+                    if (event.key == Keyboard.LeftArrow) {
+                        paragraphIndex = Math.max(0, paragraphIndex - 1);
+                        message.innerHTML = paragraphs[paragraphIndex];
+                    }
+                    else if (event.key == Keyboard.RightArrow) {
+                        paragraphIndex += 1;
+
+                        if (paragraphIndex < paragraphs.length) {    
+                            message.innerHTML = paragraphs[paragraphIndex];
+                        }
+                        else { // once we reach last paragraph, right arrow leads to start of first condition
+                            disableInput(); // disable any further input
+                            fadeOut(message, function() {
+                                showNextComponent(componentData);
+                            });
+                        }
+                    }
+                };
+            });
+
+            const paragraphs = [
+                `Super! In dieser Übung haben Sie zwei Freitage erlebt. An beiden Freitagen haben Sie Ihre Suche im Hausflur begonnen. 
+                <br>
+                <br>
+                Im richtigen Spiel werden Sie Ihre Suche an manchen Freitagen auch in anderen Räumen beginnen. Ihre Handlungsoptionen bleiben pro Raum immer gleich. 
+                <br>
+                <br>
+                Jeden Freitag verlassen Sie Ihr Haus - genau wie in der Übung - über Ihre Garage.`,
+
+
+                `Gleich kann es losgehen. Als Erinnerung:
+                <br>
+                <br>
+                - Sammeln Sie so viel Geld wie möglich. 
+                <br>
+                - Prägen Sie sich dazu die Räume und den Grundriss Ihres Hauses gut ein und wiederholen Sie Wege, die Ihnen am meisten Geld einbringen.
+                <br>
+                - Probieren Sie dennoch ab und an neue Wege aus, um sicherzugehen, dass Sie wirklich den maximalen geldbetrag finden.
+                <br>
+                <br>
+                Entscheiden Sie sich in jedem Raum so schnell wie möglich für eine Handlung:
+                <br>
+                - 'F' für linke Handlung
+                <br>
+                - 'J' für rechte Handlung
+                <br>
+                - 'Leertaste' wenn nur eine Handlung möglich`,
+                
+            
+                `Bitte markieren Sie die Aussagen auf den folgenden Seiten als richtig oder falsch, um sicherzugehen, dass Sie die Spielanleitung verstanden haben.`
+            ];
+        </script>
+
+    </body>
+</html>

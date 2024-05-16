@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+
+<!-- Start of HTML Document -->
+<html>
+    <head>
+        <!-- Load Style -->
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <link href="https://fonts.googleapis.com/css?family=Open Sans" rel="stylesheet">
+        <link rel="stylesheet" href="css/main.css">
+
+        <!-- Load Jatos -->
+        <script src="js/main.js"></script>
+        <script src="jatos.js"></script>
+    </head>
+
+    <!-- Start of Page Content (Visible on Screen) -->
+    <body>
+
+        <img id="image" class="full_screen_image"> <!-- place holder for room images with its own css class -->
+        <img id="reward" class="reward_image"> <!-- place holder for money images with its own css class -->
+
+        <script>
+            loadComponent(function() { // load study session data and wait for JATOS (see main)
+
+                // OneChoiceState(number, imageName, preChoiceTime, maxChoiceTime, afterChoiceTimeNoReward, afterChoiceTimeReward, reward, nextState)
+                // TwoChoiceState(number, imageName, preChoiceTime, maxChoiceTime, afterChoiceTime, nextStateLeft, nextStateRight)
+
+                const states = [ // define states
+                    new TwoChoiceState(1, "room1", 0.5, 3.0, 2.0, 2, 3),
+                    new TwoChoiceState(2, "room2", 0.5, 3.0, 2.0, 4, 5),
+                    new TwoChoiceState(3, "room3", 0.5, 3.0, 2.0, 5, 6),
+                    new OneChoiceState(4, "room4", 0.5, 2.0, 2.0, 2.5, null, 7),
+                    new OneChoiceState(5, "room5", 0.5, 2.0, 2.0, 2.5, null, 8),
+                    new OneChoiceState(6, "room6", 0.5, 2.0, 2.0, 2.5, null, 9),
+                    new OneChoiceState(7, "room7", 0.5, 2.0, 2.0, 2.5, 20, 10),
+                    new OneChoiceState(8, "room8", 0.5, 2.0, 2.0, 2.5, null, 10),
+                    new OneChoiceState(9, "room9", 0.5, 2.0, 2.0, 2.5, 30, 10),
+                    new OneChoiceState(10, "room10", 0.5, 2.0, 2.0, 2.5, null, null)
+                ];
+
+                const initialStateNumbers = [1,1]; // two trials starting from state 1 (first 2 elements of LearningPhaseStartStates list)
+
+                let trialIndex = 1;
+
+                let componentData = {
+                    'participant_ID':participantID, 
+                    'running_ID':runningID,
+                    'back_code': backCode,
+                    'variation':variationID, 
+                    'component':componentFlow[componentIndex], 
+                    'tutorial_results':[]
+                };
+
+                // runTrials(trialIndex, initialStateNumbers, states, aggregateResults, aggregateResultHandler)
+
+                runTrials(trialIndex, initialStateNumbers, states, componentData['tutorial_results'], function() {
+                    showNextComponent(componentData);
+                });
+            });
+        </script>
+
+    </body>
+</html>

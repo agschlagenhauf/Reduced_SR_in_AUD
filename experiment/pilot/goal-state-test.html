@@ -21,8 +21,33 @@
         <script>
             loadComponent(function() {
 
+                const stateRoomMap = jatos.studySessionData["goal-state"]["state_room_map"]; // read shuffled image order defined in learning phase
+
+                // (number, imageName, preChoiceTime, maxChoiceTime, afterChoiceTime, nextStateLeft, nextStateRight)
+
+                const states = [
+                    new TestState(1, stateRoomMap['1'], preChoiceTime, maxTestChoiceTime, afterChoiceTimeNoReward, 2, 3)
+                ];
+
+                const initialStateNumbers = [1]; // always one trial starting from state 1
+                let trialIndex = 1;
+
+                let componentData = {
+                    'participant_ID':participantID, 
+                    'running_ID':runningID,
+                    'back_code': backCode,
+                    'variation':variationID, 
+                    'component':componentFlow[componentIndex],
+                    'state_room_map':stateRoomMap,
+                    'aggregate_results':[]
+                };
+
+                runTrials(trialIndex, initialStateNumbers, states, componentData['aggregate_results'], function() {
+                    showNextComponent(componentData);
+                });
             });
         </script>
 
     </body>
 </html>
+

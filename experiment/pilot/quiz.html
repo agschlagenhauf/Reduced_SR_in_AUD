@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+
+<!-- Start of HTML Document -->
+<html>
+    <head>
+        <!-- Load Style -->
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <link href="https://fonts.googleapis.com/css?family=Open Sans" rel="stylesheet">
+        <link rel="stylesheet" href="css/main.css">
+
+        <!-- Load Jatos -->
+        <script src="js/main.js"></script>
+        <script src="jatos.js"></script>
+    </head>
+
+    <!-- Start of Page Content (Visible on Screen) -->
+    <body>
+
+        <div id="quiz_screen">
+            <div id="question" class="quiz_question">
+            </div>
+            <div class="quiz_option_outer_container">
+                <div class="quiz_option_inner_container">
+                    <div id="option_left" class="quiz_option">
+                        richtig
+                    </div>
+                </div>
+                <div class="quiz_option_inner_container">
+                    <div id="option_right" class="quiz_option">
+                        falsch
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <script>
+            loadComponent(function() {
+
+                let componentData = {
+                    'participant_ID':participantID, 
+                    'running_ID':runningID,
+                    'back_code': backCode,
+                    'variation':variationID, 
+                    'component':componentFlow[componentIndex]
+                };
+
+                let questionIndex = 0;
+
+                const question = document.getElementById("question");
+                question.innerHTML = questions[questionIndex];
+
+                const optionLeft = document.getElementById("option_left");
+                const optionRight = document.getElementById("option_right");
+
+                let quizAnswers = [];
+                let currentSelection = null;
+                
+                document.onkeydown = function(event) { // navigation through intro
+
+                    if (event.key == Keyboard.F) {
+                        currentSelection = true;
+                        optionLeft.classList.add("quiz_option_selected");
+                        optionRight.classList.remove("quiz_option_selected");
+                    }
+                    else if (event.key == Keyboard.J) {
+                        currentSelection = false;
+                        optionRight.classList.add("quiz_option_selected");
+                        optionLeft.classList.remove("quiz_option_selected");
+                        
+                    }
+                    else if (currentSelection != null && event.key == Keyboard.Enter) {
+                        quizAnswers.push(currentSelection);
+                        currentSelection = null;
+                        optionRight.classList.remove("quiz_option_selected");
+                        optionLeft.classList.remove("quiz_option_selected");
+
+                        questionIndex += 1;
+
+                        if (questionIndex < questions.length) {    
+                            question.innerHTML = questions[questionIndex];
+                        }
+                        else { // once we reach last paragraph, right arrow leads to start of first condition
+                            disableInput(); // disable any further input
+                            fadeOut(document.getElementById("quiz_screen"), function() {
+                                showNextComponent(componentData);
+                            });
+                        }
+                    }
+                };
+            });
+
+
+
+            const questions = [
+                "Ich soll so wenig Geld wie möglich finden.",
+                "Ich soll so viel Geld wie möglich finden.",
+                "Es spielt keine Rolle, wie viel Geld ich finde. Ich soll mir nur die Räume gut einprägen.",
+                "Ich darf mir so viel Zeit wie nötig bei der Handlungsauswahl lassen.",
+                "Ich soll so schnell auswählen, wie möglich.",
+                "Ich soll so langsam auswählen, wie möglich.",
+                "Wenn ich einmal einen Weg durch das Haus gefunden habe, auf dem ich aktuell Geld finde, sollte ich dabei bleiben und keine neuen Wege mehr ausprobieren.",
+                "Wenn ich einmal einen Weg durch das Haus gefunden habe, auf dem ich aktuell Geld finde, sollte ich trotzdem immer wieder neue Wege ausprobieren, um sicherzustellen, dass ich auf anderen Wegen nicht noch mehr Geld finden kann.",
+                "Die Details der Räume und des Grundrisses brauche ich mir nicht einprägen.",
+                "Die Details der Räume und den Grundriss sollte ich mir einprägen, da ich immer wieder danach gefragt werde."
+            ];
+        </script>
+
+    </body>
+</html>

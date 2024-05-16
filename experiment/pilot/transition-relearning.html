@@ -17,10 +17,43 @@
     <body>
 
         <img id="image" class="full_screen_image">
+        <img id="reward" class="reward_image">
 
         <script>
             loadComponent(function() {
 
+                const stateRoomMap = jatos.studySessionData["transition"]["state_room_map"]; // read shuffled image order defined in learning phase
+
+                // OneChoiceState(number, imageName, preChoiceTime, maxChoiceTime, afterChoiceTimeNoReward, afterChoiceTimeReward, reward, nextState)
+
+                const states = [
+                    new TwoChoiceState(2, stateRoomMap['2'], preChoiceTime, maxTwoChoiceTime, afterChoiceTimeNoReward, 5, 6),
+                    new TwoChoiceState(3, stateRoomMap['3'], preChoiceTime, maxTwoChoiceTime, afterChoiceTimeNoReward, 4, 5),
+                    new OneChoiceState(4, stateRoomMap['4'], preChoiceTime, maxOneChoiceTime, afterChoiceTimeNoReward, afterChoiceTimeReward, null, 7),
+                    new OneChoiceState(5, stateRoomMap['5'], preChoiceTime, maxOneChoiceTime, afterChoiceTimeNoReward, afterChoiceTimeReward, null, 8),
+                    new OneChoiceState(6, stateRoomMap['6'], preChoiceTime, maxOneChoiceTime, afterChoiceTimeNoReward, afterChoiceTimeReward, null, 9),
+                    new OneChoiceState(7, stateRoomMap['7'], preChoiceTime, maxOneChoiceTime, afterChoiceTimeNoReward, afterChoiceTimeReward, 20, 10),
+                    new OneChoiceState(8, stateRoomMap['8'], preChoiceTime, maxOneChoiceTime, afterChoiceTimeNoReward, afterChoiceTimeReward, null, 10),
+                    new OneChoiceState(9, stateRoomMap['9'], preChoiceTime, maxOneChoiceTime, afterChoiceTimeNoReward, afterChoiceTimeReward, 30, 10),
+                    new OneChoiceState(10, stateRoomMap['10'], preChoiceTime, maxOneChoiceTime, afterChoiceTimeNoReward, afterChoiceTimeReward, null, null)
+                ];
+
+                const initialStateNumbers = shuffle([2, 2, 2, 3, 3, 3, 4, 5, 6, 7, 8, 9]);
+                let trialIndex = 12; // one-based
+
+                let componentData = {
+                    'participant_ID':participantID, 
+                    'running_ID':runningID,
+                    'back_code': backCode,
+                    'variation':variationID, 
+                    'component':componentFlow[componentIndex],
+                    'state_room_map':stateRoomMap,
+                    'aggregate_results':[]
+                };
+
+                runTrials(trialIndex, initialStateNumbers, states, componentData['aggregate_results'], function() {
+                    showNextComponent(componentData);
+                });
             });
         </script>
 
