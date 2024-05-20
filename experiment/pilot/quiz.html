@@ -41,7 +41,7 @@
                     'running_ID':runningID,
                     'back_code': backCode,
                     'variation':variationID, 
-                    'component':componentFlow[componentIndex]
+                    'component':componentFlow[componentIndex],
                 };
 
                 let questionIndex = 0;
@@ -53,16 +53,17 @@
                 const optionRight = document.getElementById("option_right");
 
                 let quizAnswers = [];
+                const correctAnswers = [false, true, true, false, true, true, false, true, false]
                 let currentSelection = null;
                 
                 document.onkeydown = function(event) { // navigation through intro
 
-                    if (event.key == Keyboard.F) {
+                    if (event.key == Keyboard.LeftArrow) {
                         currentSelection = true;
                         optionLeft.classList.add("quiz_option_selected");
                         optionRight.classList.remove("quiz_option_selected");
                     }
-                    else if (event.key == Keyboard.J) {
+                    else if (event.key == Keyboard.RightArrow) {
                         currentSelection = false;
                         optionRight.classList.add("quiz_option_selected");
                         optionLeft.classList.remove("quiz_option_selected");
@@ -79,11 +80,19 @@
                         if (questionIndex < questions.length) {    
                             question.innerHTML = questions[questionIndex];
                         }
-                        else { // once we reach last paragraph, right arrow leads to start of first condition
+                        else { // once we reach last paragraph, right arrow leads to intro 3 or quir_wrong
                             disableInput(); // disable any further input
-                            fadeOut(document.getElementById("quiz_screen"), function() {
-                                showNextComponent(componentData);
-                            });
+
+                            if (compareArrays(quizAnswers, correctAnswers)) {
+                                fadeOut(document.getElementById("quiz_screen"), function() {
+                                    showSecondNextComponent(componentData);
+                                });
+                            }
+                            else {
+                                fadeOut(document.getElementById("quiz_screen"), function() {
+                                    showNextComponent(componentData);
+                                });
+                            }
                         }
                     }
                 };
@@ -92,16 +101,15 @@
 
 
             const questions = [
-                "Ich soll so wenig Geld wie möglich finden.",
+                "Ich werde während des Spiels in 6 verschiedenen Häusern leben.",
+                "Jedes Haus hat 10 Räume.",
                 "Ich soll so viel Geld wie möglich finden.",
-                "Es spielt keine Rolle, wie viel Geld ich finde. Ich soll mir nur die Räume gut einprägen.",
-                "Ich darf mir so viel Zeit wie nötig bei der Handlungsauswahl lassen.",
+                "Während ich in einem Haus bin, werden sich die Beträge und die Räume, in denen ich sie finde, nicht verändern.",
+                "Während ich in einem Haus bin, können Änderungen am Grundriss vorgenommen werden, sodass ich durch eine Tür plötzlich in einen anderen Raum gelange.",
                 "Ich soll so schnell auswählen, wie möglich.",
-                "Ich soll so langsam auswählen, wie möglich.",
-                "Wenn ich einmal einen Weg durch das Haus gefunden habe, auf dem ich aktuell Geld finde, sollte ich dabei bleiben und keine neuen Wege mehr ausprobieren.",
-                "Wenn ich einmal einen Weg durch das Haus gefunden habe, auf dem ich aktuell Geld finde, sollte ich trotzdem immer wieder neue Wege ausprobieren, um sicherzustellen, dass ich auf anderen Wegen nicht noch mehr Geld finden kann.",
-                "Die Details der Räume und des Grundrisses brauche ich mir nicht einprägen.",
-                "Die Details der Räume und den Grundriss sollte ich mir einprägen, da ich immer wieder danach gefragt werde."
+                "Die verschiedenen Häuser haben alle den gleichen Grundriss und ich finde immer in den gleichen Zimmern (z.B. der Küche) gleich viel Geld.",
+                "Wie viel Geld ich in einem Zimmer finde, hängt nicht davon ab, auf welchem Weg ich in dieses Zimmer gelangt bin.",
+                "Wie hoch der Bonus ist, den ich zusätzlich zur angegebenen Entlohnung enthalte, hängt davon ab, wie viel Geld ich im ersten Haus finde."
             ];
         </script>
 
