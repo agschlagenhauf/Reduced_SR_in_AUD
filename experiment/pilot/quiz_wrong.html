@@ -17,25 +17,14 @@
     <body>
 
         <div id="message" class="full_screen_message" style="text-align: center;">
-            Sehr gut, dank Ihres Suchtalents konnten Sie viele Freitagabende im Restaurant mit Freunden und Freundinnen genießen. 
+            Sie haben mindestes eine Frage falsch beantwortet.
             <br>
             <br>
-            Da Sie ein tolles Angebot gefunden haben, sind Sie vor kurzem umgezogen. 
+            Lesen Sie sich die Instruktionen noch einmal genau durch, üben Sie den Probedurchgang, und beantworten Sie die Fragen dann noch einmal.
             <br>
             <br>
-            Auch im neuen Haus sind Sie regelmäßig Freitagabends auf der Suche nach Bargeld an Ihren neuen Geheimverstecken.
-            <br>
-            <br>
-            Auch im neuen Haus gilt:
-            <br>
-            - Sammeln Sie so viel Geld wie möglich. 
-            <br>
-            - Prägen Sie sich dazu die Räume und den Grundriss Ihres Hauses gut ein und wiederholen Sie Wege, die Ihnen am meisten Geld einbringen.
-            <br>
-            - Probieren Sie dennoch ab und an neue Wege aus, um sicherzugehen, dass Sie wirklich den maximalen geldbetrag finden.
-            <br>
-            <br>
-            Viel Erfolg!
+            Mit der rechten Pfeiltaste geht es weiter.
+
         </div>
 
         <script>
@@ -44,22 +33,22 @@
                 let componentData = {
                     'participant_ID':participantID, 
                     'running_ID':runningID,
-                    'back_code': backCode,
+                    'back_code':backCode,
                     'variation':variationID, 
                     'component':componentFlow[componentIndex]
                 };
 
                 const message = document.getElementById("message");
-
-                document.onkeydown = function(event) { // navigation through intro
+                document.onkeydown = function(event) {
                     if (event.key == Keyboard.RightArrow) {
-                        disableInput(); // disable any further input
+                        disableInput();
                         fadeOut(message, function() {
-                            showNextComponent(componentData);
+                            restartComponentFlow(componentData); // start from beginning
                         });
                     }
                 };
-
+                
+                
             });
         </script>
 

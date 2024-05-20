@@ -30,7 +30,7 @@ let runningID = null; // running ID generated in RedCap
 let backCode = null; // code leading back to individual RedCap questionnaires when appended to RedCap backLink
 let variationID = null; // which condition order and matching of condition and environment (see 'variations' at bottom of main.js)
 let environmentMap = {
-    "tutorial": "messy_green"
+    "tutorial": "white_modern"
 }; // mapping btw component & environment; environment of tutorial is always the same
 let componentFlow = []; // list of component titles (reward learning etc.)
 let componentIndex = 0; // current component index
@@ -59,6 +59,7 @@ function prepareComponentFlow() { // prepare list of what we should show
         StaticComponents.Tutorial, 
         StaticComponents.Intro2, 
         StaticComponents.Quiz, 
+        StaticComponents.QuizWrong, 
         StaticComponents.Intro3
     ); 
 
@@ -128,6 +129,32 @@ function showNextComponent(componentData) { // move through elements of componen
     componentData['component_duration'] = componentDuration;
 
     componentIndex += 1;
+    jatos.studySessionData["component_index"] = componentIndex;
+
+    const componentTitle = componentFlow[componentIndex]; // get component title
+    jatos.startComponentByTitle(componentTitle, componentData); // tell JATOS to start new component & log results from current component
+}
+
+function showSecondNextComponent(componentData) { // skip one component and show second-next one (needed only if all quiz questions correct)
+    
+    const componentOffset = performance.now();
+    const componentDuration = componentOffset - componentOnset;
+    componentData['component_duration'] = componentDuration;
+
+    componentIndex += 2;
+    jatos.studySessionData["component_index"] = componentIndex;
+
+    const componentTitle = componentFlow[componentIndex]; // get component title
+    jatos.startComponentByTitle(componentTitle, componentData); // tell JATOS to start new component & log results from current component
+}
+
+function restartComponentFlow(componentData) { // restart at beginning if any wrong answer on quiz
+    
+    const componentOffset = performance.now();
+    const componentDuration = componentOffset - componentOnset;
+    componentData['component_duration'] = componentDuration;
+
+    componentIndex = 0;
     jatos.studySessionData["component_index"] = componentIndex;
 
     const componentTitle = componentFlow[componentIndex]; // get component title
@@ -212,9 +239,9 @@ const LearningPhaseStartStates = function() {
     
     let startStatesSecondSection = [
         /*
-        Array(10).fill(1),
-        Array(3).fill(2),
-        Array(3).fill(3),
+        Array(15).fill(1),
+        Array(4).fill(2),
+        Array(4).fill(3),
         Array(1).fill(4),
         Array(1).fill(5),
         Array(1).fill(6),
@@ -342,11 +369,9 @@ function configure(stateNumber, states, trialResults, trialResultHandler) {
 
                 if (input == TwoChoiceInput.Left) {
                     setImageFromEnvironment("image", `${state.imageName}_left`); // set selected image
-                    trialResults.push(state.nextStateLeft); // save next state (not shown)
                 }
                 else if (input == TwoChoiceInput.Right) {
                     setImageFromEnvironment("image", `${state.imageName}_right`);
-                    trialResults.push(state.nextStateRight); // save next state (not shown)
                 }
 
                 doAfter(state.afterChoiceTime, function() {
@@ -552,6 +577,7 @@ function disableInput() {
 /*
  * Utilities
  */
+
 function preloadImages() { // preload images so that there are no delays 
     const rootImageNames = jatos.studyJsonInput["root_image_names"];
 
@@ -625,7 +651,19 @@ function shuffle(array) { // returns randomly shuffled elements
     return arrayCopy;
 }
 
+function compareArrays(a, b) {
+    if (a.length != b.length) {
+        return false;
+    }
 
+    for (let i = 0; i < a.length; i += 1) {
+        if (a[i] != b[i]) {
+            return false;
+        }
+    }
+
+    return true;
+}
 
 
 /*
@@ -636,6 +674,7 @@ const StaticComponents = {
     Tutorial: "tutorial",
     Intro2: "intro2",
     Quiz: "quiz",
+    QuizWrong: "quiz_wrong",
     Intro3: "intro3",
     Outro: "outro"
 };
@@ -680,17 +719,15 @@ const Variations = [
         "A1": [
             {"reward":      "light_blue"},
             {"transition":  "blue_floral"},
-            {"policy":      "orange_tile"},
-            {"goal-state":  "red_brown"},
-            {"control":     "white_modern"}
+            {"goal-state":  "orange_tile"},
+            {"control":     "red_brown"},
         ]
     },
     {
         "A2": [
             {"reward":      "blue_floral"},
             {"transition":  "orange_tile"},
-            {"policy":      "red_brown"},
-            {"goal-state":  "white_modern"},
+            {"goal-state":  "red_brown"},
             {"control":     "light_blue"}
         ]
     },
@@ -698,7 +735,6 @@ const Variations = [
         "A3": [
             {"reward":      "orange_tile"},
             {"transition":  "red_brown"},
-            {"policy":      "white_modern"},
             {"goal-state":  "light_blue"},
             {"control":     "blue_floral"}
         ]
@@ -706,44 +742,31 @@ const Variations = [
     {
         "A4": [
             {"reward":      "red_brown"},
-            {"transition":  "white_modern"},
-            {"policy":      "light_blue"},
+            {"transition":  "light_blue"},
             {"goal-state":  "blue_floral"},
             {"control":     "orange_tile"}
         ]
     },
     {
-        "A5": [
-            {"reward":      "white_modern"},
-            {"transition":  "light_blue"},
-            {"policy":      "blue_floral"},
-            {"goal-state":  "orange_tile"},
-            {"control":     "red_brown"}
-        ]
-    },
-    {
         "B1": [
             {"transition":  "light_blue"},
-            {"policy":      "blue_floral"},
-            {"goal-state":  "orange_tile"},
-            {"control":     "red_brown"},
-            {"reward":      "white_modern"}
+            {"goal-state":  "blue_floral"},
+            {"control":     "orange_tile"},
+            {"reward":      "red_brown"},
         ]
     },
     {
         "B2": [
             {"transition":  "blue_floral"},
-            {"policy":      "orange_tile"},
-            {"goal-state":  "red_brown"},
-            {"control":     "white_modern"},
+            {"goal-state":  "orange_tile"},
+            {"control":     "red_brown"},
             {"reward":      "light_blue"}
         ]
     },
     {
         "B3": [
             {"transition":  "orange_tile"},
-            {"policy":      "red_brown"},
-            {"goal-state":  "white_modern"},
+            {"goal-state":  "red_brown"},
             {"control":     "light_blue"},
             {"reward":      "blue_floral"}
         ]
@@ -751,156 +774,76 @@ const Variations = [
     {
         "B4": [
             {"transition":  "red_brown"},
-            {"policy":      "white_modern"},
             {"goal-state":  "light_blue"},
             {"control":     "blue_floral"},
             {"reward":      "orange_tile"}
         ]
     },
     {
-        "B5": [
-            {"transition":  "white_modern"},
-            {"policy":      "light_blue"},
-            {"goal-state":  "blue_floral"},
-            {"control":     "orange_tile"},
-            {"reward":      "red_brown"}
-        ]
-    },
-    {
         "C1": [
-            {"policy":      "light_blue"},
-            {"goal-state":  "blue_floral"},
-            {"control":     "orange_tile"},
-            {"reward":      "red_brown"},
-            {"transition":  "white_modern"}
+            {"goal-state":  "light_blue"},
+            {"control":     "blue_floral"},
+            {"reward":      "orange_tile"},
+            {"transition":  "red_brown"},
         ]
     },
     {
         "C2": [
-            {"policy":      "blue_floral"},
-            {"goal-state":  "orange_tile"},
-            {"control":     "red_brown"},
-            {"reward":      "white_modern"},
+            {"goal-state":  "blue_floral"},
+            {"control":     "orange_tile"},
+            {"reward":      "red_brown"},
             {"transition":  "light_blue"}
         ]
     },
     {
         "C3": [
-            {"policy":      "orange_tile"},
-            {"goal-state":  "red_brown"},
-            {"control":     "white_modern"},
+            {"goal-state":  "orange_tile"},
+            {"control":     "red_brown"},
             {"reward":      "light_blue"},
             {"transition":  "blue_floral"}
         ]
     },
     {
         "C4": [
-            {"policy":      "red_brown"},
-            {"goal-state":  "white_modern"},
+            {"goal-state":  "red_brown"},
             {"control":     "light_blue"},
             {"reward":      "blue_floral"},
             {"transition":  "orange_tile"}
         ]
     },
     {
-        "C5": [
-            {"policy":      "white_modern"},
-            {"goal-state":  "light_blue"},
-            {"control":     "blue_floral"},
-            {"reward":      "orange_tile"},
-            {"transition":  "red_brown"}
-        ]
-    },
-    {
         "D1": [
-            {"goal-state":  "light_blue"},
-            {"control":     "blue_floral"},
-            {"reward":      "orange_tile"},
-            {"transition":  "red_brown"},
-            {"policy":      "white_modern"}
+            {"control":     "light_blue"},
+            {"reward":      "blue_floral"},
+            {"transition":  "orange_tile"},
+            {"goal-state":  "red_brown"}
         ]
     },
     {
         "D2": [
-            {"goal-state":  "blue_floral"},
-            {"control":     "orange_tile"},
-            {"reward":      "red_brown"},
-            {"transition":  "white_modern"},
-            {"policy":      "light_blue"}
-        ]
-    },
-    {
-        "D3": [
-            {"goal-state":  "orange_tile"},
-            {"control":     "red_brown"},
-            {"reward":      "white_modern"},
-            {"transition":  "light_blue"},
-            {"policy":      "blue_floral"}
-        ]
-    },
-    {
-        "D4": [
-            {"goal-state":  "red_brown"},
-            {"control":     "white_modern"},
-            {"reward":      "light_blue"},
-            {"transition":  "blue_floral"},
-            {"policy":      "orange_tile"}
-        ]
-    },
-    {
-        "D5": [
-            {"goal-state":  "white_modern"},
-            {"control":     "light_blue"},
-            {"reward":      "blue_floral"},
-            {"transition":  "orange_tile"},
-            {"policy":      "red_brown"}
-        ]
-    },
-    {
-        "E1": [
-            {"control":     "light_blue"},
-            {"reward":      "blue_floral"},
-            {"transition":  "orange_tile"},
-            {"policy":      "red_brown"},
-            {"goal-state":  "white_modern"}
-        ]
-    },
-    {
-        "E2": [
             {"control":     "blue_floral"},
             {"reward":      "orange_tile"},
             {"transition":  "red_brown"},
-            {"policy":      "white_modern"},
             {"goal-state":  "light_blue"}
         ]
     },
     {
-        "E3": [
+        "D3": [
             {"control":     "orange_tile"},
             {"reward":      "red_brown"},
-            {"transition":  "white_modern"},
-            {"policy":      "light_blue"},
+            {"transition":  "light_blue"},
             {"goal-state":  "blue_floral"}
         ]
     },
     {
-        "E4": [
+        "D4": [
             {"control":     "red_brown"},
-            {"reward":      "white_modern"},
-            {"transition":  "light_blue"},
-            {"policy":      "blue_floral"},
-            {"goal-state":  "orange_tile"}
-        ]
-    },
-    {
-        "E5": [
-            {"control":     "white_modern"},
             {"reward":      "light_blue"},
             {"transition":  "blue_floral"},
-            {"policy":      "orange_tile"},
-            {"goal-state":  "red_brown"}
+            {"goal-state":  "orange_tile"}
         ]
     }
 ];
+
 
 // callback is a function that is passed into another function so that it can be executed after waiting for asynchronous event
