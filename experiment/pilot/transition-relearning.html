@@ -16,9 +16,6 @@
     <!-- Start of Page Content (Visible on Screen) -->
     <body>
 
-        <div id="message" class="full_screen_message" style="text-align: center;">
-            Achtung, es hat sich etwas verändert.
-        </div>
         <div>
             <img id="image" class="full_screen_image">
             <img id="reward" class="reward_image">
@@ -56,14 +53,8 @@
                     'aggregate_results':[]
                 };
 
-                const message = document.getElementById("message");
-
-                doAfter(2, function() {
-                    fadeOut(message, function() {
-                        runTrials(trialIndex, initialStateNumbers, states, componentData['aggregate_results'], function() {
-                                showNextComponent(componentData);
-                        });
-                    });
+                runTrials(trialIndex, initialStateNumbers, states, componentData['aggregate_results'], function() {
+                        showNextComponent(componentData);
                 });
                 
             });
