@@ -234,11 +234,10 @@ class TestState {
 
 // define how many trials start in which state  (not shuffled yet)
 const LearningPhaseStartStates = function() { 
-    let startStatesFirstSection = Array(1).fill(1);
+    let startStatesFirstSection = Array(5).fill(1);
 
     
     let startStatesSecondSection = [
-        /*
         Array(15).fill(1),
         Array(4).fill(2),
         Array(4).fill(3),
@@ -248,7 +247,6 @@ const LearningPhaseStartStates = function() {
         Array(1).fill(7),
         Array(1).fill(8),
         Array(1).fill(9)
-        */
     ];
     
 
