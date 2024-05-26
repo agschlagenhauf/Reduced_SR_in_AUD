@@ -52,48 +52,45 @@ Outputs:
 def successor_episode(gamma, alpha, explore_chance, end_states, start_state, rewards, transitions, num_pairs, feat, weight, state_list, action_list, RPE_list, value_list):
     time_step = 1
     
+    # For every state-action pair, append value
     # Q-values are based on dot product of weight vector and successor matrix
     v_state = []
     for k in range(num_pairs):
         v_state.append(np.sum(weight*feat[k]))
         
-    current_state = start_state - 1
+    current_state = start_state - 1 # index starting at 0
     timestep_list = []
     not_end = True
-    end_states_adjusted = [i-1 for i in end_states]
+    end_states_adjusted = [i-1 for i in end_states] # index starting at 0
     
     while not_end:
-        if current_state in end_states_adjusted:
+        if current_state in end_states_adjusted: # end loop when end state reached
             not_end = False
             break
         
         else:
             # Determine the next state, either a random subsequent state or the highest-value subsequent state, depending on the exploration parameter
-            next_move_index = get_flattened_index(transitions, current_state, 0)
-            next_values = v_state[next_move_index:(next_move_index+len(transitions[current_state]))]
+            next_move_index = get_flattened_index(transitions, current_state, 0) # get index of element in transitions correpsonding to current state
+            next_values = v_state[next_move_index:(next_move_index+len(transitions[current_state]))] # get content of element in transitions
             # If the next action values are all the same we also choose randomly to avoid argmax defaulting to the first action
             if np.random.uniform() < explore_chance or np.all([i == next_values[0] for i in next_values]):
                 next_move = np.random.randint(len(transitions[current_state]))
             else:
                 next_move = np.argmax(next_values)
 
-            next_state = transitions[current_state][next_move] - 1
+            next_state = transitions[current_state][next_move] - 1 # get next state
 
             # Determine the action taken from the NEXT state, either the best action or a random one, depending on the exploration parameter
             # By having a random explore chance, we ensure that the successor matrix represents all possible successor actions, but has larger values for the
             # highest-reward ones. This is important for the policy reevaluation condition
             next_move_index = get_flattened_index(transitions, next_state, 0)
             next_values = v_state[next_move_index:(next_move_index+len(transitions[next_state]))]
-
-            best_next_move = np.argmax(next_values) + next_move_index
-            random_next_move = np.random.randint(len(transitions[next_state])) + next_move_index
             if np.random.uniform() < explore_chance or np.all([i == next_values[0] for i in next_values]):
-                next_move_sr = random_next_move
+                np.random.randint(len(transitions[next_state])) + next_move_index
             else:
-                next_move_sr = best_next_move
+                next_move_sr = np.argmax(next_values) + next_move_index
 
-
-            # Update weights with TD learning on the reward
+            # Update weights with TD learning on the reward ??? add value of next state
             reward = rewards[current_state][next_move]
             weight_delta = reward - weight[get_flattened_index(rewards, current_state, next_move)]
             weight[get_flattened_index(rewards, current_state, next_move)] += alpha * weight_delta

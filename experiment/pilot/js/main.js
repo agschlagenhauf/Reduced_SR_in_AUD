@@ -63,7 +63,6 @@ function prepareComponentFlow() { // prepare list of what we should show
         StaticComponents.Intro3
     ); 
 
-
     const variation = Variations[runningID % Variations.length]; // get element of Variations based on participantID
     variationID = Object.keys(variation)[0]; // get e.g. A1, A2 etc. key
     const entries = variation[variationID]; // get content of variation element e.g. A1
@@ -92,8 +91,26 @@ function prepareComponentFlow() { // prepare list of what we should show
         "variation_id": variationID,
         "environment_map": environmentMap,
         "component_flow": componentFlow,
-        "component_index": componentIndex
+        "component_index": componentIndex,
     };
+
+    const correctFirstStateActionLearning = shuffle(["left", "left", "right", "right"]);; // which state 1 action is correct after learning
+
+    jatos.studySessionData["control"] = { // save session data to pass to other components
+        "correct_first_state_action_learning": correctFirstStateActionLearning[0]
+    };
+    jatos.studySessionData["reward"] = {
+        "correct_first_state_action_learning": correctFirstStateActionLearning[1]
+    };
+    jatos.studySessionData["goal-state"] = {
+        "correct_first_state_action_learning": correctFirstStateActionLearning[2]
+    };
+    jatos.studySessionData["transition"] = {
+        "correct_first_state_action_learning": correctFirstStateActionLearning[3]
+    };
+    //jatos.studySessionData["policy"] = {
+    //    "correct_first_state_action_learning": correctFirstStateActionLearning[4]
+    //};
 
     preloadImages();
 
@@ -233,30 +250,52 @@ class TestState {
 }
 
 // define how many trials start in which state  (not shuffled yet)
-const LearningPhaseStartStates = function() { 
-    let startStatesFirstSection = Array(5).fill(1);
+function defineLearningPhaseStartStates(correctFirstStateActionLearning) { 
+    let startStatesFirstSection = Array(2).fill(1);
 
-    
     let startStatesSecondSection = [
-        Array(15).fill(1),
-        Array(4).fill(2),
-        Array(4).fill(3),
-        Array(1).fill(4),
-        Array(1).fill(5),
-        Array(1).fill(6),
-        Array(1).fill(7),
-        Array(1).fill(8),
-        Array(1).fill(9)
+        Array(2).fill(1),
+        Array(2).fill(2),
+        Array(2).fill(3),
+        Array(2).fill(4),
+        Array(2).fill(5),
+        Array(2).fill(6),
+        Array(2).fill(7),
+        Array(2).fill(8),
+        Array(2).fill(9)
     ];
+
+    let startStatesThirdSection = function() {
+
+        if (correctFirstStateActionLearning == "right") {
+            return [
+                Array(6).fill(1),
+                Array(8).fill(2),
+                Array(4).fill(3),
+            ];
+        }
+        else {
+            return [
+                Array(6).fill(1),
+                Array(4).fill(2),
+                Array(8).fill(3),
+            ];
+        }
+    
+    }();
     
 
     let flattenedStartStatesSecondSection = [].concat.apply([], startStatesSecondSection); // flatten: 1,1,1,1,1,1,1,1,1,1,2,2,2,2,3,3,3,4,4,4,5,5,5 etc.
     let shuffledStartStatesSecondSection = shuffle(flattenedStartStatesSecondSection);
 
-    let allStartStates = startStatesFirstSection.concat(shuffledStartStatesSecondSection);
+
+    let flattenedStartStatesThirdSection = [].concat.apply([], startStatesThirdSection); // flatten: 1,1,1,1,1,1,1,1,1,1,2,2,2,2,3,3,3,4,4,4,5,5,5 etc.
+    let shuffledStartStatesThirdSection = shuffle(flattenedStartStatesThirdSection);
+
+    let allStartStates = startStatesFirstSection.concat(shuffledStartStatesSecondSection, shuffledStartStatesThirdSection);
 
     return allStartStates;
-}();
+};
 
 
 
