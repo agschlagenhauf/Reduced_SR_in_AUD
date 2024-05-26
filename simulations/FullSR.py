@@ -10,7 +10,6 @@ Output: the flattened list
 def list_flatten(list):
     return [item for row in list for item in row]
 
-
 '''
 Helper function that converts an index of a ragged 2d array into the equivalent index of the flattened array
 Inputs:
@@ -53,7 +52,7 @@ def successor_episode(gamma, alpha, explore_chance, end_states, start_state, rew
     time_step = 1
     
     # For every state-action pair, append value
-    # Q-values are based on dot product of weight vector and successor matrix
+    # 13 Q-values (1 for each state-action pair) based on dot product of weight vector and successor matrix
     v_state = []
     for k in range(num_pairs):
         v_state.append(np.sum(weight*feat[k]))
@@ -71,42 +70,49 @@ def successor_episode(gamma, alpha, explore_chance, end_states, start_state, rew
         else:
             # Determine the next state, either a random subsequent state or the highest-value subsequent state, depending on the exploration parameter
             next_move_index = get_flattened_index(transitions, current_state, 0) # get index of element in transitions correpsonding to current state
-            next_values = v_state[next_move_index:(next_move_index+len(transitions[current_state]))] # get content of element in transitions
+            next_values = v_state[next_move_index:(next_move_index+len(transitions[current_state]))] # get V for all state-action pairs available from current state (indexing not inclusive)
             # If the next action values are all the same we also choose randomly to avoid argmax defaulting to the first action
             if np.random.uniform() < explore_chance or np.all([i == next_values[0] for i in next_values]):
                 next_move = np.random.randint(len(transitions[current_state]))
             else:
-                next_move = np.argmax(next_values)
+                next_move = np.argmax(next_values) # get index of max value
 
-            next_state = transitions[current_state][next_move] - 1 # get next state
+            next_state = transitions[current_state][next_move] - 1 # get index of next state
 
             # Determine the action taken from the NEXT state, either the best action or a random one, depending on the exploration parameter
             # By having a random explore chance, we ensure that the successor matrix represents all possible successor actions, but has larger values for the
-            # highest-reward ones. This is important for the policy reevaluation condition
-            next_move_index = get_flattened_index(transitions, next_state, 0)
-            next_values = v_state[next_move_index:(next_move_index+len(transitions[next_state]))]
-            if np.random.uniform() < explore_chance or np.all([i == next_values[0] for i in next_values]):
-                np.random.randint(len(transitions[next_state])) + next_move_index
+            # highest-reward ones.
+            second_next_move_index = get_flattened_index(transitions, next_state, 0)
+            second_next_values = v_state[second_next_move_index:(second_next_move_index+len(transitions[next_state]))] # get V for all state-action pairs available from next state (indexing not inclusive)
+            if np.random.uniform() < explore_chance or np.all([i == second_next_values[0] for i in second_next_values]):
+                second_next_move = np.random.randint(len(transitions[next_state]))
             else:
-                next_move_sr = np.argmax(next_values) + next_move_index
+                second_next_move = np.argmax(second_next_values)
 
-            # Update weights with TD learning on the reward ??? add value of next state
+            # Update weights with TD learning
             reward = rewards[current_state][next_move]
-            weight_delta = reward - weight[get_flattened_index(rewards, current_state, next_move)]
-            weight[get_flattened_index(rewards, current_state, next_move)] += alpha * weight_delta
+            weight_delta = (reward + gamma * v_state[get_flattened_index(transitions, next_state, second_next_move)]
+                            - v_state[get_flattened_index(transitions, current_state, next_move)]) # reward in current state + discounted value of next state - value of current state
+            feat_scaled = feat[current_state] / np.matmul(feat[current_state], np.transpose(feat[current_state])) # scale feature according to Russek et al. 2017
 
-            # An action is always considered to succeed itself
+            weight += alpha * weight_delta * feat_scaled
+
+            # Update value of current state-action pair based on updated weight and current feature vector
+            for k in range(num_pairs):
+                v_state[k] = np.sum(weight*feat[k])
+
+            # Update the current state's row of the successor matrix with TD learning
+            # Theoretically happens when next state is reached
+            # The learning rate for the feature vector is lower than for the weights so that the occupancies from previous episodes
+            # stay mostly intact if a different action is chosen, even with a high alpha
+
+            # Create vector with all zeros except the position of the current state-action pair
+            # (an action is always considered to succeed itself)
             one_hot = np.zeros(num_pairs)
             one_hot[get_flattened_index(transitions, current_state, next_move)] = 1
 
-            # Update the current state's row of the successor matrix with TD learning on the occupancies
-            # The learning rate for the feature vector is lower than for the weights so that the occupancies from previous episodes
-            # stay mostly intact if a different action is chosen, even with a high alpha
-            feat_delta = one_hot + gamma * feat[next_move_sr] - feat[get_flattened_index(transitions, current_state, next_move)]
-            feat[get_flattened_index(transitions, current_state, next_move)] += alpha * 0.25 * feat_delta
-            
-            for k in range(num_pairs):
-                v_state[k] = np.sum(weight*feat[k])
+            feat_delta = one_hot + gamma * feat[next_state] - feat[current_state]
+            feat[current_state] += alpha * 0.25 * feat_delta # adapt SR learning rate here
 
             state_list.append(current_state + 1)
             action_list.append(next_state + 1)

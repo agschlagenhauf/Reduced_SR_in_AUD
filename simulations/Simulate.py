@@ -49,10 +49,10 @@ def simulate(model, condition, sim_num, output_filename, full_logging=True):
     # Initialize the simulation-specific parameters
         transitions = [[2, 3], [4, 5], [5, 6], [7], [8], [9], [10], [10], [10], [11]]
 
-        if condition == "Policy":
-            rewards = [[0, 0], [0, 0], [0, 0], [0], [0], [0], [10], [20], [30], [0]]
-        else:
-            rewards = [[0, 0], [0, 0], [0, 0], [0], [0], [0], [20], [0], [30], [0]]
+    if condition == "Policy":
+        rewards = [[0, 0], [0, 0], [0, 0], [0], [0], [0], [10], [20], [30], [0]]
+    else:
+        rewards = [[0, 0], [0, 0], [0, 0], [0], [0], [0], [20], [0], [30], [0]]
 
         if model == "Punctate":
             v_state = []
@@ -74,7 +74,8 @@ def simulate(model, condition, sim_num, output_filename, full_logging=True):
             init_t_counts = np.zeros((num_pairs, num_states))
             model_parameters = [v_state, init_t_counts, init_weight]
         else:
-            init_sr = np.zeros((num_pairs, num_pairs))
+            init_sr = np.identity((num_pairs)) # init M with identity matrix as in Russek et al. 2017
+            init_sr[-1,:] = 0 # set row corresponding to terminal state to 0 as in Russek et al. 2017
             init_weight = np.zeros(num_pairs)
             
             # We wrap the model parameters in a single list so we can use the same function call for every model
