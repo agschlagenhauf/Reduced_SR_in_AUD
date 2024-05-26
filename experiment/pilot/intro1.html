@@ -22,8 +22,14 @@
         <script>
             jatos.onLoad(function() { // load JATOS for the very first time
 
-                prepareComponentFlow();
-
+                if (componentIndex == 0) {
+                    prepareComponentFlow();
+                }
+                else {
+                    componentOnset = performance.now();
+                    loadStudySessionData();
+                }
+                
                 let componentData = {
                     'participant_ID':participantID, 
                     'running_ID':runningID,
@@ -94,19 +100,16 @@
                 Freitags suchen Sie daher regelmäßig kurz vor Aufbruch zum Restaurant Ihr Haus ab.`,
 
 
-                `Ihr Haus hat insgesamt 10 Zimmer. Da Sie es kurz vor Aufbruch zum Restaurant eilig haben, suchen Sie nie alle Zimmer ab. 
+                `Ihr Haus hat insgesamt 10 Zimmer. Sobald Sie ein Zimmer betreten, leuchten Ihre Handlungsoptionen nach kurzer Zeit auf.
                 <br>
                 <br>
-                In manchen Räumen entscheiden Sie sich nur für eine Tür, d.h. für einen bestimmten Weg durch das Haus. 
+                In manchen Räumen haben Sie zwei Handlungsoptionen: Zwei Türen, die zu verschiedenen nächsten Zimmern führen.
                 <br>
                 <br>
-                In allen anderen suchen Sie an einer einzigen Stelle nach Bargeld.`,
+                In anderen Räumen haben Sie eine Handlungsoption: Eine bestimmte Stelle (z.B. ein Regal), an der Sie nach Bargeld suchen. Nachdem Sie die Stelle abgesucht haben, gehen Sie automatisch - d.h. ohne dafür eine Option auswählen zu müssen - in den nächsten Raum weiter. `,
 
 
-                `Sobald Sie einen Raum betreten, leuchten Ihre Handlungsoptionen nach kurzer Zeit auf. Manchmal haben Sie eine, manchmal zwei Optionen.
-                <br>
-                <br>
-                - Möchten Sie die linke von zwei Optionen wählen, drücken Sie die Taste 'F'.
+                `- Möchten Sie die linke von zwei Optionen wählen, drücken Sie die Taste 'F'.
                 <br>
                 - Möchten Sie die rechte von zwei Optionen wählen, drücken Sie die Taste 'J'.
                 <br>
