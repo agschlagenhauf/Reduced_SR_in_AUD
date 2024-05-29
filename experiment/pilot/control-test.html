@@ -16,9 +16,9 @@
     <!-- Start of Page Content (Visible on Screen) -->
     <body>
 
-        <div id="message" class="full_screen_message" style="text-align: center;">
+        <!-- <div id="message" class="full_screen_message" style="text-align: center;">
             Wählen Sie nun den Weg, auf dem Sie am meisten Geld finden werden.
-        </div>
+        </div> -->
         <div>
             <img id="image" class="full_screen_image">
         </div>
@@ -49,13 +49,13 @@
 
                 const message = document.getElementById("message");
 
-                doAfter(3, function() {
-                    fadeOut(message, function() {
-                        runTrials(trialIndex, initialStateNumbers, states, componentData['aggregate_results'], function() {
-                                showNextComponent(componentData);
-                        });
-                    });
+                //doAfter(3, function() {
+                    //fadeOut(message, function() {
+                runTrials(trialIndex, initialStateNumbers, states, componentData['aggregate_results'], function() {
+                    showNextComponent(componentData);
                 });
+                    //});
+                //});
 
             });
         </script>

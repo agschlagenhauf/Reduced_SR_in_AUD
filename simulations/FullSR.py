@@ -50,6 +50,7 @@ Outputs:
 '''
 def successor_episode(gamma, alpha, explore_chance, end_states, start_state, rewards, transitions, num_pairs, feat, weight, state_list, action_list, RPE_list, value_list):
     time_step = 1
+
     
     # For every state-action pair, append value
     # 13 Q-values (1 for each state-action pair) based on dot product of weight vector and successor matrix
@@ -66,40 +67,94 @@ def successor_episode(gamma, alpha, explore_chance, end_states, start_state, rew
         if current_state in end_states_adjusted: # end loop when end state reached
             not_end = False
             break
-        
-        else:
+
+        elif current_state == start_state - 1:
+            print(f"time_step: {time_step}")
+            print(f"current_state: {current_state}")
+            print(f"v_state: {v_state}")
             # Determine the next state, either a random subsequent state or the highest-value subsequent state, depending on the exploration parameter
-            next_move_index = get_flattened_index(transitions, current_state, 0) # get index of element in transitions correpsonding to current state
-            next_values = v_state[next_move_index:(next_move_index+len(transitions[current_state]))] # get V for all state-action pairs available from current state (indexing not inclusive)
+            next_move_index = get_flattened_index(transitions, current_state,
+                                                  0)  # get index of element in transitions correpsonding to current state
+            next_values = v_state[next_move_index:(next_move_index + len(transitions[
+                                                                             current_state]))]  # get V for all state-action pairs available from current state (indexing not inclusive)
             # If the next action values are all the same we also choose randomly to avoid argmax defaulting to the first action
             if np.random.uniform() < explore_chance or np.all([i == next_values[0] for i in next_values]):
                 next_move = np.random.randint(len(transitions[current_state]))
             else:
-                next_move = np.argmax(next_values) # get index of max value
+                next_move = np.argmax(next_values)  # get index of max value
+            print(f"next_move: {next_move}")
 
-            next_state = transitions[current_state][next_move] - 1 # get index of next state
+            next_state = transitions[current_state][next_move] - 1  # get next state
+            print(f"next_state: {next_state}")
 
             # Determine the action taken from the NEXT state, either the best action or a random one, depending on the exploration parameter
             # By having a random explore chance, we ensure that the successor matrix represents all possible successor actions, but has larger values for the
             # highest-reward ones.
             second_next_move_index = get_flattened_index(transitions, next_state, 0)
-            second_next_values = v_state[second_next_move_index:(second_next_move_index+len(transitions[next_state]))] # get V for all state-action pairs available from next state (indexing not inclusive)
+            second_next_values = v_state[second_next_move_index:(second_next_move_index + len(transitions[
+                                                                                                  next_state]))]  # get V for all state-action pairs available from next state (indexing not inclusive)
             if np.random.uniform() < explore_chance or np.all([i == second_next_values[0] for i in second_next_values]):
                 second_next_move = np.random.randint(len(transitions[next_state]))
             else:
                 second_next_move = np.argmax(second_next_values)
+            print(f"second_next_move: {second_next_move}")
+
+            second_next_state = transitions[next_state][second_next_move] - 1  # get next state
 
             # Update weights with TD learning
             reward = rewards[current_state][next_move]
             weight_delta = (reward + gamma * v_state[get_flattened_index(transitions, next_state, second_next_move)]
-                            - v_state[get_flattened_index(transitions, current_state, next_move)]) # reward in current state + discounted value of next state - value of current state
-            feat_scaled = feat[current_state] / np.matmul(feat[current_state], np.transpose(feat[current_state])) # scale feature according to Russek et al. 2017
+                            - v_state[get_flattened_index(transitions, current_state, next_move)])
+            print(
+                f"reward:{reward}, gamma: {gamma}, v_state[get_flattened_index(transitions, next_state, second_next_move)]: {v_state[get_flattened_index(transitions, next_state, second_next_move)]}, v_state[get_flattened_index(transitions, current_state, next_move)]: {v_state[get_flattened_index(transitions, current_state, next_move)]}")  # reward in current state + discounted value of next state - value of current state
+            feat_scaled = feat[get_flattened_index(transitions, current_state, next_move)] / np.matmul(
+                feat[get_flattened_index(transitions, current_state, next_move)], np.transpose(feat[get_flattened_index(
+                    transitions, current_state, next_move)]))  # scale feature according to Russek et al. 2017
+            print(f"feat_scaled: {feat_scaled}")
 
             weight += alpha * weight_delta * feat_scaled
+            print(f"weight: {weight}")
 
-            # Update value of current state-action pair based on updated weight and current feature vector
+            # Update value of current state-action pair based on updated weight and initial feature vector
             for k in range(num_pairs):
-                v_state[k] = np.sum(weight*feat[k])
+                v_state[k] = np.sum(weight * feat[k])
+            print(f"v_state: {v_state}")
+
+            state_list.append(current_state + 1)
+            action_list.append(next_state + 1)
+            RPE_list.append(weight_delta)
+            timestep_list.append(time_step)
+
+            for k in range(num_pairs):
+                value_list[k].append(v_state[k])
+
+            # Move to the next state
+            last_state = current_state
+            last_move = next_move
+            current_state = next_state
+            next_move = second_next_move
+            next_state = second_next_state
+
+            time_step += 1
+
+        else:
+            print(f"time_step: {time_step}")
+            print(f"current_state: {current_state}")
+            print(f"v_state: {v_state}")
+
+            # Determine the action taken from the NEXT state, either the best action or a random one, depending on the exploration parameter
+            # By having a random explore chance, we ensure that the successor matrix represents all possible successor actions, but has larger values for the
+            # highest-reward ones.
+            second_next_move_index = get_flattened_index(transitions, next_state, 0)
+            second_next_values = v_state[second_next_move_index:(second_next_move_index + len(transitions[
+                                                                                                  next_state]))]  # get V for all state-action pairs available from next state (indexing not inclusive)
+            if np.random.uniform() < explore_chance or np.all([i == second_next_values[0] for i in second_next_values]):
+                second_next_move = np.random.randint(len(transitions[next_state]))
+            else:
+                second_next_move = np.argmax(second_next_values)
+                print(f"second_next_move: {second_next_move}")
+
+            second_next_state = transitions[next_state][second_next_move] - 1  # get next state
 
             # Update the current state's row of the successor matrix with TD learning
             # Theoretically happens when next state is reached
@@ -109,22 +164,50 @@ def successor_episode(gamma, alpha, explore_chance, end_states, start_state, rew
             # Create vector with all zeros except the position of the current state-action pair
             # (an action is always considered to succeed itself)
             one_hot = np.zeros(num_pairs)
-            one_hot[get_flattened_index(transitions, current_state, next_move)] = 1
+            one_hot[get_flattened_index(transitions, last_state, last_move)] = 1
+            print(f"one_hot: {one_hot}")
 
-            feat_delta = one_hot + gamma * feat[next_state] - feat[current_state]
-            feat[current_state] += alpha * 0.25 * feat_delta # adapt SR learning rate here
+            feat_delta = one_hot + gamma * feat[get_flattened_index(transitions, current_state, next_move)] - feat[
+                get_flattened_index(transitions, last_state, last_move)]
+            print(f"feat_delta: {feat_delta}")
+            feat[get_flattened_index(transitions, last_state,
+                                     last_move)] += alpha * 0.25 * feat_delta  # adapt SR learning rate here
+            print(f"feat[current_state]: {feat[get_flattened_index(transitions, last_state, last_move)]}")
+
+            # Update weights with TD learning
+            reward = rewards[current_state][next_move]
+            weight_delta = (reward + gamma * v_state[get_flattened_index(transitions, next_state, second_next_move)]
+                            - v_state[get_flattened_index(transitions, current_state, next_move)])
+            print(
+                f"reward:{reward}, gamma: {gamma}, v_state[get_flattened_index(transitions, next_state, second_next_move)]: {v_state[get_flattened_index(transitions, next_state, second_next_move)]}, v_state[get_flattened_index(transitions, current_state, next_move)]: {v_state[get_flattened_index(transitions, current_state, next_move)]}")  # reward in current state + discounted value of next state - value of current state
+            feat_scaled = feat[get_flattened_index(transitions, current_state, next_move)] / np.matmul(
+                feat[get_flattened_index(transitions, current_state, next_move)], np.transpose(feat[get_flattened_index(
+                    transitions, current_state, next_move)]))  # scale feature according to Russek et al. 2017
+            print(f"feat_scaled: {feat_scaled}")
+
+            weight += alpha * weight_delta * feat_scaled
+            print(f"weight: {weight}")
+
+            # Update value of current state-action pair based on updated weight and current feature vector
+            for k in range(num_pairs):
+                v_state[k] = np.sum(weight * feat[k])
+            print(f"v_state: {v_state}")
 
             state_list.append(current_state + 1)
             action_list.append(next_state + 1)
             RPE_list.append(weight_delta)
             timestep_list.append(time_step)
-            
+
             for k in range(num_pairs):
                 value_list[k].append(v_state[k])
-            
+
             # Move to the next state
+            last_state = current_state
+            last_move = next_move
             current_state = next_state
-            
+            next_move = second_next_move
+            next_state = second_next_state
+
             time_step += 1
 
     return feat, weight, state_list, action_list, RPE_list, value_list, timestep_list
@@ -163,9 +246,14 @@ def pretraining(gamma, alpha, explore_chance, end_states, rewards, transitions, 
     epi_length = []
     # Create the list of starting states, randomly ordered, but guaranteed a certain number of starts in each starting state
     #start_states = np.array([1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 4, 4, 5, 5, 6, 6])
-    start_states = np.array([1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1])
-    start_states= np.append(start_states, np.random.randint(1, 7, 5))
-    np.random.shuffle(start_states)
+    start_states_1 = np.array([1, 1])
+    start_states_2 = np.array([1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7, 8, 8, 9, 9, 10, 10])
+    np.random.shuffle(start_states_2)
+    start_states_3 = np.array([1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3])
+    np.random.shuffle(start_states_3)
+    start_states = np.append(start_states_1, start_states_2)
+    start_states = np.append(start_states, start_states_3)
+    print(f"start_states: {start_states}")
     for index, k in enumerate(start_states):
         c_feat, c_weight, c_state_list, c_action_list, c_RPE_list, c_value_list, timestep_list = \
         successor_episode(gamma, alpha, explore_chance, end_states, k, rewards, transitions, num_pairs, feat, weight, state_list, action_list, RPE_list, value_list)
@@ -250,7 +338,7 @@ def retraining(condition, gamma, alpha, explore_chance, end_states, rewards, tra
         #start_states = np.array([2, 2, 2, 3, 3, 3, 4, 5, 6])
         start_states = np.array([2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3])
     else:
-        start_states = np.array([4, 4, 4, 4, 5, 5, 5, 5, 6, 6, 6, 6])
+        start_states = np.array([7, 7, 7, 7, 8, 8, 8, 8, 9, 9, 9, 9])
     np.random.shuffle(start_states)
     for index, k in enumerate(start_states):
         c_feat, c_weight, c_state_list, c_action_list, c_RPE_list, c_value_list, timestep_list = \

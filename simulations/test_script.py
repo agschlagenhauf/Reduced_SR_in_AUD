@@ -3,9 +3,9 @@ import numpy as np
 import Simulate
 
 
-num_trials = 10
+num_simulations = 100 # number of simulations including all trials per phase per condition
 models = ["FullSR"] # "Punctate", "ModelBased", "FullSR", "ReducedSR"
-conditions = ["Control", "Reward", "Transition", "Goal"] # "Control", "Reward", "Transition", "Policy", "Goal"
+conditions = ["Control", "Reward", "Transition", "Policy", "Goal"] # "Control", "Reward", "Transition", "Policy", "Goal"
 
 success_rates = open("./Results/success_rates.txt", "w")
 
@@ -15,7 +15,7 @@ for model in models:
       
         print(f"Running model {model} in condition {condition}...")
         
-        milestone_results = Simulate.simulate(model, condition, num_trials, "./Results/" + model + "_" + condition + ".csv", full_logging=False)
+        milestone_results = Simulate.simulate(model, condition, num_simulations, "./Results/" + model + "_" + condition + ".csv", full_logging=True)
         success_rates.write(model + " model, " + condition + " condition:\n")
 
         initial_results = np.array(milestone_results[milestone_results['Phase'] == "After Learning"]['Test Result'])
@@ -32,10 +32,10 @@ for model in models:
         else:
             relearn_success = sum(final_results_correctly_trained == 2)
 
-        init_percent = initial_success / num_trials * 100
+        init_percent = initial_success / num_simulations * 100
         relearn_percent = relearn_success / initial_success * 100
 
-        success_rates.write("Successful Initial Learning: " + str(initial_success) + "/" + str(num_trials) + ", " + str(init_percent) + "%\n")
+        success_rates.write("Successful Initial Learning: " + str(initial_success) + "/" + str(num_simulations) + ", " + str(init_percent) + "%\n")
         success_rates.write("Successful Relearning: " + str(relearn_success) + "/" + str(initial_success) + ", " + str(relearn_percent) + "%\n\n")
 
 success_rates.close()
