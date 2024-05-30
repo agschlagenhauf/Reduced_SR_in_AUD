@@ -40,9 +40,8 @@
                 };
 
                 // save shuffled image order into study session data
-                jatos.studySessionData["control"] = {
-                    "state_room_map": stateRoomMap
-                };
+                jatos.studySessionData["control"]["state_room_map"] = stateRoomMap;
+
 
                 // read wich first state action is correct, defined in prepareComponentFlow called in intro1 if first component
                 const correctFirstStateActionLearning = jatos.studySessionData["control"]["correct_first_state_action_learning"];

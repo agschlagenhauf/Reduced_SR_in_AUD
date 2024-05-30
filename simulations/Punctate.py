@@ -1,32 +1,10 @@
+#
+# punctate.py
+#
+
 import numpy as np
 import random as rd
-import pandas as pd
-
-
-'''
-Helper function that returns a flattened list
-Input: list: a 2-dimensional list, which can be ragged
-Output: the flattened list
-'''
-def list_flatten(list):
-    return [item for row in list for item in row]
-
-
-'''
-Helper function that converts an index of a ragged 2d array into the equivalent index of the flattened array
-Inputs:
-    list: a 2 dimensional list, which can be ragged
-    row: desired row index of the list
-    item: desired item index of the given row
-Output: the corresponding index of the flattened list
-'''
-def get_flattened_index(list, row, item):
-    index = 0
-    for i in range(row):
-        index += len(list[i])
-    index += item
-    return index
-
+from utilities import *
 
 '''
 Simulates a single episode, from the given start state until an end state is reached
@@ -151,27 +129,18 @@ def pretraining(gamma, alpha, explore_chance, end_states, rewards, transitions, 
     return c_v_state, logs_new, epi_length
 
 
-'''
-Changes the rewards and transitions for the re-learning phase, as appropriate for the condition being tested
-Inputs:
-    condition: String with the name of the condition being tested (case sensitive, so first letter needs to be capitalized)
-    rewards: the original reward list
-    transitions: the original transition list
-Outputs:
-    rewards: the new reward list
-    transitions: the new transition list
-'''
 def update_parameters(condition, rewards, transitions):
-    if condition == "Reward":
+    if condition == "reward":
         rewards = [[0, 0], [0, 0], [0, 0], [0], [0], [0], [40], [0], [30], [0]]
-    elif condition == "Transition":
+    elif condition == "transition":
         transitions = [[2, 3], [5, 6], [4, 5], [7], [8], [9], [10], [10], [10], [11]]
-    elif condition == "Policy":
+    elif condition == "policy":
         rewards = [[0, 0], [0, 0], [0, 0], [0], [0], [0], [40], [20], [30], [0]]
-    elif condition == "Goal":
+    elif condition == "goal":
         rewards = [[0, 0], [0, 0], [0, 0], [20], [0], [0], [20], [0], [30], [0]]
     else:
         rewards = [[0, 0], [0, 0], [0, 0], [0], [0], [0], [20], [0], [40], [0]]
+        
     return rewards, transitions
 
 
@@ -203,7 +172,7 @@ def retraining(condition, gamma, alpha, explore_chance, end_states, rewards, tra
     state_list, action_list, RPE_list, epi_num_list, phase_list = logging_lists[0:5]
     value_list = logging_lists[5:][0]
     epi_length = []
-    if condition == "Transition":
+    if condition == "transition":
         #start_states = np.array([2, 2, 2, 3, 3, 3, 4, 5, 6])
         start_states = np.array([2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3])
     else:

@@ -1,0 +1,31 @@
+#
+# todo.txt
+#
+
+** full_sr.py is finished, can base other models on it. **
+
+1) For each model
+  - Change episode() to run_trial()
+  - Change pretraining() to learning()
+  - Change retraining() to relearning()
+  - Remove update_logs()
+  - Remove any references to timestep*
+  - Remove any references to epi*
+  - Change end_states to just end_state everywhere
+
+2) run_trial()
+  - Remove all input arguments and references to *_list (logging_lists, action_list, value_list, etc.)
+  - Should now return any updated params and transition_log (transition log is just a list of strings, each one is a line in the csv)
+
+3) learning()
+  - Remove all input arguments and references to *_list
+  - Should now return new_params, transition_log
+
+4) relearning()
+  - Remove all references to *_list
+  - Should now return new_params, transition_log
+  
+5) test()
+  - Should now return action (1 or 2) and transition_log (transition log is an array of a single string in this case)
+
+6) For all functions, update doc strings to match style and content of those in full_sr.py

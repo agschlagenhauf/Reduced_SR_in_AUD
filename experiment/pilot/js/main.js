@@ -12,7 +12,7 @@
 const preChoiceTime = 0.5; // time in state without highlighted choice options
 const maxOneChoiceTime = 2.0; // max time in one choice state with highlighted choice option - ended as soon as valid key pressed
 const maxTwoChoiceTime = 3.0; // max time in two choice state with highlighted choice option - ended as soon as valid key pressed
-const maxTestChoiceTime = 10.0; // max time with highlighted options in test phase
+const maxTestChoiceTime = 3.0; // max time with highlighted options in test phase
 const afterChoiceTimeNoReward = 2.0; // time after valid choice with no reward
 const afterChoiceTimeReward = 2.5; // time after valid choice with reward presentation
 const fadeoutTime = 0.5; // fadeout duration after each trial (and intro/outro component)
@@ -45,14 +45,13 @@ let componentOnset = null; // onset time for each component
 function prepareComponentFlow() { // prepare list of what we should show
 
     // read out link components
-    //example link: http://127.0.0.1:9000/publix/xJoZc2UPD10?participant=30620126hqIHzHP2GhTvxYt
-    //let urlQuery = jatos.urlQueryParameters.participant;
+    // example link: http://127.0.0.1:9000/publix/xJoZc2UPD10?participant=30620126hqIHzHP2GhTvxYt
+    // let urlQuery = jatos.urlQueryParameters.participant;
     let urlQuery = '30620126hqIHzHP2GhTvxYt';
     participantID = Number(urlQuery.substr(0,4)); 
     runningID = Number(urlQuery.substr(4,3));
     console.log(runningID);
     backCode = urlQuery.substr(7,urlQuery.length-7);
-    //participantID = 25; // get from JATOS
 
     componentFlow.push( // add StaticComponents to componentFlow array
         StaticComponents.Intro1, 
@@ -253,46 +252,47 @@ class TestState {
 function defineLearningPhaseStartStates(correctFirstStateActionLearning) { 
     let startStatesFirstSection = Array(2).fill(1);
 
-    let startStatesSecondSection = [
-        Array(2).fill(1),
-        Array(2).fill(2),
-        Array(2).fill(3),
-        Array(2).fill(4),
-        Array(2).fill(5),
-        Array(2).fill(6),
-        Array(2).fill(7),
-        Array(2).fill(8),
-        Array(2).fill(9)
-    ];
+    // let startStatesSecondSection = [
+    //     Array(5).fill(1),
+    //     Array(2).fill(2),
+    //     Array(2).fill(3),
+    //     Array(2).fill(4),
+    //     Array(2).fill(5),
+    //     Array(2).fill(6),
+    //     Array(1).fill(7),
+    //     Array(1).fill(8),
+    //     Array(1).fill(9)
+    // ];
 
-    let startStatesThirdSection = function() {
+    // let startStatesThirdSection = function() {
 
-        if (correctFirstStateActionLearning == "right") {
-            return [
-                Array(6).fill(1),
-                Array(8).fill(2),
-                Array(4).fill(3),
-            ];
-        }
-        else {
-            return [
-                Array(6).fill(1),
-                Array(4).fill(2),
-                Array(8).fill(3),
-            ];
-        }
+    //     if (correctFirstStateActionLearning == "right") {
+    //         return [
+    //             Array(6).fill(1),
+    //             Array(8).fill(2),
+    //             Array(4).fill(3),
+    //         ];
+    //     }
+    //     else {
+    //         return [
+    //             Array(6).fill(1),
+    //             Array(4).fill(2),
+    //             Array(8).fill(3),
+    //         ];
+    //     }
     
-    }();
+    // }();
     
 
-    let flattenedStartStatesSecondSection = [].concat.apply([], startStatesSecondSection); // flatten: 1,1,1,1,1,1,1,1,1,1,2,2,2,2,3,3,3,4,4,4,5,5,5 etc.
-    let shuffledStartStatesSecondSection = shuffle(flattenedStartStatesSecondSection);
+    // let flattenedStartStatesSecondSection = [].concat.apply([], startStatesSecondSection); // flatten: 1,1,1,1,1,1,1,1,1,1,2,2,2,2,3,3,3,4,4,4,5,5,5 etc.
+    // let shuffledStartStatesSecondSection = shuffle(flattenedStartStatesSecondSection);
 
 
-    let flattenedStartStatesThirdSection = [].concat.apply([], startStatesThirdSection); // flatten: 1,1,1,1,1,1,1,1,1,1,2,2,2,2,3,3,3,4,4,4,5,5,5 etc.
-    let shuffledStartStatesThirdSection = shuffle(flattenedStartStatesThirdSection);
+    // let flattenedStartStatesThirdSection = [].concat.apply([], startStatesThirdSection); // flatten: 1,1,1,1,1,1,1,1,1,1,2,2,2,2,3,3,3,4,4,4,5,5,5 etc.
+    // let shuffledStartStatesThirdSection = shuffle(flattenedStartStatesThirdSection);
 
-    let allStartStates = startStatesFirstSection.concat(shuffledStartStatesSecondSection, shuffledStartStatesThirdSection);
+    // let allStartStates = startStatesFirstSection.concat(shuffledStartStatesSecondSection, shuffledStartStatesThirdSection);
+    let allStartStates = startStatesFirstSection
 
     return allStartStates;
 };

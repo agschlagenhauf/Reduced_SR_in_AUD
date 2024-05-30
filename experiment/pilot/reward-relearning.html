@@ -29,7 +29,7 @@
                 // read wich first state action is correct, defined in prepareComponentFlow called in intro1 if first component
                 const correctFirstStateActionLearning = jatos.studySessionData["reward"]["correct_first_state_action_learning"];
 
-                const correctFirstStateActionRelearning = null;
+                let correctFirstStateActionRelearning = null;
 
                 if (correctFirstStateActionLearning == "right") {
                     correctFirstStateActionRelearning = "left";
@@ -61,7 +61,7 @@
                 
 
                 const initialStateNumbers = shuffle([7, 7, 7, 7, 8, 8, 8, 8, 9, 9, 9, 9]);
-                let trialIndex = 1; // one-based
+                let trialIndex = 11; // one-based
 
                 let componentData = {
                     'participant_ID':participantID, 
