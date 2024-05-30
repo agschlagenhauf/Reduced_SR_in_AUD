@@ -27,7 +27,7 @@
                 const stateRoomMap = jatos.studySessionData["control"]["state_room_map"]; // read shuffled image order defined in learning phase
 
                 // read wich first state action is correct, defined in prepareComponentFlow called in intro1 if first component
-                const correctFirstStateActionRelearning = jatos.studySessionData["control"]["correct_first_state_action_learning"];
+                let correctFirstStateActionRelearning = jatos.studySessionData["control"]["correct_first_state_action_learning"];
 
                 // OneChoiceState(number, imageName, preChoiceTime, maxChoiceTime, afterChoiceTimeNoReward, afterChoiceTimeReward, reward, nextState)
 

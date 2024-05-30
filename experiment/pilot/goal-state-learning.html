@@ -40,9 +40,7 @@
                 };
 
                 // save shuffled image order into study session data
-                jatos.studySessionData["goal-state"] = {
-                    "state_room_map": stateRoomMap
-                };
+                jatos.studySessionData["goal-state"]["state_room_map"] = stateRoomMap;
 
                 // read wich first state action is correct, defined in prepareComponentFlow called in intro1 if first component
                 const correctFirstStateActionLearning = jatos.studySessionData["goal-state"]["correct_first_state_action_learning"];
@@ -64,6 +62,7 @@
                             new OneChoiceState(9, stateRoomMap['9'], preChoiceTime, maxOneChoiceTime, afterChoiceTimeNoReward, afterChoiceTimeReward, 30, 10),
                             new OneChoiceState(10, stateRoomMap['10'], preChoiceTime, maxOneChoiceTime, afterChoiceTimeNoReward, afterChoiceTimeReward, null, null)
                         ];
+                    }
                     else {
                         return [ // define states
                             new TwoChoiceState(1, stateRoomMap['1'], preChoiceTime, maxTwoChoiceTime, afterChoiceTimeNoReward, 2, 3),
