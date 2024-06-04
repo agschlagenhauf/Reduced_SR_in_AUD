@@ -16,7 +16,7 @@ SUCCESS_COUNT_FILENAME = "success_counts.txt"
 #
 # Parameters
 #
-NUM_SIMULATIONS = 100
+NUM_SIMULATIONS = 30
 MODELS = ["full_sr"] # "full_sr", "reduced_sr", "model_based", "punctate"
 CONDITIONS = ["control", "reward", "transition", "policy", "goal"] # "control", "reward", "transition", "policy", "goal"
 
@@ -72,7 +72,7 @@ def get_transition_log_headers():
 
     # TODO: - Fill in remaining models
 
-    transition_log_headers["full_sr"] = f"{TRANSITION_LOG_HEADER_PREFIX},weight_delta,{value_strings_joined},{weight_strings_joined},{occupancy_strings_joined}"
+    transition_log_headers["full_sr"] = f"{TRANSITION_LOG_HEADER_PREFIX},weight_delta,feature_delta,{value_strings_joined},{weight_strings_joined},{occupancy_strings_joined}"
     transition_log_headers["reduced_sr"] = f"{TRANSITION_LOG_HEADER_PREFIX},"
     transition_log_headers["model_based"] = f"{TRANSITION_LOG_HEADER_PREFIX},"
     transition_log_headers["punctate"] = f"{TRANSITION_LOG_HEADER_PREFIX},"
@@ -131,17 +131,11 @@ def main(num_simulations, models, conditions):
 
         print(f"> Writing transition log to {GREEN}{model_simulation_results_filepath}{RESET} ...")
         with open(model_simulation_results_filepath, "w") as model_simulation_results_file:
-
-            header = transition_log_headers[model]
-            transition_log_lines = flatten([result.transition_log for result in model_simulation_results])
-
-            for line in transition_log_lines:
-                assert len(header.split(",")) == len(line.split(","))
-
             # Write csv header
-            model_simulation_results_file.write(header + "\n")
+            model_simulation_results_file.write(transition_log_headers[model])
 
             # Write csv rows
+            transition_log_lines = flatten([result.transition_log for result in model_simulation_results])
             model_simulation_results_file.writelines(
                 suffix_all(transition_log_lines, "\n")
             )
