@@ -1,0 +1,640 @@
+---
+title: "Reduced SR in AUD Pilot"
+author: "Milena Musial"
+date: 04.06.2024
+format: revealjs
+editor: visual
+---
+
+## Preps
+
+```{r}
+##### BEHAVIORAL DATA ANALYSIS 
+##### Milena Musial ###########
+##### 06 - 2024 ###############
+
+rm(list = ls(all = TRUE))
+
+##### Load packages
+packages <- c("ggplot2", "dplyr", "tidyr", "kableExtra")
+lapply(packages, library, character.only = TRUE)
+
+##### define paths
+data_path <- "C:/Users/musialm/OneDrive - Charité - Universitätsmedizin Berlin/PhD/04_B01/WP3/WP3_DATA/PILOT/02_03.06.2024/complete_and_incomplete_datasets"
+
+##### read dfs
+load(file.path(data_path, "pilot_data.RData"))
+```
+
+# Learning Phase: Correct choices
+
+## Percent correct per component and state
+
+```{r}
+aggregate_learning_correct_df <- trial_df %>%
+  filter(phase == "learning",
+         state %in% c(1,2,3)
+         ) %>%
+  group_by(component, state) %>%
+  summarise(mean_correct = mean(correct, na.rm = TRUE),
+            se_correct = sd(correct, na.rm = TRUE)/sqrt(n())
+            ) %>%
+  mutate(state=as.factor(state))
+
+aggregate_learning_correct_df %>%
+  kable("html") %>%
+  kable_styling(font_size = 16,
+                latex_options = "scale_down")
+
+#knitr::kable(head(aggregate_learning_correct_df),format = "html")
+```
+
+## Percent correct per component and state
+
+Comparable learning performance across conditions
+
+```{r}
+# bar plot
+ggplot(aggregate_learning_correct_df, aes(x=component, y=mean_correct, fill=state)) +
+  geom_bar(stat="identity", position=position_dodge()) +
+  geom_errorbar(aes(ymin=mean_correct-se_correct, ymax=mean_correct+se_correct), width=.2,
+                position=position_dodge(.9)) +
+  theme_minimal() +
+  scale_y_continuous(limits = c(0, 1)) +
+  theme_minimal() +
+  scale_fill_manual(values=c('lightblue','#E69F00','seagreen'))
+
+```
+
+## Percent correct all states per component over time
+```{r}
+# get percent correct over time
+aggregate_learning_correct_time_df <- trial_df %>%
+  filter(phase == "learning",
+         state %in% c(1,2,3)
+         ) %>%
+  mutate(time_bin = cut(
+    trial,
+    breaks = 4,
+    labels = c("T1", "T2", "T3", "T4")
+    )
+  ) %>%
+  group_by(component, time_bin) %>%
+  summarise(mean_correct = mean(correct, na.rm = TRUE),
+            se_correct = sd(correct, na.rm = TRUE)/sqrt(n())
+            )
+
+aggregate_learning_correct_time_df %>%
+  kable("html") %>%
+  kable_styling(font_size = 14,
+                latex_options = "scale_down")
+```
+
+## Percent correct all states per component over time
+
+Learning performance increases over time in all conditions
+
+```{r}
+ggplot(aggregate_learning_correct_time_df, aes(x=component, y=mean_correct, fill=time_bin)) +
+  geom_bar(stat="identity", position=position_dodge()) +
+  geom_errorbar(aes(ymin=mean_correct-se_correct, ymax=mean_correct+se_correct), width=.2,
+                position=position_dodge(.9)) +
+  scale_y_continuous(limits = c(0, 1)) +
+  theme_minimal() +
+  scale_fill_manual(values=c('lightblue','#E69F00','seagreen','grey'))
+```
+
+## Percent correct state 1 over time
+```{r}
+# get percent correct over time
+aggregate_learning_correct_time_df <- trial_df %>%
+  filter(phase == "learning",
+         state %in% c(1)
+         ) %>%
+  mutate(time_bin = cut(
+    trial,
+    breaks = 4,
+    labels = c("T1", "T2", "T3", "T4")
+    )
+  ) %>%
+  group_by(component, time_bin) %>%
+  summarise(mean_correct_state_1 = mean(correct_state_1, na.rm = TRUE),
+            se_correct_state_1 = sd(correct_state_1, na.rm = TRUE)/sqrt(n())
+            )
+
+aggregate_learning_correct_time_df %>%
+  kable("html") %>%
+  kable_styling(font_size = 14,
+                latex_options = "scale_down")
+```
+
+## Percent correct state 1 over time
+
+Learning performance in state 1 increases over time in all conditions
+
+```{r}
+# bar plot state 1
+ggplot(aggregate_learning_correct_time_df, aes(x=component, y=mean_correct_state_1, fill=time_bin)) +
+  geom_bar(stat="identity", position=position_dodge()) +
+  geom_errorbar(aes(ymin=mean_correct_state_1-se_correct_state_1, ymax=mean_correct_state_1+se_correct_state_1), width=.2, position=position_dodge(.9)) +
+  scale_y_continuous(limits = c(0, 1)) +
+  theme_minimal() +
+  scale_fill_manual(values=c('lightblue','#E69F00','seagreen','grey'))
+
+```
+
+## Percent correct all states per condition index
+```{r}
+# get percent correct over time
+aggregate_learning_correct_order_df <- trial_df %>%
+  mutate(condition_index = as.factor(condition_index)) %>%
+  filter(phase == "learning",
+         state %in% c(1,2,3)
+         ) %>%
+  group_by(condition_index, component) %>%
+  summarise(mean_correct = mean(correct, na.rm = TRUE),
+            se_correct = sd(correct, na.rm = TRUE)/sqrt(n())
+            )
+
+aggregate_learning_correct_order_df %>%
+  kable("html") %>%
+  kable_styling(font_size = 14,
+                latex_options = "scale_down")
+```
+
+## Percent correct all states per condition index
+
+Slightly increased learning performance in later conditions
+
+```{r}
+# bar plot
+ggplot(aggregate_learning_correct_order_df, aes(x=condition_index, y=mean_correct, fill=component)) +
+  geom_bar(stat="identity", position=position_dodge()) +
+  geom_errorbar(aes(ymin=mean_correct-se_correct, ymax=mean_correct+se_correct), width=.2, position=position_dodge(.9)) +
+  scale_y_continuous(limits = c(0, 1)) +
+  theme_minimal() +
+  scale_fill_manual(values=c('lightblue','#E69F00','seagreen','grey'))
+
+```
+
+## Balancing check: Condition index per condition
+
+Balancing between conditions and index successful
+
+```{r}
+# get percent correct over time
+aggregate_learning_order_df <- component_df %>%
+  mutate(condition_index = as.factor(condition_index)) %>%
+  filter(phase == "learning"
+         ) %>%
+  group_by(condition_index, component) %>%
+  summarise(n = n()
+            )
+
+aggregate_learning_order_df %>%
+  kable("html") %>%
+  kable_styling(font_size = 14,
+                latex_options = "scale_down")
+```
+
+## Percent correct all states per environment
+```{r}
+# get percent correct over time
+aggregate_learning_correct_env_df <- trial_df %>%
+  mutate(environment = as.factor(environment)) %>%
+  filter(phase == "learning",
+         state %in% c(1,2,3)
+         ) %>%
+  group_by(environment, component) %>%
+  summarise(mean_correct = mean(correct, na.rm = TRUE),
+            se_correct = sd(correct, na.rm = TRUE)/sqrt(n())
+            )
+
+aggregate_learning_correct_env_df %>%
+  kable("html") %>%
+  kable_styling(font_size = 14,
+                latex_options = "scale_down")
+```
+
+## Percent correct all states per environment
+
+Every condition works particularly well in one environment
+Environments comparable
+
+```{r}
+# bar plot
+ggplot(aggregate_learning_correct_env_df, aes(x=environment, y=mean_correct, fill=component)) +
+  geom_bar(stat="identity", position=position_dodge()) +
+  geom_errorbar(aes(ymin=mean_correct-se_correct, ymax=mean_correct+se_correct), width=.2, position=position_dodge(.9)) +
+  scale_y_continuous(limits = c(0, 1)) +
+  theme_minimal() +
+  scale_fill_manual(values=c('lightblue','#E69F00','seagreen','grey'))
+
+```
+## Inclusion criterion: >2 correct choices in each of last 4 2-choice states
+
+```{r}
+# get last 4 choices per ID, component, state
+learning_trial_state_1_df <- trial_df %>%
+  filter(phase == "learning",
+         state == 1) %>%
+  group_by(ID, component) %>%
+  slice_tail(n=4)
+
+learning_trial_state_2_df <- trial_df %>%
+  filter(phase == "learning",
+         state == 2) %>%
+  group_by(ID, component) %>%
+  slice_tail(n=4)
+
+learning_trial_state_3_df <- trial_df %>%
+  filter(phase == "learning",
+         state == 3) %>%
+  group_by(ID, component) %>%
+  slice_tail(n=4)
+
+# who does not state 1 pass criterion
+aggregate_learning_trial_state_1_df_all <- learning_trial_state_1_df %>%
+  group_by(ID, component, condition) %>%
+  summarise(sum_correct = sum(correct_state_1))
+
+aggregate_learning_trial_state_1_df_excl <- aggregate_learning_trial_state_1_df_all %>% 
+  filter(sum_correct < 3) %>%
+  mutate(ID_condition_combo = paste(ID, "-", condition, sep=""))
+
+# who does not state 2 pass criterion
+aggregate_learning_trial_state_2_df_all <- learning_trial_state_2_df %>%
+  group_by(ID, component, condition) %>%
+  summarise(sum_correct = sum(correct_state_2))
+
+aggregate_learning_trial_state_2_df_excl <- aggregate_learning_trial_state_2_df_all %>% 
+  filter(sum_correct < 3) %>%
+  mutate(ID_condition_combo = paste(ID, "-", condition, sep=""))
+
+# who does not state 3 pass criterion
+aggregate_learning_trial_state_3_df_all <- learning_trial_state_3_df %>%
+  group_by(ID, component, condition) %>%
+  summarise(sum_correct = sum(correct_state_3))
+
+aggregate_learning_trial_state_3_df_excl <- aggregate_learning_trial_state_3_df_all %>% 
+  filter(sum_correct < 3) %>%
+  mutate(ID_condition_combo = paste(ID, "-", condition, sep=""))
+
+# excluded components
+excluded_components <- unique(c(aggregate_learning_trial_state_1_df_excl$ID_condition_combo, 
+                                aggregate_learning_trial_state_2_df_excl$ID_condition_combo,
+                                aggregate_learning_trial_state_3_df_excl$ID_condition_combo))
+
+percent_component_excluded <- length(excluded_components)/nrow(aggregate_learning_trial_state_1_df_all)
+
+
+# how many subjects don't pass criterion in at least condition
+excluded_IDs <- unique(c(aggregate_learning_trial_state_1_df_excl$ID, 
+                                aggregate_learning_trial_state_2_df_excl$ID,
+                                aggregate_learning_trial_state_3_df_excl$ID))
+
+percent_IDs_excluded <- length(excluded_IDs)/length(unique(trial_df$ID))
+```
+
+-   \% excluded components
+
+```{r}
+percent_component_excluded
+```
+
+-   \% excluded IDs
+
+```{r}
+percent_IDs_excluded
+```
+
+## Alternative inclusion criterion: >= 75% correct during learning overall
+
+```{r}
+# get choices per ID, component, state
+learning_trial_state_1_df <- trial_df %>%
+  filter(phase == "learning",
+         state == 1)
+
+learning_trial_state_2_df <- trial_df %>%
+  filter(phase == "learning",
+         state == 2)
+
+learning_trial_state_3_df <- trial_df %>%
+  filter(phase == "learning",
+         state == 3)
+
+# who does not state 1 pass criterion
+aggregate_learning_trial_state_1_df_all <- learning_trial_state_1_df %>%
+  group_by(ID, component, condition) %>%
+  summarise(mean_correct = mean(correct_state_1))
+
+aggregate_learning_trial_state_1_df_excl <- aggregate_learning_trial_state_1_df_all %>% 
+  filter(mean_correct < 0.75) %>%
+  mutate(ID_condition_combo = paste(ID, "-", condition, sep=""))
+
+# who does not state 2 pass criterion
+aggregate_learning_trial_state_2_df_all <- learning_trial_state_2_df %>%
+  group_by(ID, component, condition) %>%
+  summarise(mean_correct = mean(correct_state_2))
+
+aggregate_learning_trial_state_2_df_excl <- aggregate_learning_trial_state_2_df_all %>% 
+  filter(mean_correct < 0.75) %>%
+  mutate(ID_condition_combo = paste(ID, "-", condition, sep=""))
+
+# who does not state 3 pass criterion
+aggregate_learning_trial_state_3_df_all <- learning_trial_state_3_df %>%
+  group_by(ID, component, condition) %>%
+  summarise(mean_correct = mean(correct_state_3))
+
+aggregate_learning_trial_state_3_df_excl <- aggregate_learning_trial_state_3_df_all %>% 
+  filter(mean_correct < 0.75) %>%
+  mutate(ID_condition_combo = paste(ID, "-", condition, sep=""))
+
+# excluded components
+excluded_components_a <- unique(c(aggregate_learning_trial_state_1_df_excl$ID_condition_combo, 
+                                aggregate_learning_trial_state_2_df_excl$ID_condition_combo,
+                                aggregate_learning_trial_state_3_df_excl$ID_condition_combo))
+
+percent_component_excluded_a <- length(excluded_components_a)/nrow(aggregate_learning_trial_state_1_df_all)
+
+
+# how many subjects don't pass criterion in at least condition
+excluded_IDs_a <- unique(c(aggregate_learning_trial_state_1_df_excl$ID, 
+                         aggregate_learning_trial_state_2_df_excl$ID,
+                         aggregate_learning_trial_state_3_df_excl$ID))
+
+percent_IDs_excluded_a <- length(excluded_IDs_a)/length(unique(trial_df$ID))
+```
+
+-   \% excluded components
+
+```{r}
+percent_component_excluded_a
+```
+
+-   \% excluded IDs
+
+```{r}
+percent_IDs_excluded_a
+```
+
+For now, choose Momennejad criterion to exclude components for test phase.
+
+# Re-Learning Phase: Correct choices
+
+## Transition revaluation: Percent correct per state
+```{r}
+aggregate_relearning_correct_df <- trial_df %>%
+  filter(phase == "relearning",
+         state %in% c(2,3)
+         ) %>%
+  group_by(component, state) %>%
+  summarise(mean_correct = mean(correct, na.rm = TRUE),
+            se_correct = sd(correct, na.rm = TRUE)/sqrt(n())
+            ) %>%
+  mutate(state=as.factor(state))
+
+aggregate_relearning_correct_df %>%
+  kable("html") %>%
+  kable_styling(font_size = 16,
+                latex_options = "scale_down")
+
+#knitr::kable(head(aggregate_learning_correct_df),format = "html")
+```
+
+## Transition revaluation: Percent correct per state
+
+Only chance probability of choosing correctly 
+
+```{r}
+# bar plot
+ggplot(aggregate_relearning_correct_df, aes(x=component, y=mean_correct, fill=state)) +
+  geom_bar(stat="identity", position=position_dodge()) +
+  geom_errorbar(aes(ymin=mean_correct-se_correct, ymax=mean_correct+se_correct), width=.2,
+                position=position_dodge(.9)) +
+  theme_minimal() +
+  scale_y_continuous(limits = c(0, 1)) +
+  theme_minimal() +
+  scale_fill_manual(values=c('lightblue','#E69F00','seagreen'))
+
+```
+## Transition revaluation: Percent correct all states per condition index
+```{r}
+# get percent correct over time
+aggregate_relearning_correct_order_df <- trial_df %>%
+  mutate(condition_index = as.factor(condition_index)) %>%
+  filter(phase == "relearning",
+         state %in% c(2,3)
+         ) %>%
+  group_by(condition_index, component) %>%
+  summarise(mean_correct = mean(correct, na.rm = TRUE),
+            se_correct = sd(correct, na.rm = TRUE)/sqrt(n())
+            )
+
+aggregate_relearning_correct_order_df %>%
+  kable("html") %>%
+  kable_styling(font_size = 14,
+                latex_options = "scale_down")
+```
+
+## Transition revaluation: Percent correct all states per condition index
+
+Slightly increased transition relearning performance in later components
+```{r}
+# bar plot
+ggplot(aggregate_relearning_correct_order_df, aes(x=condition_index, y=mean_correct, fill=component)) +
+  geom_bar(stat="identity", position=position_dodge()) +
+  geom_errorbar(aes(ymin=mean_correct-se_correct, ymax=mean_correct+se_correct), width=.2, position=position_dodge(.9)) +
+  scale_y_continuous(limits = c(0, 1)) +
+  theme_minimal() +
+  scale_fill_manual(values=c('lightblue','#E69F00','seagreen','grey'))
+
+```
+## Transition revaluation: Percent correct all states per environment
+```{r}
+# get percent correct over time
+aggregate_relearning_correct_env_df <- trial_df %>%
+  mutate(environment = as.factor(environment)) %>%
+  filter(phase == "relearning",
+         state %in% c(2,3)
+         ) %>%
+  group_by(environment, component) %>%
+  summarise(mean_correct = mean(correct, na.rm = TRUE),
+            se_correct = sd(correct, na.rm = TRUE)/sqrt(n())
+            )
+
+aggregate_relearning_correct_env_df %>%
+  kable("html") %>%
+  kable_styling(font_size = 14,
+                latex_options = "scale_down")
+```
+
+## Transition revaluation: Percent correct all states per environment
+
+Transition relearning performance comparable across environments
+
+```{r}
+# bar plot
+ggplot(aggregate_relearning_correct_env_df, aes(x=environment, y=mean_correct, fill=component)) +
+  geom_bar(stat="identity", position=position_dodge()) +
+  geom_errorbar(aes(ymin=mean_correct-se_correct, ymax=mean_correct+se_correct), width=.2, position=position_dodge(.9)) +
+  scale_y_continuous(limits = c(0, 1)) +
+  theme_minimal() +
+  scale_fill_manual(values=c('lightblue','#E69F00','seagreen','grey'))
+
+```
+
+# Test Phase: Correct choices
+
+## Correct test choices per component
+
+```{r}
+# Exclude from all dfs
+trial_df <- trial_df %>%
+  mutate(ID_condition_combo = paste(ID, "-", condition, sep="")) %>%
+  filter(! ID_condition_combo %in% excluded_components)
+
+component_df <- component_df %>%
+  mutate(ID_condition_combo = paste(ID, "-", condition, sep="")) %>%
+  filter(! ID_condition_combo %in% excluded_components)
+```
+
+```{r}
+aggregate_test_df <- trial_df %>%
+  filter(phase == "test") %>%
+  group_by(component) %>%
+  summarise(n_components = n(),
+            sum_correct = sum(correct, na.rm=T),
+            percent_correct = mean(correct, na.rm=T),
+            se_correct = sd(correct, na.rm = TRUE)/sqrt(n()))
+
+aggregate_test_df %>%
+  kable("html") %>%
+  kable_styling(font_size = 14,
+                latex_options = "scale_down")
+```
+
+## Correct test choices per component {.smaller}
+
+- Control as expected
+- transition better than expected
+- reward worse than expected
+- goal-state < transition --> suggests reduced SR use
+
+```{r}
+# bar plot
+ggplot(aggregate_test_df, aes(x=component, y=percent_correct)) +
+  geom_bar(stat="identity", fill="lightblue") +
+  geom_errorbar(aes(ymin=percent_correct-se_correct, ymax=percent_correct+se_correct), width=.2, position=position_dodge(.9)) +
+  scale_y_continuous(limits = c(0, 1)) +
+  theme_minimal()
+```
+
+## Correct test choices per condition index
+```{r}
+# get percent correct over time
+aggregate_test_correct_order_df <- trial_df %>%
+  mutate(condition_index = as.factor(condition_index)) %>%
+  filter(phase == "test"
+         ) %>%
+  group_by(condition_index, component) %>%
+  summarise(mean_correct = mean(correct, na.rm = TRUE),
+            se_correct = sd(correct, na.rm = TRUE)/sqrt(n())
+            )
+
+aggregate_test_correct_order_df %>%
+  kable("html") %>%
+  kable_styling(font_size = 14,
+                latex_options = "scale_down")
+```
+
+## Correct test choices per condition index {.smaller}
+
+- control more successful the earlier
+- transition more successful the later
+- goal-state never successful when 2nd?!
+
+```{r}
+# bar plot
+ggplot(aggregate_test_correct_order_df, aes(x=condition_index, y=mean_correct, fill=component)) +
+  geom_bar(stat="identity", position=position_dodge()) +
+  geom_errorbar(aes(ymin=mean_correct-se_correct, ymax=mean_correct+se_correct), width=.2, position=position_dodge(.9)) +
+  scale_y_continuous(limits = c(0, 1)) +
+  theme_minimal() +
+  scale_fill_manual(values=c('lightblue','#E69F00','seagreen','grey'))
+
+```
+## Correct test choices per environment
+```{r}
+# get percent correct over time
+aggregate_test_correct_env_df <- trial_df %>%
+  mutate(environment = as.factor(environment)) %>%
+  filter(phase == "test"
+         ) %>%
+  group_by(environment, component) %>%
+  summarise(mean_correct = mean(correct, na.rm = TRUE),
+            se_correct = sd(correct, na.rm = TRUE)/sqrt(n())
+            )
+
+aggregate_test_correct_env_df %>%
+  kable("html") %>%
+  kable_styling(font_size = 14,
+                latex_options = "scale_down")
+```
+
+## Correct test choices per environment
+
+- control most successful in light_blue env
+
+```{r}
+# bar plot
+ggplot(aggregate_test_correct_env_df, aes(x=environment, y=mean_correct, fill=component)) +
+  geom_bar(stat="identity", position=position_dodge()) +
+  geom_errorbar(aes(ymin=mean_correct-se_correct, ymax=mean_correct+se_correct), width=.2, position=position_dodge(.9)) +
+  scale_y_continuous(limits = c(0, 1)) +
+  theme_minimal() +
+  scale_fill_manual(values=c('lightblue','#E69F00','seagreen','grey'))
+
+```
+
+# Reaction times
+
+## RT per condition and phase
+
+```{r}
+aggregate_trial_RT_df <- trial_df %>%
+  filter(component %in% c("control-learning",
+                          "control-relearning",
+                          "control-test",
+                          "reward-learning",
+                          "reward-relearning",
+                          "reward-test",
+                          "transition-learning",
+                          "transition-relearning",
+                          "transition-test",
+                          "goal-state-learning",
+                          "goal-state-relearning",
+                          "goal-state-test")) %>%
+  group_by(phase, condition) %>%
+  summarise(mean_RT = mean(RT),
+            se_RT = sd(RT, na.rm = TRUE)/sqrt(n()))
+
+aggregate_trial_RT_df %>%
+  kable("html") %>%
+  kable_styling(font_size = 14,
+                latex_options = "scale_down")
+```
+
+## RT per condition and phase {.smaller}
+
+- slower RT in test trial
+- lowest RT in test control
+
+```{r}
+ggplot(trial_df, aes(x=phase, y=RT, fill = condition)) +
+  geom_boxplot() +
+  scale_y_continuous(labels = scales::comma) +
+  theme_minimal() +
+  scale_fill_manual(values=c('lightblue','#E69F00','seagreen','grey'))
+```
