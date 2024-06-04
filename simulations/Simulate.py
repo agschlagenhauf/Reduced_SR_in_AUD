@@ -55,7 +55,7 @@ def run_simulations(model, condition, num_simulations):
     #
     alpha = 0.9
     gamma = 0.95
-    explore_chance = 0.2
+    explore_chance = 0.25
     end_state = 10
     num_pairs = 13 # (state, action) pairs
     num_states = 10
