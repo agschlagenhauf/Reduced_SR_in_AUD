@@ -33,7 +33,7 @@ def run_simulations(model, condition, num_simulations):
     Runs a number of simulations of a given model, including the learning, relearning, and test phases.
 
     Arguments:
-        - model: str, e.g. "punctate", "full_sr", "reduced_sr"
+        - model: str, e.g. "model_free", "full_sr", "reduced_sr"
         - condition: str, e.g. "control", "reward", "transition", "policy", "goal"
         - num_simulations: int, number of simulations to run
 
@@ -85,7 +85,10 @@ def run_simulations(model, condition, num_simulations):
         #
         # Initialize Model-Specific Parameters
         #
-        if model == "punctate":
+
+        ###### model-free ######
+        if model == "model_free":
+
             v_state = []
 
             for j in range(len(rewards)):
@@ -94,7 +97,9 @@ def run_simulations(model, condition, num_simulations):
                     row.append(0)
                 v_state.append(row)
 
-            model_parameters = v_state
+            model_parameters = [v_state]
+
+        ###### model-based ######
         elif model == "model_based":
             v_state = []
             init_weight = []
@@ -108,10 +113,14 @@ def run_simulations(model, condition, num_simulations):
 
             init_t_counts = np.zeros((num_pairs, num_states))
             model_parameters = [v_state, init_t_counts, init_weight]
+
+
+        ###### full & reduced SR ######
         else:
-            init_sr = np.identity(num_pairs) # init M with identity matrix as in Russek et al. 2017
-            init_sr[-1,:] = 0 # set terminal state row to 0 as in Russek et al. 2017
             init_weight = np.zeros(num_pairs)
+            init_sr = np.identity(num_pairs)  # init M with identity matrix as in Russek et al. 2017
+            #init_sr[-1, :] = 0  # set terminal state row to 0 as in Russek et al. 2017
+
             model_parameters = [num_pairs, init_sr, init_weight]
 
         #

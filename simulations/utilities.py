@@ -18,6 +18,7 @@ def safe_divide(numerator, denominator):
     else:
         return float(numerator) / float(denominator)
 
+
 def comma_separate(items):
     return ",".join([str(item) for item in items])
 

@@ -1,32 +1,12 @@
 #
-# model_based.py
+# model_free.py
 #
 
 import numpy as np
 import random as rd
 from utilities import *
 
-from utilities import *
-
-def policy(values, explore_chance):
-    '''
-    Finds the probability of choosing each action of a given state under the current policy
-    Inputs:
-        values: 1D list of the calculated Q-values of all actions from a single state
-        explore-chance: probability that the current policy will choose a random action
-    Output: policy - the probability that each action will be chosen
-    '''
-    if np.all([i == values[0] for i in values]):
-        policy = np.repeat((1 / len(values)), len(values))
-    else:
-        policy = np.repeat((explore_chance / len(values)), len(values))
-        policy[np.argmax(values)] += 1 - explore_chance
-    return policy
-
-#
-# Run Trial
-#
-def run_trial(gamma, alpha, explore_chance, end_state, start_state, rewards, transitions, v_state, t_counts, weight):
+def run_trial(gamma, alpha, explore_chance, end_state, start_state, rewards, transitions, v_state):
     '''
     Simulates a single episode, from the given start state until an end state is reached
     Inputs:
@@ -37,135 +17,97 @@ def run_trial(gamma, alpha, explore_chance, end_state, start_state, rewards, tra
         start_state: state that the agent starts in
         rewards: list of rewards corresponding to each action
         transitions: list of valid transitions from each state
-        num_pairs: the number of state-action pairs
-        t_counts:
-        weight:
+        v_state: calculated Q-values of each state-action pair (should generally be initialized as zeroes)
+        state_list: states visited at each time step
+        action_list: actions taken at each time step
+        RPE_list: reward prediction error for each time step
+        value_list: each state-action pair's Q-values at each time step
     Outputs:
-        feat, weight: values updated after the current episode
+        v_state: Q-values updated after the current episode
         state_list, action_list, RPE_list, value_list: with episode's values appended to the end
-        timestep_list: Total number of timesteps in this episode, used to pad all logs to the same length
     '''
-    # initialize
+
     current_state = start_state - 1
     transition_log_lines = []  # all transitions per trial
-    # Transition matrix is a normalized count of the number of times each state follows directly from each state-action pair
-    # In our case, transitions are deterministic so this effectively be a one-hot array
-    # Normalized means: no absolute counts (stored in t_counts), but relative probability
-    t_matrix = np.zeros((len(flatten(rewards)), len(rewards)))
-
+    
     while True:
 
         if (current_state + 1) == start_state:
+
             # Determine the next state, either a random subsequent state or the highest-value one based on the exploration parameter
+            # Determine the next state, either a random subsequent state or the highest-value subsequent state, depending on the exploration parameter
             next_values = v_state[current_state]
             # If the next action values are all the same we also choose randomly to avoid argmax defaulting to the first action
             if np.random.uniform() < explore_chance or np.all([i == next_values[0] for i in next_values]):
                 next_move = np.random.randint(len(transitions[current_state]))
             else:
                 next_move = np.argmax(next_values)  # get index of max value
-
             next_state = transitions[current_state][next_move] - 1  # get next state
 
-            # Determine the next state, either a random subsequent state or the highest-value one based on the exploration parameter
+            # Determine the action taken from the NEXT state, either the best action or a random one, depending on the exploration parameter
+            # By having a random explore chance, we ensure that the successor matrix represents all possible successor actions, but has larger values for the
+            # highest-reward ones.
             second_next_values = v_state[next_state]
             # If the next action values are all the same we also choose randomly to avoid argmax defaulting to the first action
             if np.random.uniform() < explore_chance or np.all([i == second_next_values[0] for i in second_next_values]):
                 second_next_move = np.random.randint(len(transitions[next_state]))
             else:
                 second_next_move = np.argmax(second_next_values)  # get index of max value
-
             second_next_state = transitions[next_state][second_next_move] - 1  # get second next state
 
-            # Update weights with TD learning
+            # Update Q-values with TD learning on reward obtained
             reward = rewards[current_state][next_move]
-            weight_delta = reward + gamma * v_state[next_state][second_next_move] - \
-                           v_state[current_state][next_move]  # get weight prediction error
-            weight[current_state][next_move] += alpha * weight_delta  # update weight
-
-            # Update the Q-values according to the Bellman Equation
-            next_state_values = [np.sum(v_state[state] * policy(v_state[state], explore_chance)) for state in range(len(rewards))]
-            for i in range(len(rewards)):
-                for j in range(len(rewards[i])):
-                    v_state[i][j] = weight[i][j] + gamma * np.sum(t_matrix[get_flattened_index(rewards, i, j)] * next_state_values)
+            delta = reward + gamma * v_state[next_state][second_next_move] - v_state[current_state][next_move]
+            v_state[current_state][next_move] += alpha * delta
 
             # Transition log line: state,action,reward,weight_delta,feature_delta,{values},{weights},{flattened_features}
             transition_log_lines.append(
-                f"{current_state + 1},{next_move + 1},{weight_delta},{comma_separate(v_state)},{comma_separate(weight)},{comma_separate(flatten(t_matrix))}"
+                f"{current_state + 1},{next_move + 1},{comma_separate(v_state)}"
             )
 
             # Move to the next state
-            last_state = current_state
-            last_move = next_move
             current_state = next_state
             next_move = second_next_move
             next_state = second_next_state
 
         elif (current_state + 1) != end_state:
-            # Determine the next state, either a random subsequent state or the highest-value one based on the exploration parameter
+
+            # Determine the action taken from the NEXT state, either the best action or a random one, depending on the exploration parameter
+            # By having a random explore chance, we ensure that the successor matrix represents all possible successor actions, but has larger values for the
+            # highest-reward ones.
             second_next_values = v_state[next_state]
             # If the next action values are all the same we also choose randomly to avoid argmax defaulting to the first action
             if np.random.uniform() < explore_chance or np.all([i == second_next_values[0] for i in second_next_values]):
                 second_next_move = np.random.randint(len(transitions[next_state]))
             else:
-                second_next_move = np.argmax(second_next_values) # get index of max value
+                second_next_move = np.argmax(second_next_values)  # get index of max value
+            second_next_state = transitions[next_state][second_next_move] - 1  # get second next state
 
-            second_next_state = transitions[next_state][second_next_move] - 1 # get second next state
-
-            # Update transition counts and re-normalize
-            t_counts[get_flattened_index(transitions, last_state, last_move), current_state] += 1
-            for index, row in enumerate(t_counts):
-                if np.sum(row) == 0:
-                    t_matrix[index] = np.zeros(len(rewards))
-                else:
-                    t_matrix[index] = row / np.sum(row)
-
-            # Update weights with TD learning
+            # Update Q-values with TD learning on reward obtained
             reward = rewards[current_state][next_move]
-            weight_delta = reward + gamma * v_state[next_state][second_next_move] - \
-                           v_state[current_state][next_move] # get weight prediction error
-            weight[current_state][next_move] += alpha * weight_delta # update weight
-            
-            # Update the Q-values according to the Bellman Equation
-            for i in range(len(v_state)):
-                for j in range(len(v_state[i])):
-                    v_state[i][j] = weight[i][j] + gamma * np.sum(t_matrix[get_flattened_index(v_state, i, j)] * second_next_values)
+            delta = reward + gamma * v_state[next_state][second_next_move] - v_state[current_state][next_move]
+            v_state[current_state][next_move] += alpha * delta
 
             # Transition log line: state,action,reward,weight_delta,feature_delta,{values},{weights},{flattened_features}
             transition_log_lines.append(
-                f"{current_state + 1},{next_move + 1},{weight_delta},{comma_separate(v_state)},{comma_separate(weight)},{comma_separate(flatten(t_matrix))}"
+                f"{current_state + 1},{next_move + 1},{comma_separate(v_state)}"
             )
 
             # Move to the next state
-            last_state = current_state
-            last_move = next_move
             current_state = next_state
             next_move = second_next_move
             next_state = second_next_state
 
         elif (current_state + 1) == end_state:
 
-            # Update transition counts and re-normalize
-            t_counts[get_flattened_index(rewards, last_state, last_move), current_state] += 1
-            for index, row in enumerate(t_counts):
-                if np.sum(row) == 0:
-                    t_matrix[index] = np.zeros(len(rewards))
-                else:
-                    t_matrix[index] = row / np.sum(row)
-
-            # Update weights with TD learning
+            # Update Q-values with TD learning on reward obtained
             reward = rewards[current_state][next_move]
-            weight_delta = reward - v_state[current_state][next_move]  # get weight prediction error
-            weight[current_state][next_move] += alpha * weight_delta  # update weight
-
-            # Update the Q-values according to the Bellman Equation
-            for i in range(len(v_state)):
-                for j in range(len(v_state[i])):
-                    v_state[i][j] = weight[i][j] + gamma * np.sum(
-                        t_matrix[get_flattened_index(v_state, i, j)] * second_next_values)
+            delta = reward - v_state[current_state][next_move]
+            v_state[current_state][next_move] += alpha * delta
 
             # Transition log line: state,action,reward,weight_delta,feature_delta,{values},{weights},{flattened_features}
             transition_log_lines.append(
-                f"{current_state + 1},{next_move + 1},{weight_delta},{comma_separate(v_state)},{comma_separate(weight)},{comma_separate(flatten(t_matrix))}"
+                f"{current_state + 1},{next_move + 1},{comma_separate(v_state)}"
             )
 
             # end loop
@@ -173,8 +115,7 @@ def run_trial(gamma, alpha, explore_chance, end_state, start_state, rewards, tra
         else:
             assert False
 
-    return t_counts, weight, transition_log_lines
-
+    return v_state, transition_log_lines
 
 
 def learning(gamma, alpha, explore_chance, end_state, rewards, transitions, model_parameters):
@@ -187,15 +128,13 @@ def learning(gamma, alpha, explore_chance, end_state, rewards, transitions, mode
         end_state: list of states that are considered end states
         rewards: list of rewards corresponding to each action
         transitions: list of valid transitions from each state
-        model_parameters: the components of a successor representation, in order:
-            num_pairs: the number of state-action pairs
-            feat: the successor matrix (should generally be initialized with zeros)
-            weight: the weight vector (also generally initialized with zeros
+        v_state: calculated Q-values of each state-action pair (should generally be initialized as zeroes)
     Outputs:
-        model_parameters: calculated successor matrix and weight after pretraining
+        v_state: calculated state values after pretraining
         logging_lists: with new simulation's values appended to the end
+        
     '''
-    v_state, t_counts, weight = model_parameters
+    v_state = model_parameters[0]
 
     # Create start states
     start_states_1 = np.array([1, 1])
@@ -211,7 +150,7 @@ def learning(gamma, alpha, explore_chance, end_state, rewards, transitions, mode
     # Run trials
     transition_log = []
     for trial_index, start_state in enumerate(start_states):
-        t_counts, weight, transition_log_lines = run_trial(
+        v_state, transition_log_lines = run_trial(
             gamma,
             alpha,
             explore_chance,
@@ -219,15 +158,13 @@ def learning(gamma, alpha, explore_chance, end_state, rewards, transitions, mode
             start_state,
             rewards,
             transitions,
-            v_state,
-            t_counts,
-            weight
+            v_state
         )
 
         transition_log_lines = prefix_all(f"{trial_index + 1},", transition_log_lines)
         transition_log.extend(transition_log_lines)
 
-    new_params = [v_state, t_counts, weight]
+    new_params = [v_state]
         
     return new_params, transition_log
 
@@ -259,17 +196,12 @@ def relearning(condition, gamma, alpha, explore_chance, end_state, rewards, tran
         end_state: list of states that are considered end states
         rewards: list of rewards corresponding to each action
         transitions: list of valid transitions from each state
-        model parameters: the components of a successor representation, in order:
-            num_pairs: the number of state-action pairs
-            feat: the successor matrix, held over from the pretraining
-            weight: the weight vector, held over from pretraining
-
+        v_state: calculated Q-values of each state-action pair, held over from the pretraining
     Outputs:
-        model_parameters: calculated successor matrix and weight after pretraining
+        v_state: calculated state values after pretraining
         logging_lists: with new simulation's values appended to the end
     '''
-    # Unpack logging_lists and model parameters into component variables
-    v_state, t_counts, weight = model_parameters
+    v_state = model_parameters[0]
 
     # Create start states
     if condition == "transition":
@@ -281,7 +213,7 @@ def relearning(condition, gamma, alpha, explore_chance, end_state, rewards, tran
 
     transition_log = []
     for trial_index, start_state in enumerate(start_states):
-        t_counts, weight, transition_log_lines = run_trial(
+        v_state, transition_log_lines = run_trial(
             gamma,
             alpha,
             explore_chance,
@@ -289,37 +221,26 @@ def relearning(condition, gamma, alpha, explore_chance, end_state, rewards, tran
             start_state,
             rewards,
             transitions,
-            v_state,
-            t_counts,
-            weight
+            v_state
         )
 
         transition_log_lines = prefix_all(f"{trial_index + 1},", transition_log_lines)
         transition_log.extend(transition_log_lines)
 
-    new_params = [v_state, t_counts, weight]
+    new_params = [v_state]
+
         
     return new_params, transition_log
 
-
+'''
+Simulates the test phase by comparing the action values of the two possible starting-state actions. The test state action is assumed to always be 
+the higher-value choice
+Input: v_state: 2d list of Q-values (rows are states, columns are actions)
+Output: preferred starting state action
+'''
 def test(model_parameters):
-    '''
-    Simulates the test phase by comparing the action values of the two possible starting-state actions. The test state action is assumed to always be
-    the higher-value choice.
 
-    Arguments:
-        - model_parameters: [
-            - num_pairs: the number of state-action pairs
-            - feat: the successor matrix, held over from learning
-            - weight: the weight vector, held over from learning
-        ]
-
-    Returns: (
-        - action: int, (1 = left, 2 = right)
-        - transition_log: [str]
-    )
-    '''
-    v_state, t_counts, weight = model_parameters
+    v_state = model_parameters[0]
 
     action_index = np.argmax(v_state[0][0:2])
 
@@ -334,3 +255,4 @@ def test(model_parameters):
     transition_log_line = f"1,1,{action},0"
 
     return action, [transition_log_line]
+

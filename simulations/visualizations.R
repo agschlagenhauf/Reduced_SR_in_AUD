@@ -30,12 +30,3 @@ ggplot2::ggplot(data=full_sr_reward_sim6_learning, ggplot2::aes(x=transition)) +
   ggplot2::geom_line(ggplot2::aes(y = VS3A1), color = "orange") +
   ggplot2::geom_line(ggplot2::aes(y = VS3A2), color = "yellow") 
 
-ggplot2::ggplot(data=full_sr_reward_sim6_learning, ggplot2::aes(x=transition)) +
-  ggplot2::geom_line(ggplot2::aes(y = (OS1A1-S2A1), color = "darkred") +
-  ggplot2::geom_line(ggplot2::aes(y = OS1A1-S2A2), color = "pink") +
-  ggplot2::geom_line(ggplot2::aes(y = OS1A2-S3A1), color = "blue") +
-  ggplot2::geom_line(ggplot2::aes(y = OS1A2-S3A2), color = "green") 
-
-ggplot2::ggplot(data=full_sr_reward_sim6_relearning, ggplot2::aes(x=transition)) +
-  ggplot2::geom_line(ggplot2::aes(y = VS1A1), color = "darkred") +
-  ggplot2::geom_line(ggplot2::aes(y = VS1A2), color = "blue")
