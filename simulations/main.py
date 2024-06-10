@@ -17,7 +17,7 @@ SUCCESS_COUNT_FILENAME = "success_counts.txt"
 # Parameters
 #
 NUM_SIMULATIONS = 30
-MODELS = ["full_sr"] # "full_sr", "reduced_sr", "model_based", "punctate"
+MODELS = ["reduced_sr"] # "full_sr", "reduced_sr", "model_based", "model_free"
 CONDITIONS = ["control", "reward", "transition", "policy", "goal"] # "control", "reward", "transition", "policy", "goal"
 
 #
@@ -70,12 +70,13 @@ def get_transition_log_headers():
     occupancy_strings = [f"O{item}" for item in state_action_combination_strings]
     occupancy_strings_joined = ",".join(occupancy_strings)
 
-    # TODO: - Fill in remaining models
+    transition_strings = [f"T{item}" for item in state_action_combination_strings]
+    transition_strings_joined = ",".join(transition_strings)
 
     transition_log_headers["full_sr"] = f"{TRANSITION_LOG_HEADER_PREFIX},weight_delta,feature_delta,{value_strings_joined},{weight_strings_joined},{occupancy_strings_joined}"
-    transition_log_headers["reduced_sr"] = f"{TRANSITION_LOG_HEADER_PREFIX},"
-    transition_log_headers["model_based"] = f"{TRANSITION_LOG_HEADER_PREFIX},"
-    transition_log_headers["punctate"] = f"{TRANSITION_LOG_HEADER_PREFIX},"
+    transition_log_headers["reduced_sr"] = f"{TRANSITION_LOG_HEADER_PREFIX},weight_delta,feature_delta,{value_strings_joined},{weight_strings_joined},{occupancy_strings_joined}"
+    transition_log_headers["model_based"] = f"{TRANSITION_LOG_HEADER_PREFIX},{value_strings_joined},{weight_strings_joined},{transition_strings_joined}"
+    transition_log_headers["model_free"] = f"{TRANSITION_LOG_HEADER_PREFIX},{value_strings_joined}"
 
     return transition_log_headers
 

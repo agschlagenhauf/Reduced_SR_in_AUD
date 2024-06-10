@@ -2,17 +2,15 @@
 ##### Milena Musial ###########
 ##### 06 - 2024 ###############
 
-##### install packages
-#install.packages("jsonlite")
-
 rm(list = ls(all = TRUE))
 
 ##### Load packages
-packages <- c("dplyr", "ggplot2", "rjson", "ndjson", "jsonlite", "tidyr")
+packages <- c("dplyr", "ggplot2", "rjson", "ndjson", "jsonlite", "tidyr", "lme4")
+#install.packages(packages)
 lapply(packages, library, character.only = TRUE)
 
 ##### define paths
-data_path <- "C:/Users/musialm/OneDrive - Charité - Universitätsmedizin Berlin/PhD/04_B01/WP3/WP3_DATA/PILOT/02_03.06.2024/complete_and_incomplete_datasets"
+data_path <- "WP3_DATA/PILOT/behavioral_data"
 
 ##### read in json data and convert to df
 data_raw <- readLines(file.path(data_path, "jatos_results_data_20240603210018.txt"))
@@ -26,15 +24,23 @@ data_df <- data_df %>%
          names_sep = "_",
          keep_empty = TRUE)
 
-# exclude custom components per participant (data collection errors)
+# # exclude custom components per participant (data collection errors)
+# data_df <- data_df %>%
+#   filter(!(participant_ID == "5468" & component %in% c("reward-learning", "reward-relearning", "reward-test"))) %>% # not completed anyways, just to be safe
+#   filter(!(participant_ID == "2347" & component %in% c("control-learning", "control-relearning", "control-test"))) %>% # control condition stopped after relearning
+#   filter(!(participant_ID == "7373" & component %in% c("goal-state-learning", "goal-state-relearning", "goal-state-test"))) %>% # same participant as 8037, only transition /red_brown env) completed under this ID, goal-state (light_blue env) startedB4 variation
+#   filter(!(participant_ID == "8037" & component %in% c("goal-state-learning", "goal-state-relearning", "goal-state-test",
+#                                                        "transition-learning", "transition-relearning", "transition-test",
+#                                                        "control-learning", "control-relearning", "control-test"))) %>% # same participant as 7373, full experiment, take reward (blue_floral env) from here (2 envs seen, transition already performed), C4 variation
+#   filter(!(participant_ID == "3237")) # tehcnical issues reported
+
+# OR exclude entire participants (data collection errors)
 data_df <- data_df %>%
-  filter(!(participant_ID == "5468" & component %in% c("reward-learning", "reward-relearning", "reward-test"))) %>% # not completed anyways, just to be safe
-  filter(!(participant_ID == "2347" & component %in% c("control-learning", "control-relearning", "control-test"))) %>% # control condition stopped after relearning
-  filter(!(participant_ID == "7373" & component %in% c("goal-state-learning", "goal-state-relearning", "goal-state-test"))) %>% # same participant as 8037, only transition /red_brown env) completed under this ID, goal-state (light_blue env) startedB4 variation
-  filter(!(participant_ID == "8037" & component %in% c("goal-state-learning", "goal-state-relearning", "goal-state-test",
-                                                       "transition-learning", "transition-relearning", "transition-test",
-                                                       "control-learning", "control-relearning", "control-test"))) %>% # same participant as 7373, full experiment, take reward (blue_floral env) from here (2 envs seen, transition already performed), C4 variation
-  filter(!(participant_ID == "3237")) # tehcnical issues reported
+  filter(!(participant_ID == "5468")) %>% # not completed anyways, just to be safe
+  filter(!(participant_ID == "2347")) %>% # control condition stopped after relearning
+  filter(!(participant_ID == "7373")) %>% # same participant as 8037, only transition /red_brown env) completed under this ID, goal-state (light_blue env) started, B4 variation
+  filter(!(participant_ID == "8037")) %>% # same participant as 7373, full experiment, take reward (blue_floral env) from here (2 envs seen, transition already performed), C4 variation
+  filter(!(participant_ID == "3237")) # technical issues reported
          
 ##### create purpose-specific dfs
 # trial-df
@@ -65,9 +71,6 @@ trial_df <- data_df %>%
                             "interlude-1",
                             "interlude-2",
                             "interlude-3")) %>%
-  arrange(ID,
-          component,
-          trial) %>%
   mutate_at(c('ID', 'component'), as.factor) %>%
   mutate(phase = if_else(component %in% c("control-learning", 
                                           "reward-learning", 
@@ -124,7 +127,10 @@ trial_df <- data_df %>%
                                  ((variation %in% c("A1", "B1", "C1", "D1") & condition_index == 4) |
                                     (variation %in% c("A2", "B2", "C2", "D2") & condition_index == 3) |
                                     (variation %in% c("A3", "B3", "C3", "D3") & condition_index == 2) |
-                                    (variation %in% c("A4", "B4", "C4", "D4") & condition_index == 1)) ~ "red_brown"))
+                                    (variation %in% c("A4", "B4", "C4", "D4") & condition_index == 1)) ~ "red_brown")) %>%
+  arrange(ID,
+          component,
+          trial)
 
 # insert correct test-stage action
 for (n in unique(trial_df$ID)) {
@@ -146,7 +152,9 @@ trial_df <- trial_df %>%
                                    if_else((state == 2 & correct_second_state_action != choice), 0, NA)),
          correct_state_3 = if_else((state == 3 & correct_third_state_action == choice), 1,
                                    if_else((state == 3 & correct_third_state_action != choice), 0, NA))) %>%
-  mutate(correct = coalesce(correct_state_1, correct_state_2, correct_state_3))
+  mutate(correct = coalesce(correct_state_1, correct_state_2, correct_state_3)) %>%
+  mutate(switch = if_else(component %in% c("control-relearning", "control-test"), abs(correct-1), 
+                          if_else(phase %in% c("relearning", "test"), correct, NA)))
 
 # exclude trials with invalid choice
 trial_df <- trial_df %>% 
@@ -176,9 +184,13 @@ for (i in invalid_trial_df$running_index) {
   }
 }
 
+# compute accumulated trial per participant
 trial_df <- trial_df %>%
   filter(valid_choice == TRUE) %>%
-  select(! running_index)
+  select(! running_index) %>%
+  arrange(ID, condition_index) %>%
+  group_by(ID) %>%
+  mutate(accumulated_states_visited = row_number())
   
 # config-df with info on randomization
 component_df <- data_df %>%
@@ -261,4 +273,4 @@ component_df <- data_df %>%
                                     (variation %in% c("A4", "B4", "C4", "D4") & condition_index == 1)) ~ "red_brown"))
 
 ##### save
-save(trial_df, component_df, file = file.path(data_path, "pilot_data.RData"))
+save(trial_df, component_df, file = file.path(data_path, "pilot_data_complete.RData"))
