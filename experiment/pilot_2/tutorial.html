@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+
+<!-- Start of HTML Document -->
+<html>
+    <head>
+        <!-- Load Style -->
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <link href="https://fonts.googleapis.com/css?family=Open Sans" rel="stylesheet">
+        <link rel="stylesheet" href="css/main.css">
+
+        <!-- Load Jatos -->
+        <script src="js/main.js"></script>
+        <script src="jatos.js"></script>
+    </head>
+
+    <!-- Start of Page Content (Visible on Screen) -->
+    <body>
+
+        <div id="image_container" class="image_container"> 
+            <img id="image" class="full_screen_image"> <!-- place holder for room images with its own css class -->
+            <img id="reward" class="reward_image"> <!-- place holder for money images with its own css class -->
+        </div>
+
+        <script>
+            loadComponent(function() { // load study session data and wait for JATOS (see main)
+
+                // OneChoiceState(name, imageName, preChoiceTime, maxChoiceTime, afterChoiceTimeNoReward, afterChoiceTimeReward, reward, nextState)
+                // TwoChoiceState(name, imageName, preChoiceTime, maxChoiceTime, afterChoiceTime, nextStateLeft, nextStateRight)
+
+                const states = [ // define states
+                    new TwoChoiceState("1", "room1", preChoiceTime, maxTwoChoiceTime, afterChoiceTimeNoReward, "2", "3"),
+                    new TwoChoiceState("1LeftTo2Right", "room1", preChoiceTime, maxTwoChoiceTime, afterChoiceTimeNoReward, "2Right", null),
+
+                    new TwoChoiceState("2", "room2", preChoiceTime, maxTwoChoiceTime, afterChoiceTimeNoReward, "4", "5"),
+                    new TwoChoiceState("2Right", "room2", preChoiceTime, maxTwoChoiceTime, afterChoiceTimeNoReward, null, "5"),
+
+                    new TwoChoiceState("3", "room3", preChoiceTime, maxTwoChoiceTime, afterChoiceTimeNoReward, "5", "6"),
+
+                    new OneChoiceState("4", "room4", preChoiceTime, maxOneChoiceTime, afterChoiceTimeNoReward, afterChoiceTimeReward, null, "7"),
+                    new OneChoiceState("5", "room5", preChoiceTime, maxOneChoiceTime, afterChoiceTimeNoReward, afterChoiceTimeReward, null, "8"),
+                    new OneChoiceState("6", "room6", preChoiceTime, maxOneChoiceTime, afterChoiceTimeNoReward, afterChoiceTimeReward, null, "9"),
+                    new OneChoiceState("7", "room7", preChoiceTime, maxOneChoiceTime, afterChoiceTimeNoReward, afterChoiceTimeReward, 15, "10"),
+                    new OneChoiceState("8", "room8", preChoiceTime, maxOneChoiceTime, afterChoiceTimeNoReward, afterChoiceTimeReward, null, "10"),
+                    new OneChoiceState("9", "room9", preChoiceTime, maxOneChoiceTime, afterChoiceTimeNoReward, afterChoiceTimeReward, 30, "10"),
+                    new OneChoiceState("10", "room10", preChoiceTime, maxOneChoiceTime, afterChoiceTimeNoReward, afterChoiceTimeReward, null, null)
+                ];
+
+                const initialStateNames = ["1LeftTo2Right", "1"]; // two trials starting from state 1 (first 2 elements of LearningPhaseStartStates list)
+
+                let trialIndex = 1;
+
+                let componentData = {
+                    'participant_ID':participantID, 
+                    'running_ID':runningID,
+                    'back_code': backCode,
+                    'variation':variationID, 
+                    'component':componentFlow[componentIndex], 
+                    'tutorial_results':[]
+                };
+
+                // runTrials(trialIndex, initialStateNames, states, aggregateResults, aggregateResultHandler)
+
+                runTrials(trialIndex, initialStateNames, states, componentData['tutorial_results'], function() {
+                    showNextComponent(componentData);
+                });
+            });
+        </script>
+
+    </body>
+</html>
