@@ -8,23 +8,23 @@ from utilities import *
 
 def run_trial(gamma, alpha, explore_chance, end_state, start_state, rewards, transitions, v_state):
     '''
-    Simulates a single episode, from the given start state until an end state is reached
-    Inputs:
+    Simulates a single trial, from the given start state until the end state is reached.
+
+    Arguments:
         gamma: the time discounting constant
         alpha: the learning rate constant
         explore_chance: probability that the agent will choose a random action instead of the highest-value one
-        end_state: list of states that are considered end states
+        end_state: terminal state
         start_state: state that the agent starts in
         rewards: list of rewards corresponding to each action
         transitions: list of valid transitions from each state
-        v_state: calculated Q-values of each state-action pair (should generally be initialized as zeroes)
-        state_list: states visited at each time step
-        action_list: actions taken at each time step
-        RPE_list: reward prediction error for each time step
-        value_list: each state-action pair's Q-values at each time step
-    Outputs:
-        v_state: Q-values updated after the current episode
-        state_list, action_list, RPE_list, value_list: with episode's values appended to the end
+        v_state: list of values per state-action pair
+
+    Returns: (
+        - feat: value updated after the current trial
+        - weight: value updated after the current trial
+        - transition_log_lines: [str]
+    )
     '''
 
     current_state = start_state - 1
@@ -32,10 +32,11 @@ def run_trial(gamma, alpha, explore_chance, end_state, start_state, rewards, tra
     
     while True:
 
+        ###### First state ######
         if (current_state + 1) == start_state:
 
-            # Determine the next state, either a random subsequent state or the highest-value one based on the exploration parameter
-            # Determine the next state, either a random subsequent state or the highest-value subsequent state, depending on the exploration parameter
+            ###### Determine next and second next state ######
+            # Determine the next state
             next_values = v_state[current_state]
             # If the next action values are all the same we also choose randomly to avoid argmax defaulting to the first action
             if np.random.uniform() < explore_chance or np.all([i == next_values[0] for i in next_values]):
@@ -43,75 +44,73 @@ def run_trial(gamma, alpha, explore_chance, end_state, start_state, rewards, tra
             else:
                 next_move = np.argmax(next_values)  # get index of max value
             next_state = transitions[current_state][next_move] - 1  # get next state
-
-            # Determine the action taken from the NEXT state, either the best action or a random one, depending on the exploration parameter
-            # By having a random explore chance, we ensure that the successor matrix represents all possible successor actions, but has larger values for the
-            # highest-reward ones.
+            # Determine the second next state
             second_next_values = v_state[next_state]
-            # If the next action values are all the same we also choose randomly to avoid argmax defaulting to the first action
             if np.random.uniform() < explore_chance or np.all([i == second_next_values[0] for i in second_next_values]):
                 second_next_move = np.random.randint(len(transitions[next_state]))
             else:
                 second_next_move = np.argmax(second_next_values)  # get index of max value
             second_next_state = transitions[next_state][second_next_move] - 1  # get second next state
 
-            # Update Q-values with TD learning on reward obtained
+            ###### Update Q-values with TD learning ######
             reward = rewards[current_state][next_move]
             delta = reward + gamma * v_state[next_state][second_next_move] - v_state[current_state][next_move]
             v_state[current_state][next_move] += alpha * delta
 
-            # Transition log line: state,action,reward,weight_delta,feature_delta,{values},{weights},{flattened_features}
+            ###### Fill in transition log line ######
             transition_log_lines.append(
-                f"{current_state + 1},{next_move + 1},{comma_separate(v_state)}"
+                f"{current_state + 1},{next_move + 1},{reward},{comma_separate(v_state)}"
             )
 
-            # Move to the next state
+            ###### Move to the next state ######
             current_state = next_state
             next_move = second_next_move
             next_state = second_next_state
 
+        ###### Middle states ######
         elif (current_state + 1) != end_state:
 
-            # Determine the action taken from the NEXT state, either the best action or a random one, depending on the exploration parameter
-            # By having a random explore chance, we ensure that the successor matrix represents all possible successor actions, but has larger values for the
-            # highest-reward ones.
+            ###### Determine second next state ######
+            # Next state determined in last state visit
+            # Determine second next state
             second_next_values = v_state[next_state]
-            # If the next action values are all the same we also choose randomly to avoid argmax defaulting to the first action
             if np.random.uniform() < explore_chance or np.all([i == second_next_values[0] for i in second_next_values]):
                 second_next_move = np.random.randint(len(transitions[next_state]))
             else:
                 second_next_move = np.argmax(second_next_values)  # get index of max value
             second_next_state = transitions[next_state][second_next_move] - 1  # get second next state
 
-            # Update Q-values with TD learning on reward obtained
+            ###### Update Q-values with TD learning ######
             reward = rewards[current_state][next_move]
             delta = reward + gamma * v_state[next_state][second_next_move] - v_state[current_state][next_move]
             v_state[current_state][next_move] += alpha * delta
 
-            # Transition log line: state,action,reward,weight_delta,feature_delta,{values},{weights},{flattened_features}
+            ###### Fill in transition log line ######
             transition_log_lines.append(
-                f"{current_state + 1},{next_move + 1},{comma_separate(v_state)}"
+                f"{current_state + 1},{next_move + 1},{reward},{comma_separate(v_state)}"
             )
 
-            # Move to the next state
+            ###### Move to the next state ######
             current_state = next_state
             next_move = second_next_move
             next_state = second_next_state
 
+        ###### Last state ######
         elif (current_state + 1) == end_state:
 
-            # Update Q-values with TD learning on reward obtained
+            ###### Update Q-values with TD learning ######
             reward = rewards[current_state][next_move]
             delta = reward - v_state[current_state][next_move]
             v_state[current_state][next_move] += alpha * delta
 
-            # Transition log line: state,action,reward,weight_delta,feature_delta,{values},{weights},{flattened_features}
+            ###### Fill in transition log line ######
             transition_log_lines.append(
-                f"{current_state + 1},{next_move + 1},{comma_separate(v_state)}"
+                f"{current_state + 1},{next_move + 1},{reward},{comma_separate(v_state)}"
             )
 
-            # end loop
+            ###### End loop ######
             break
+
         else:
             assert False
 
@@ -145,7 +144,8 @@ def learning(gamma, alpha, explore_chance, end_state, rewards, transitions, mode
     start_states_3 = np.array([1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3])
     np.random.shuffle(start_states_3)
 
-    start_states = np.concatenate([start_states_1, start_states_2, start_states_3])
+    #start_states = np.concatenate([start_states_1, start_states_2, start_states_3])
+    start_states = np.ones(30, dtype=np.int8)
 
     # Run trials
     transition_log = []
@@ -205,7 +205,7 @@ def relearning(condition, gamma, alpha, explore_chance, end_state, rewards, tran
 
     # Create start states
     if condition == "transition":
-        start_states = np.array([2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3])
+        start_states = np.array([2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3])
     else:
         start_states = np.array([4, 4, 4, 4, 4, 4, 4, 4, 5, 5, 5, 5, 5, 5, 5, 5, 6, 6, 6, 6, 6, 6, 6, 6])
 

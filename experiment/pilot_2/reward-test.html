@@ -43,7 +43,7 @@
                     new TwoChoiceState("3", stateRoomMap['3'], preChoiceTime, maxTestChoiceTime, afterChoiceTimeNoReward, null, null),
                 ];
 
-                const initialStateNames = ["1"]; // always starting from state 1
+                const initialStateNames = ["1", "1", "1", "1", "1"]; // always starting from state 1
                 let trialIndex = 1;
 
                 let componentData = {
@@ -58,7 +58,7 @@
 
                 const message = document.getElementById("message");
 
-                doAfter(5, function() {
+                doAfter(15, function() {
                     fadeOut(message, function() {
                         runTrials(trialIndex, initialStateNames, states, componentData['aggregate_results'], function() {
                             showNextComponent(componentData);

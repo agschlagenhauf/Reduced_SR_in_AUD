@@ -42,7 +42,7 @@
                             new OneChoiceState("6", stateRoomMap['6'], preChoiceTime, maxOneChoiceTime, afterChoiceTimeNoReward, afterChoiceTimeReward, null, "9"),
                             new OneChoiceState("7", stateRoomMap['7'], preChoiceTime, maxOneChoiceTime, afterChoiceTimeNoReward, afterChoiceTimeReward, 15, "10"),
                             new OneChoiceState("8", stateRoomMap['8'], preChoiceTime, maxOneChoiceTime, afterChoiceTimeNoReward, afterChoiceTimeReward, null, "10"),
-                            new OneChoiceState("9", stateRoomMap['9'], preChoiceTime, maxOneChoiceTime, afterChoiceTimeNoReward, afterChoiceTimeReward, 60, "10"),
+                            new OneChoiceState("9", stateRoomMap['9'], preChoiceTime, maxOneChoiceTime, afterChoiceTimeNoReward, afterChoiceTimeReward, 45, "10"),
                             new OneChoiceState("10", stateRoomMap['10'], preChoiceTime, maxOneChoiceTime, afterChoiceTimeNoReward, afterChoiceTimeReward, null, null)
                         ];
                     }
@@ -51,7 +51,7 @@
                             new OneChoiceState("4", stateRoomMap['4'], preChoiceTime, maxOneChoiceTime, afterChoiceTimeNoReward, afterChoiceTimeReward, null, "7"),
                             new OneChoiceState("5", stateRoomMap['5'], preChoiceTime, maxOneChoiceTime, afterChoiceTimeNoReward, afterChoiceTimeReward, null, "8"),
                             new OneChoiceState("6", stateRoomMap['6'], preChoiceTime, maxOneChoiceTime, afterChoiceTimeNoReward, afterChoiceTimeReward, null, "9"),
-                            new OneChoiceState("7", stateRoomMap['7'], preChoiceTime, maxOneChoiceTime, afterChoiceTimeNoReward, afterChoiceTimeReward, 60, "10"),
+                            new OneChoiceState("7", stateRoomMap['7'], preChoiceTime, maxOneChoiceTime, afterChoiceTimeNoReward, afterChoiceTimeReward, 45, "10"),
                             new OneChoiceState("8", stateRoomMap['8'], preChoiceTime, maxOneChoiceTime, afterChoiceTimeNoReward, afterChoiceTimeReward, null, "10"),
                             new OneChoiceState("9", stateRoomMap['9'], preChoiceTime, maxOneChoiceTime, afterChoiceTimeNoReward, afterChoiceTimeReward, 15, "10"),
                             new OneChoiceState("10", stateRoomMap['10'], preChoiceTime, maxOneChoiceTime, afterChoiceTimeNoReward, afterChoiceTimeReward, null, null)
@@ -59,8 +59,8 @@
                     }
                 }();
 
-                const initialStateNames = shuffle(["4", "5", "6"]);
-                let trialIndex = 2; // one-based
+                const initialStateNames = shuffle(["4", "4", "4", "5", "5", "5", "6", "6", "6"]);
+                let trialIndex = 1; // one-based
 
                 let componentData = {
                     'participant_ID':participantID, 

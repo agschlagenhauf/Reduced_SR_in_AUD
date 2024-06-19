@@ -5,4 +5,5 @@ venv
 .Rhistory
 .RData
 .DS_Store
+.html
 results

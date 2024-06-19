@@ -663,7 +663,7 @@ length(unique(df$ID))
 ## Implications for revised task design {.smaller}
 
 -   **facilitate learning** by including a floorplan in the instructions & adding a saptial component (displaying states resulting from left choices on the left and from right choices on the right screen side)
--   **start all trials from state 1** (allow SR to learn), except several distractor trials from states 2 & 3 (to mask beginning of re-learning phase)
+-   **start all trials from state 1** (allow SR to learn)
 -   introduce **forced choices** in states 1, 2, 3 & instruct to always choose better option when 2 choices available (limit exploration)
 
 # Re-Learning Phase: Switches
@@ -795,7 +795,7 @@ ggplot(relearning_switch_component_environment_df, aes(x=environment, y=mean_swi
 
 ## Implications for revised task design
 
--   let **all re-learning trials across conditions start in states 2, 3** with most of them **forced choice** --\> conditions more comparable, allows to derive re-learning measure
+-   let **all re-learning trials across conditions start in states 4, 5, 6** --\> conditions more comparable
 
 # Test Phase: Switches
 
@@ -1021,27 +1021,25 @@ ggplot(test_switch_component_environment_df, aes(x=environment, y=mean_switch, f
 
 -   adapt **reward sizes** so that reward, transition, and goal-state revaluation induce equivalent changes to values of the state 1 actions (currently larger change in transition revaluation)
 
--   let **all re-learning trials start from states 2 and 3**, optimally with equal experience of changes across conditions
+-   let **all re-learning trials start from states 4, 5, 6**
 
--   after test: ask participants to **rate how much better chosen vs unchosen option was** / how sure they are that their last choice led to the highest possible reward
+-   introduce **5 test trials** from state 1 to state 2/3 to get a better impression of preferences
 
-    -   dimensional score for preference switch
-
-    -   useful to relate to psychiatric symptom dimensions
+-   after test trials: ask participants to **rate to how much reward each state 1/2/3 action will lead --\>** dimensional score for preference switch, useful to relate to psychiatric symptom dimensions
 
 ## Summary: Revised task design {.smaller}
 
 -   **facilitate learning**: floorplan in instructions, adding saptial component
 
--   start **all learning trials from state 1** (allow SR to learn), except several distractor trials from states 2 & 3 (to mask beginning of re-learning phase)
-
--   let **all re-learning trials start from states 2 and 3**, optimally with equal experience of changes across conditions
-
--   Adapt **reward sizes** so that reward, transition, and goal-state revaluation induce equivalent changes to values of the state 1 actions
+-   start **all learning trials from state 1** (allow SR to learn)
 
 -   introduce **forced choices** in states 1, 2, 3 & instruct to always choose better option when 2 choices available (limit exploration)
 
--   after test: **rating chosen vs unchosen option** --\> dimensional score for preference switch, useful to relate to psychiatric symptom dimensions
+-   let **all re-learning trials start from states 4, 5, 6** (thanks to revised transition revaluation)
+
+-   Adapt **reward sizes** so that reward, transition, and goal-state revaluation induce equivalent changes to values of the state 1 actions
+
+-   after test: **rating all state 1/2/3 actions** --\> dimensional score for preference switch, useful to relate to psychiatric symptom dimensions
 
 # Reaction times
 

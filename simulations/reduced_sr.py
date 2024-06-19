@@ -30,9 +30,9 @@ def reduce_weight_and_feat(feat, weight, rewards):
     return np.transpose(reduced_sr), reduced_weight
 
 
-def run_trial(phase, gamma, alpha, explore_chance, end_state, start_state, rewards, transitions, num_pairs, feat, weight):
+def run_trial(phase, gamma, alpha, explore_chance, end_state, start_state, rewards, transitions, num_pairs, v_state, feat, weight):
     '''
-    Simulates a single trial, from the given start state until an end state is reached.
+    Simulates a single trial, from the given start state until the end state is reached.
 
     Arguments:
         gamma: the time discounting constant
@@ -52,7 +52,6 @@ def run_trial(phase, gamma, alpha, explore_chance, end_state, start_state, rewar
         - transition_log_lines: [str]
     )
     '''
-    v_state = []
     for k in range(num_pairs):
         v_state.append(np.sum(weight * feat[k]))
 
@@ -99,7 +98,7 @@ def run_trial(phase, gamma, alpha, explore_chance, end_state, start_state, rewar
 
             weight += alpha * weight_delta * feat_scaled
 
-            ###### Update value of current state-action pair ######
+            ###### Update values of all state-action pairs ######
             for k in range(num_pairs):
                 v_state[k] = np.sum(weight * feat[k])
 
@@ -152,7 +151,7 @@ def run_trial(phase, gamma, alpha, explore_chance, end_state, start_state, rewar
 
             weight += alpha * weight_delta * feat_scaled
 
-            ###### Update value of current state-action pair ######
+            ###### Update values of all state-action pairs ######
             for k in range(num_pairs):
                 v_state[k] = np.sum(weight * feat[k])
 
@@ -192,7 +191,7 @@ def run_trial(phase, gamma, alpha, explore_chance, end_state, start_state, rewar
 
             weight += alpha * weight_delta * feat_scaled
 
-            ###### Update value of current state-action pair ######
+            ###### Update values of all state-action pairs ######
             for k in range(num_pairs):
                 v_state[k] = np.sum(weight * feat[k])
 
@@ -236,7 +235,7 @@ def learning(gamma, alpha, explore_chance, end_state, rewards, transitions, mode
         - transition_log: [str]
     )
     '''
-    num_pairs, feat, weight = model_parameters
+    num_pairs, v_state, feat, weight = model_parameters
     phase = "learning"
 
     # Create start states
@@ -248,7 +247,8 @@ def learning(gamma, alpha, explore_chance, end_state, rewards, transitions, mode
     start_states_3 = np.array([1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3])
     np.random.shuffle(start_states_3)
 
-    start_states = np.concatenate([start_states_1, start_states_2, start_states_3])
+    #start_states = np.concatenate([start_states_1, start_states_2, start_states_3])
+    start_states = np.ones(30, dtype=np.int8)
 
     # Run trials
     transition_log = []
@@ -263,6 +263,7 @@ def learning(gamma, alpha, explore_chance, end_state, rewards, transitions, mode
             rewards,
             transitions,
             num_pairs,
+            v_state,
             feat,
             weight
         )
@@ -270,7 +271,7 @@ def learning(gamma, alpha, explore_chance, end_state, rewards, transitions, mode
         transition_log_lines = prefix_all(f"{trial_index + 1},", transition_log_lines)
         transition_log.extend(transition_log_lines)
 
-    new_params = [num_pairs, feat, weight]
+    new_params = [num_pairs, v_state, feat, weight]
         
     return new_params, transition_log
 
@@ -320,7 +321,7 @@ def relearning(condition, gamma, alpha, explore_chance, end_state, rewards, tran
         - transition_log: [str]
     )
     '''
-    num_pairs, feat, weight = model_parameters
+    num_pairs, v_state, feat, weight = model_parameters
     phase = "relearning"
 
     reduced_feat, reduced_weight = reduce_weight_and_feat(feat, weight, rewards)
@@ -346,6 +347,7 @@ def relearning(condition, gamma, alpha, explore_chance, end_state, rewards, tran
             rewards,
             transitions,
             num_pairs,
+            v_state,
             reduced_feat,
             reduced_weight
         )
@@ -353,7 +355,7 @@ def relearning(condition, gamma, alpha, explore_chance, end_state, rewards, tran
         transition_log_lines = prefix_all(f"{trial_index + 1},", transition_log_lines)
         transition_log.extend(transition_log_lines)
 
-    new_params = [num_pairs, feat, weight]
+    new_params = [num_pairs, v_state, feat, weight]
         
     return new_params, transition_log
 
@@ -374,9 +376,8 @@ def test(model_parameters):
         - transition_log: [str]
     )
     '''
-    num_pairs, feat, weight = model_parameters
+    num_pairs, v_state, feat, weight = model_parameters
 
-    v_state = []
     for k in range(num_pairs):
         v_state.append(np.sum(weight * feat[k]))
 
