@@ -55,7 +55,7 @@ def run_simulations(model, condition, num_simulations):
     #
     alpha = 0.9
     gamma = 0.95
-    explore_chance = 0.25
+    explore_chance = 0.5
     end_state = 10
     num_pairs = 13 # (state, action) pairs
     num_states = 10
@@ -112,16 +112,18 @@ def run_simulations(model, condition, num_simulations):
                 init_weight.append(row.copy())
 
             init_t_counts = np.zeros((num_pairs, num_states))
-            model_parameters = [v_state, init_t_counts, init_weight]
+            init_t_matrix = init_t_counts # normalized transition matrix
+            model_parameters = [v_state, init_t_counts, init_t_matrix, init_weight]
 
 
         ###### full & reduced SR ######
         else:
+            v_state = []
             init_weight = np.zeros(num_pairs)
             init_sr = np.identity(num_pairs)  # init M with identity matrix as in Russek et al. 2017
             #init_sr[-1, :] = 0  # set terminal state row to 0 as in Russek et al. 2017
 
-            model_parameters = [num_pairs, init_sr, init_weight]
+            model_parameters = [num_pairs, v_state, init_sr, init_weight]
 
         #
         # Learning Phase
@@ -174,6 +176,7 @@ def run_simulations(model, condition, num_simulations):
 
         transition_log = prefix_all(f"{simulation_number},{model},{condition},", transition_log)
 
+        # ecode correctness of test (TRUE = correct)
         if condition == "control":
             learning_test_result = (learning_test_action == ACTION_RIGHT)
             relearning_test_result = (relearning_test_action == ACTION_RIGHT)

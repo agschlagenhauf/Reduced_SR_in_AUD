@@ -17,8 +17,8 @@ SUCCESS_COUNT_FILENAME = "success_counts.txt"
 # Parameters
 #
 NUM_SIMULATIONS = 30
-MODELS = ["reduced_sr"] # "full_sr", "reduced_sr", "model_based", "model_free"
-CONDITIONS = ["control", "reward", "transition", "policy", "goal"] # "control", "reward", "transition", "policy", "goal"
+MODELS = ["model_based", "full_sr"] # "full_sr", "reduced_sr", "model_based", "model_free"
+CONDITIONS = ["reward"] # "control", "reward", "transition", "policy", "goal"
 
 #
 # Transition Log Headers
@@ -50,33 +50,42 @@ def get_transition_log_headers():
     }
 
     # e.g. S1A2
-    state_action_choice_strings = []
+    state_strings = []
+    state_action_strings = []
+    for state in range(len(state_action_choices)):
+        state_strings.append(f"S{state+1}")
     for state_number, choices in state_action_choices.items():
         for choice in choices:
-            state_action_choice_strings.append(f"S{state_number}A{choice}")
+            state_action_strings.append(f"S{state_number}A{choice}")
 
-    value_strings = [f"V{item}" for item in state_action_choice_strings]
+    value_strings = [f"V{item}" for item in state_action_strings]
     value_strings_joined = ",".join(value_strings)
 
-    weight_strings = [f"W{item}" for item in state_action_choice_strings]
+    weight_strings = [f"W{item}" for item in state_action_strings]
     weight_strings_joined = ",".join(weight_strings)
 
-    # e.g. S1A2-S2A4
+    # e.g. S1A2-S3A1
     state_action_combination_strings = []
-    for first_state_action_pair in state_action_choice_strings:
-        for second_state_action_pair in state_action_choice_strings:
+    for first_state_action_pair in state_action_strings:
+        for second_state_action_pair in state_action_strings:
             state_action_combination_strings.append(f"{first_state_action_pair}-{second_state_action_pair}")
 
     occupancy_strings = [f"O{item}" for item in state_action_combination_strings]
     occupancy_strings_joined = ",".join(occupancy_strings)
 
-    transition_strings = [f"T{item}" for item in state_action_combination_strings]
+    # e.g. S1A2-S3
+    state_action_state_strings = []
+    for state_action_pair in state_action_strings:
+        for state in state_strings:
+            state_action_state_strings.append(f"{state_action_pair}-{state}")
+
+    transition_strings = [f"T{item}" for item in state_action_state_strings]
     transition_strings_joined = ",".join(transition_strings)
 
-    transition_log_headers["full_sr"] = f"{TRANSITION_LOG_HEADER_PREFIX},weight_delta,feature_delta,{value_strings_joined},{weight_strings_joined},{occupancy_strings_joined}"
-    transition_log_headers["reduced_sr"] = f"{TRANSITION_LOG_HEADER_PREFIX},weight_delta,feature_delta,{value_strings_joined},{weight_strings_joined},{occupancy_strings_joined}"
-    transition_log_headers["model_based"] = f"{TRANSITION_LOG_HEADER_PREFIX},{value_strings_joined},{weight_strings_joined},{transition_strings_joined}"
-    transition_log_headers["model_free"] = f"{TRANSITION_LOG_HEADER_PREFIX},{value_strings_joined}"
+    transition_log_headers["full_sr"] = f"{TRANSITION_LOG_HEADER_PREFIX},weight_delta,feature_delta,{value_strings_joined},{weight_strings_joined},{occupancy_strings_joined}\n"
+    transition_log_headers["reduced_sr"] = f"{TRANSITION_LOG_HEADER_PREFIX},weight_delta,feature_delta,{value_strings_joined},{weight_strings_joined},{occupancy_strings_joined}\n"
+    transition_log_headers["model_based"] = f"{TRANSITION_LOG_HEADER_PREFIX},weight_delta,{value_strings_joined},{weight_strings_joined},{transition_strings_joined}\n"
+    transition_log_headers["model_free"] = f"{TRANSITION_LOG_HEADER_PREFIX},{value_strings_joined}\n"
 
     return transition_log_headers
 

@@ -11,8 +11,8 @@
 
 const preChoiceTime = 0.5; // time in state without highlighted choice options
 const maxOneChoiceTime = 2; // max time in one choice state with highlighted choice option - ended as soon as valid key pressed
-const maxTwoChoiceTime = 2.5; // max time in two choice state with highlighted choice option - ended as soon as valid key pressed
-const maxTestChoiceTime = 10; // max time with highlighted options in test phase
+const maxTwoChoiceTime = 3; // max time in two choice state with highlighted choice option - ended as soon as valid key pressed
+const maxTestChoiceTime = 15; // max time with highlighted options in test phase
 const afterChoiceTimeNoReward = 2.0; // time after valid choice with no reward
 const afterChoiceTimeReward = 2.5; // time after valid choice with reward presentation
 const fadeoutTime = 0.5; // fadeout duration after each trial (and intro/outro component)
@@ -46,8 +46,8 @@ function prepareComponentFlow() { // prepare list of what we should show
 
     // read out link components
     // example link: http://127.0.0.1:9000/publix/xJoZc2UPD10?participant=30620126hqIHzHP2GhTvxYt
-    // let urlQuery = jatos.urlQueryParameters.participant;
-    let urlQuery = '30620126hqIHzHP2GhTvxYt';
+    let urlQuery = jatos.urlQueryParameters.participant;
+    //let urlQuery = '30620126hqIHzHP2GhTvxYt';
     participantID = Number(urlQuery.substr(0,4)); 
     runningID = Number(urlQuery.substr(4,3));
     console.log(runningID);
@@ -55,13 +55,13 @@ function prepareComponentFlow() { // prepare list of what we should show
 
     componentFlow.push( // add StaticComponents to componentFlow array
         StaticComponents.Intro1, 
-        //StaticComponents.FloorPlan,
-        //StaticComponents.Intro2,  
-        //StaticComponents.Tutorial, 
-        //StaticComponents.Intro3, 
-        //StaticComponents.Quiz, 
-        //StaticComponents.QuizWrong, 
-        //StaticComponents.Intro4
+        StaticComponents.FloorPlan,
+        StaticComponents.Intro2,  
+        StaticComponents.Tutorial, 
+        StaticComponents.Intro3, 
+        StaticComponents.Quiz, 
+        StaticComponents.QuizWrong, 
+        StaticComponents.Intro4
     ); 
 
     const variation = Variations[runningID % Variations.length]; // get element of Variations based on participantID
@@ -239,14 +239,14 @@ class TwoChoiceState {
 function defineLearningPhaseStartStates(correctFirstStateActionLearning) { 
 
     let startStatesFirstSection = [
-        Array(1).fill("1LeftTo2Left"),
-        Array(1).fill("1LeftTo2Right"),
-        Array(1).fill("1RightTo3Left"),
-        Array(1).fill("1RightTo3Right"),
+        Array(3).fill("1LeftTo2Left"),
+        Array(3).fill("1LeftTo2Right"),
+        Array(3).fill("1RightTo3Left"),
+        Array(3).fill("1RightTo3Right"),
     ];
 
     let startStatesSecondSection = [
-        Array(1).fill("1")
+        Array(12).fill("1")
     ];
 
     let flattenedStartStatesFirstSection = [].concat.apply([], startStatesFirstSection);
@@ -255,7 +255,6 @@ function defineLearningPhaseStartStates(correctFirstStateActionLearning) {
     let flattenedStartStatesSecondSection = [].concat.apply([], startStatesSecondSection); // flatten: 1,1,1,1,1,1,1,1,1,1,2,2,2,2,3,3,3,4,4,4,5,5,5 etc.
     
     let allStartStates = shuffledStartStatesFirstSection.concat(flattenedStartStatesSecondSection);
-    //let allStartStates = flattenedStartStatesSecondSection
 
     return allStartStates;
 };
