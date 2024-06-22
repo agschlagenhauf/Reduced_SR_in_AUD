@@ -1,9 +1,9 @@
 __pycache__
-.idea
+*.idea
 venv
-.Rproj.user
-.Rhistory
-.RData
-.DS_Store
-.html
+*.Rproj.user
+*.Rhistory
+*.RData
+*.DS_Store
+*.html
 results
