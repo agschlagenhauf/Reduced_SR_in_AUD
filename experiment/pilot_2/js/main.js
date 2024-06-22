@@ -45,9 +45,9 @@ let componentOnset = null; // onset time for each component
 function prepareComponentFlow() { // prepare list of what we should show
 
     // read out link components
-    // example link: http://127.0.0.1:9000/publix/xJoZc2UPD10?participant=30620126hqIHzHP2GhTvxYt
-    let urlQuery = jatos.urlQueryParameters.participant;
-    //let urlQuery = '30620126hqIHzHP2GhTvxYt';
+    // example link: https://studies.bccn-berlin.de/publix/HG5A1FTtOIL?participant=30620126hqIHzHP2GhTvxYt
+    // let urlQuery = jatos.urlQueryParameters.participant;
+    let urlQuery = '30620126hqIHzHP2GhTvxYt';
     participantID = Number(urlQuery.substr(0,4)); 
     runningID = Number(urlQuery.substr(4,3));
     console.log(runningID);
@@ -239,14 +239,14 @@ class TwoChoiceState {
 function defineLearningPhaseStartStates(correctFirstStateActionLearning) { 
 
     let startStatesFirstSection = [
-        Array(3).fill("1LeftTo2Left"),
-        Array(3).fill("1LeftTo2Right"),
-        Array(3).fill("1RightTo3Left"),
-        Array(3).fill("1RightTo3Right"),
+        Array(1).fill("1LeftTo2Left"),
+        Array(1).fill("1LeftTo2Right"),
+        Array(1).fill("1RightTo3Left"),
+        Array(1).fill("1RightTo3Right"),
     ];
 
     let startStatesSecondSection = [
-        Array(12).fill("1")
+        Array(1).fill("1")
     ];
 
     let flattenedStartStatesFirstSection = [].concat.apply([], startStatesFirstSection);

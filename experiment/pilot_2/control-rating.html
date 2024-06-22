@@ -64,10 +64,10 @@
                     'variation': variationID, 
                     'component': componentFlow[componentIndex],
                     'state_room_map':stateRoomMap,
-                    'aggregate_rating_results': []
+                    'rating_results': []
                 };
 
-                runRatings(ratingStateIndex, initialStateNames, states, componentData['aggregate_rating_results'], function() {
+                runRatings(ratingStateIndex, initialStateNames, states, componentData['rating_results'], function() {
                     showNextComponent(componentData);
                 });
 

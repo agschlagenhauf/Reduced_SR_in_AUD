@@ -10,7 +10,7 @@ packages <- c("dplyr", "ggplot2", "rjson", "ndjson", "jsonlite", "tidyr", "lme4"
 lapply(packages, library, character.only = TRUE)
 
 ##### define paths
-data_path <- "WP3_DATA/PILOT/behavioral_data"
+data_path <- "WP3_DATA/PILOT_1/behavioral_data"
 
 ##### read in json data and convert to df
 data_raw <- readLines(file.path(data_path, "jatos_results_data_20240603210018.txt"))
