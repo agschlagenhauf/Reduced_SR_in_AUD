@@ -118,10 +118,9 @@ def run_simulations(model, condition, num_simulations):
 
         ###### full & reduced SR ######
         else:
-            v_state = []
+            v_state = np.zeros(num_pairs)
             init_weight = np.zeros(num_pairs)
             init_sr = np.identity(num_pairs)  # init M with identity matrix as in Russek et al. 2017
-            #init_sr[-1, :] = 0  # set terminal state row to 0 as in Russek et al. 2017
 
             model_parameters = [num_pairs, v_state, init_sr, init_weight]
 

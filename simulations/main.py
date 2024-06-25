@@ -16,9 +16,9 @@ SUCCESS_COUNT_FILENAME = "success_counts.txt"
 #
 # Parameters
 #
-NUM_SIMULATIONS = 30
-MODELS = ["model_based", "full_sr"] # "full_sr", "reduced_sr", "model_based", "model_free"
-CONDITIONS = ["reward"] # "control", "reward", "transition", "policy", "goal"
+NUM_SIMULATIONS = 100
+MODELS = ["full_sr", "reduced_sr"]  # "full_sr", "reduced_sr", "model_based", "model_free"
+CONDITIONS = ["control", "reward", "transition", "policy", "goal"] # "control", "reward", "transition", "policy", "goal"
 
 #
 # Transition Log Headers

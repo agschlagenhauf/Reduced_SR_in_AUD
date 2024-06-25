@@ -2,6 +2,10 @@
 # model_based.py
 #
 
+'''
+IMPLEMENTATION OF A MODEL-BASED VALUE ITERATION AGENT
+'''
+
 import numpy as np
 import random as rd
 from utilities import *
@@ -31,22 +35,27 @@ def policy(values, explore_chance):
 #
 def run_trial(gamma, alpha, explore_chance, end_state, start_state, rewards, transitions, v_state, t_counts, t_matrix, weight):
     '''
-    Simulates a single episode, from the given start state until an end state is reached
-    Inputs:
+    Simulates a single trial, from the given start state until the end state is reached.
+
+    Arguments:
         gamma: the time discounting constant
         alpha: the learning rate constant
         explore_chance: probability that the agent will choose a random action instead of the highest-value one
-        end_state: list of states that are considered end states
+        end_state: terminal state
         start_state: state that the agent starts in
         rewards: list of rewards corresponding to each action
         transitions: list of valid transitions from each state
-        num_pairs: the number of state-action pairs
-        t_counts:
-        weight:
-    Outputs:
-        feat, weight: values updated after the current episode
-        state_list, action_list, RPE_list, value_list: with episode's values appended to the end
-        timestep_list: Total number of timesteps in this episode, used to pad all logs to the same length
+        v_state: the values of state-action pairs
+        t_counts: the transition matrix (counts)
+        t_matrix: the normalized transition matrix (0-1)
+        weight: the weight vector
+
+    Returns: (
+        - v_state: the values of state-action pairs updated after the current trial
+        - t_counts: the transition matrix (counts) updated after the current trial
+        - t_matrix: the normalized transition matrix (0-1) updated after the current trial
+        - weight: the weight vector updated after the current trial
+    )
     '''
     current_state = start_state - 1
     transition_log_lines = []  # all transitions per trial
@@ -131,13 +140,10 @@ def run_trial(gamma, alpha, explore_chance, end_state, start_state, rewards, tra
             ###### Update values of all state-action pairs (Bellman Equation) ######
             next_state_values = [np.sum(v_state[state] * policy(v_state[state], explore_chance)) for state in
                                  range(len(rewards))]
-            #print(next_state_values)
             for i in range(len(v_state)):
                 for j in range(len(v_state[i])):
                     v_state[i][j] = weight[i][j] + gamma * np.sum(t_matrix[get_flattened_index(v_state, i, j)] * next_state_values)
-                    #print(f"i={i}, j={j}")
-                    #print(np.sum(t_matrix[get_flattened_index(v_state, i, j)]))
-                    #print(t_matrix[get_flattened_index(v_state, i, j)])
+
             ###### Fill in transition log line ######
             transition_log_lines.append(
                 f"{current_state + 1},{next_move + 1},{reward},{weight_delta},{comma_separate(v_state)},{comma_separate(weight)},{comma_separate(flatten(t_matrix))}"
@@ -167,9 +173,12 @@ def run_trial(gamma, alpha, explore_chance, end_state, start_state, rewards, tra
             weight[current_state][next_move] += alpha * weight_delta  # update weight
 
             ###### Update values of all state-action pairs (Bellman Equation) ######
+            next_state_values = [np.sum(v_state[state] * policy(v_state[state], explore_chance)) for state in
+                                 range(len(rewards))]
             for i in range(len(v_state)):
                 for j in range(len(v_state[i])):
-                    v_state[i][j] = weight[i][j]
+                    v_state[i][j] = weight[i][j] + gamma * np.sum(
+                        t_matrix[get_flattened_index(v_state, i, j)] * next_state_values)
 
             ###### Fill in transition log line ######
             transition_log_lines.append(
@@ -182,27 +191,37 @@ def run_trial(gamma, alpha, explore_chance, end_state, start_state, rewards, tra
         else:
             assert False
 
-    return v_state, t_counts, weight, transition_log_lines
+    return v_state, t_counts, t_matrix, weight, transition_log_lines
 
 
 
 def learning(gamma, alpha, explore_chance, end_state, rewards, transitions, model_parameters):
     '''
-    Simulates the pre-training learning phase, where the agent has access to the starting state
-    Inputs:
-        gamma: the time discounting constant
-        alpha: the learning rate constant
-        explore_chance: probability that the agent will choose a random action instead of the highest-value one
-        end_state: list of states that are considered end states
-        rewards: list of rewards corresponding to each action
-        transitions: list of valid transitions from each state
-        model_parameters: the components of a successor representation, in order:
-            num_pairs: the number of state-action pairs
-            feat: the successor matrix (should generally be initialized with zeros)
-            weight: the weight vector (also generally initialized with zeros
-    Outputs:
-        model_parameters: calculated successor matrix and weight after pretraining
-        logging_lists: with new simulation's values appended to the end
+    Simulates the learning phase, where the agent has access to the starting state.
+
+    Arguments:
+        - gamma: the time discounting constant
+        - alpha: the learning rate constant
+        - explore_chance: probability that the agent will choose a random action instead of the highest-value one
+        - end_state: terminal state
+        - rewards: list of rewards corresponding to each action
+        - transitions: list of valid transitions from each state
+        - model_parameters: [
+            - v_state: the value of state-action pairs
+            - t_counts: the transition matrix (should generally be initialized with zeros)
+            - t_matrix: the normalized transition matrix (0-1, should generally be initialized with zeros)
+            - weight: the weight vector (also generally initialized with zeros)
+        ]
+
+    Returns: (
+        - model_parameters: [
+            - v_state: the value of state-action pairs
+            - t_counts: the transition matrix (should generally be initialized with zeros)
+            - t_matrix: the normalized transition matrix (0-1, should generally be initialized with zeros)
+            - weight: the weight vector (also generally initialized with zeros)
+        ]
+        - transition_log: [str]
+    )
     '''
     ##### initialize model parameters #####
     v_state, t_counts, t_matrix, weight = model_parameters
@@ -222,7 +241,7 @@ def learning(gamma, alpha, explore_chance, end_state, rewards, transitions, mode
     # Run trials
     transition_log = []
     for trial_index, start_state in enumerate(start_states):
-        v_state, t_counts, weight, transition_log_lines = run_trial(
+        v_state, t_counts, t_matrix, weight, transition_log_lines = run_trial(
             gamma,
             alpha,
             explore_chance,
@@ -262,23 +281,32 @@ def update_parameters(condition, rewards, transitions):
 
 def relearning(condition, gamma, alpha, explore_chance, end_state, rewards, transitions, model_parameters):
     '''
-    Simulates the relearning phase, where the agent does not directly experience the starting state
-    Inputs:
-        condition: string representing the relearning condition, case sensitive (needed because the Transition condition uses different starting states)
-        gamma: the time discounting constant
-        alpha: the learning rate constant
-        explore_chance: probability that the agent will choose a random action instead of the highest-value one
-        end_state: list of states that are considered end states
-        rewards: list of rewards corresponding to each action
-        transitions: list of valid transitions from each state
-        model parameters: the components of a successor representation, in order:
-            num_pairs: the number of state-action pairs
-            feat: the successor matrix, held over from the pretraining
-            weight: the weight vector, held over from pretraining
+    Simulates the relearning phase, where the agent does not directly experience the starting state.
 
-    Outputs:
-        model_parameters: calculated successor matrix and weight after pretraining
-        logging_lists: with new simulation's values appended to the end
+    Arguments:
+        - condition: string representing the relearning condition
+        - gamma: the time discounting constant
+        - alpha: the learning rate constant
+        - explore_chance: probability that the agent will choose a random action instead of the highest-value one
+        - end_state: terminal state
+        - rewards: list of rewards corresponding to each action
+        - transitions: list of valid transitions from each state
+        - model parameters: [
+            - v_state: the value of state-action pairs
+            - t_counts: the transition matrix, held over from learning
+            - t_matrix: the normalized transition matrix, held over from learning
+            - weight: the weight vector, held over from learning
+        ]
+
+    Returns: (
+        - model_parameters: [
+            - v_state: the value of state-action pairs
+            - t_counts: the transition matrix (should generally be initialized with zeros)
+            - t_matrix: the normalized transition matrix (0-1, should generally be initialized with zeros)
+            - weight: the weight vector (also generally initialized with zeros)
+        ]
+        - transition_log: [str]
+    )
     '''
     # Unpack logging_lists and model parameters into component variables
     v_state, t_counts, t_matrix, weight = model_parameters
@@ -293,7 +321,7 @@ def relearning(condition, gamma, alpha, explore_chance, end_state, rewards, tran
 
     transition_log = []
     for trial_index, start_state in enumerate(start_states):
-        v_state, t_counts, weight, transition_log_lines = run_trial(
+        v_state, t_counts, t_matrix, weight, transition_log_lines = run_trial(
             gamma,
             alpha,
             explore_chance,

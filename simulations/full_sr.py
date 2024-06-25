@@ -2,10 +2,14 @@
 # full_sr.py
 #
 
+'''
+IMPLEMENTATION OF A SUCCESSOR REPRESENTATION AGENT USING TEMPORAL-DIFFERENCE LEARNING TO UPDATE WEIGHT VECTOR AND
+SUCCESSOR MATRIX
+'''
+
 import numpy as np
 import random as rd
 from utilities import *
-
 
 #
 # Run Trial
@@ -23,18 +27,16 @@ def run_trial(gamma, alpha, explore_chance, end_state, start_state, rewards, tra
         rewards: list of rewards corresponding to each action
         transitions: list of valid transitions from each state
         num_pairs: the number of state-action pairs
+        v_state: value of all state-action pairs
         feat: the successor matrix
         weight: the weight vector
 
     Returns: (
-        - feat: value updated after the current trial
-        - weight: value updated after the current trial
+        - feat: successor matrix updated after the current trial
+        - weight: weight vector updated after the current trial
         - transition_log_lines: [str]
     )
     '''
-    for k in range(num_pairs):
-        v_state.append(np.sum(weight * feat[k]))
-
     current_state = start_state - 1
     transition_log_lines = []
 
@@ -110,7 +112,7 @@ def run_trial(gamma, alpha, explore_chance, end_state, start_state, rewards, tra
             feat_delta = one_hot + gamma * feat[get_flattened_index(transitions, current_state, next_move)] - feat[
                 get_flattened_index(transitions, last_state, last_move)]
             feat[get_flattened_index(transitions, last_state,
-                                     last_move)] += alpha * 0.25 * feat_delta
+                                     last_move)] += alpha * feat_delta
 
             ###### Update weights with TD learning ######
             reward = rewards[current_state][next_move]
@@ -147,15 +149,16 @@ def run_trial(gamma, alpha, explore_chance, end_state, start_state, rewards, tra
             one_hot[get_flattened_index(transitions, last_state, last_move)] = 1
             feat_delta = one_hot + gamma * feat[get_flattened_index(transitions, current_state, next_move)] - feat[
                 get_flattened_index(transitions, last_state, last_move)]
-            feat[get_flattened_index(transitions, last_state, last_move)] += alpha * 0.25 * feat_delta
+            feat[get_flattened_index(transitions, last_state, last_move)] += alpha * feat_delta
 
             ###### Update weights with TD learning ######
             reward = rewards[current_state][next_move]
             weight_delta = reward - v_state[get_flattened_index(transitions, current_state, next_move)]
             # scale feature according to Russek et al. 2017
-            feat_scaled = feat[get_flattened_index(transitions, current_state, next_move)] / np.matmul(feat[get_flattened_index(transitions, current_state, next_move)], \
-                                                                                                       np.transpose(feat[get_flattened_index(transitions, current_state, next_move)]))
-
+            feat_scaled = feat[get_flattened_index(transitions, current_state, next_move)] / np.matmul(
+                feat[get_flattened_index(transitions, current_state, next_move)],
+                np.transpose(feat[get_flattened_index(transitions, current_state, next_move)])
+            )
             weight += alpha * weight_delta * feat_scaled
 
             ###### Update values of all state-action pairs ######
@@ -173,7 +176,7 @@ def run_trial(gamma, alpha, explore_chance, end_state, start_state, rewards, tra
         else:
             assert False
 
-    return feat, weight, transition_log_lines
+    return v_state, feat, weight, transition_log_lines
 
 
 #
@@ -222,7 +225,7 @@ def learning(gamma, alpha, explore_chance, end_state, rewards, transitions, mode
     # Run trials
     transition_log = []
     for trial_index, start_state in enumerate(start_states):
-        feat, weight, transition_log_lines = run_trial(
+        v_state, feat, weight, transition_log_lines = run_trial(
             gamma,
             alpha,
             explore_chance,
@@ -302,7 +305,7 @@ def relearning(condition, gamma, alpha, explore_chance, end_state, rewards, tran
     # Run trials
     transition_log = []
     for trial_index, start_state in enumerate(start_states):
-        feat, weight, transition_log_lines = run_trial(
+        v_state, feat, weight, transition_log_lines = run_trial(
             gamma,
             alpha,
             explore_chance,
