@@ -70,11 +70,11 @@ def run_trial(gamma, alpha, explore_chance, end_state, start_state, rewards, tra
             weight_delta = reward + gamma * v_state[get_flattened_index(transitions, next_state, second_next_move)] - \
                            v_state[get_flattened_index(transitions, current_state, next_move)]
             # scale feature according to Russek et al. 2017
-            feat_scaled = feat[get_flattened_index(transitions, current_state, next_move)] / np.matmul(
+            feat_scaled = (feat[get_flattened_index(transitions, current_state, next_move)] / np.matmul(
                 feat[get_flattened_index(transitions, current_state, next_move)],
                 np.transpose(feat[get_flattened_index(transitions, current_state, next_move)])
-            )
-            weight += alpha * weight_delta * feat_scaled
+            ))
+            weight += alpha * weight_delta * feat[get_flattened_index(transitions, current_state, next_move)]
 
             ###### Update values of all state-action pairs ######
             for k in range(num_pairs):
@@ -123,7 +123,7 @@ def run_trial(gamma, alpha, explore_chance, end_state, start_state, rewards, tra
                 feat[get_flattened_index(transitions, current_state, next_move)],
                 np.transpose(feat[get_flattened_index(transitions, current_state, next_move)])
             )
-            weight += alpha * weight_delta * feat_scaled
+            weight += alpha * weight_delta * feat[get_flattened_index(transitions, current_state, next_move)]
 
             ###### Update values of all state-action pairs ######
             for k in range(num_pairs):
@@ -159,7 +159,7 @@ def run_trial(gamma, alpha, explore_chance, end_state, start_state, rewards, tra
                 feat[get_flattened_index(transitions, current_state, next_move)],
                 np.transpose(feat[get_flattened_index(transitions, current_state, next_move)])
             )
-            weight += alpha * weight_delta * feat_scaled
+            weight += alpha * weight_delta * feat[get_flattened_index(transitions, current_state, next_move)]
 
             ###### Update values of all state-action pairs ######
             for k in range(num_pairs):

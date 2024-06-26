@@ -63,7 +63,7 @@ def run_trial(gamma, alpha, explore_chance, end_state, start_state, rewards, tra
 
             ###### Fill in transition log line ######
             transition_log_lines.append(
-                f"{current_state + 1},{next_move + 1},{reward},{comma_separate(v_state)}"
+                f"{current_state + 1},{next_move + 1},{reward},{comma_separate(flatten(v_state))}"
             )
 
             ###### Move to the next state ######
@@ -91,7 +91,7 @@ def run_trial(gamma, alpha, explore_chance, end_state, start_state, rewards, tra
 
             ###### Fill in transition log line ######
             transition_log_lines.append(
-                f"{current_state + 1},{next_move + 1},{reward},{comma_separate(v_state)}"
+                f"{current_state + 1},{next_move + 1},{reward},{comma_separate(flatten(v_state))}"
             )
 
             ###### Move to the next state ######
@@ -109,7 +109,7 @@ def run_trial(gamma, alpha, explore_chance, end_state, start_state, rewards, tra
 
             ###### Fill in transition log line ######
             transition_log_lines.append(
-                f"{current_state + 1},{next_move + 1},{reward},{comma_separate(v_state)}"
+                f"{current_state + 1},{next_move + 1},{reward},{comma_separate(flatten(v_state))}"
             )
 
             ###### End loop ######

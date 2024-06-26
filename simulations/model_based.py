@@ -91,14 +91,16 @@ def run_trial(gamma, alpha, explore_chance, end_state, start_state, rewards, tra
             weight[current_state][next_move] += alpha * weight_delta  # update weight
 
             ###### Update values of all state-action pairs (Bellman Equation) ######
+            # vector of values per state under a given policy (multiplies value of each action available from a state with its probability of being chosen and sums over all actions per state)
             next_state_values = [np.sum(v_state[state] * policy(v_state[state], explore_chance)) for state in range(len(rewards))]
             for i in range(len(rewards)):
                 for j in range(len(rewards[i])):
+                    # multiply transition probability from s to s' (all other = 0) by value of s'
                     v_state[i][j] = weight[i][j] + gamma * np.sum(t_matrix[get_flattened_index(rewards, i, j)] * next_state_values)
 
             ###### Fill in transition log line ######
             transition_log_lines.append(
-                f"{current_state + 1},{next_move + 1},{reward},{weight_delta},{comma_separate(v_state)},{comma_separate(weight)},{comma_separate(flatten(t_matrix))}"
+                f"{current_state + 1},{next_move + 1},{reward},{weight_delta},{comma_separate(flatten(v_state))},{comma_separate(flatten(weight))},{comma_separate(flatten(t_matrix))}"
             )
 
             ###### Move to the next state ######
@@ -146,7 +148,7 @@ def run_trial(gamma, alpha, explore_chance, end_state, start_state, rewards, tra
 
             ###### Fill in transition log line ######
             transition_log_lines.append(
-                f"{current_state + 1},{next_move + 1},{reward},{weight_delta},{comma_separate(v_state)},{comma_separate(weight)},{comma_separate(flatten(t_matrix))}"
+                f"{current_state + 1},{next_move + 1},{reward},{weight_delta},{comma_separate(flatten(v_state))},{comma_separate(flatten(weight))},{comma_separate(flatten(t_matrix))}"
             )
 
             ###### Move to the next state ######
@@ -180,9 +182,10 @@ def run_trial(gamma, alpha, explore_chance, end_state, start_state, rewards, tra
                     v_state[i][j] = weight[i][j] + gamma * np.sum(
                         t_matrix[get_flattened_index(v_state, i, j)] * next_state_values)
 
+
             ###### Fill in transition log line ######
             transition_log_lines.append(
-                f"{current_state + 1},{next_move + 1},{reward},{weight_delta},{flatten(v_state)},{comma_separate(weight)},{comma_separate(flatten(t_matrix))}"
+                f"{current_state + 1},{next_move + 1},{reward},{weight_delta},{comma_separate(flatten(v_state))},{comma_separate(flatten(weight))},{comma_separate(flatten(t_matrix))}"
             )
 
             ###### End loop ######
