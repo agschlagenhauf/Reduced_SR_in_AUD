@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+
+<!-- Start of HTML Document -->
+<html>
+    <head>
+        <!-- Load Style -->
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <link href="https://fonts.googleapis.com/css?family=Open Sans" rel="stylesheet">
+        <link rel="stylesheet" href="css/main.css">
+
+        <!-- Load Jatos -->
+        <script src="js/main.js"></script>
+        <script src="jatos.js"></script>
+    </head>
+
+    <!-- Start of Page Content (Visible on Screen) -->
+    <body>
+
+        <div id="message" class="full_screen_message" style="text-align: center;">
+        </div>
+
+        <script>
+            jatos.onLoad(function() { // load JATOS for the very first time
+
+                prepareComponentFlow();
+                
+                let componentData = {
+                    'participant_ID':participantID, 
+                    'running_ID':runningID,
+                    'back_code': backCode,
+                    'variation':variationID, 
+                    'component':componentFlow[componentIndex]
+                };
+
+                let paragraphIndex = 0;
+
+                const message = document.getElementById("message");
+                message.innerHTML = paragraphs[paragraphIndex];
+                
+                document.onkeydown = function(event) { // navigation through intro
+                    if (event.key == Keyboard.LeftArrow) {
+                        paragraphIndex = Math.max(0, paragraphIndex - 1);
+                        message.innerHTML = paragraphs[paragraphIndex];
+                    }
+                    else if (event.key == Keyboard.RightArrow) {
+                        paragraphIndex += 1;
+
+                        if (paragraphIndex < paragraphs.length) {    
+                            message.innerHTML = paragraphs[paragraphIndex];
+                        }
+                        else { // once we reach last paragraph, right arrow leads to start of first condition
+                            disableInput(); // disable any further input
+                            fadeOut(message, function() {
+                                showNextComponent(componentData);
+                            });
+                        }
+                    }
+                };
+            });
+
+            const paragraphs = [
+                `Herzlich willkommen zum Computerspiel! 
+                <br>
+                <br>
+                Das Spiel wird ungefähr 1 Stunde dauern. Machen Sie es sich bequem und lesen Sie sich die Spielregeln auf den nächsten Seiten bitte aufmerksam durch.
+                <br>
+                <br>
+                rechte Pfeiltaste = weiter
+                <br>
+                linke Pfeiltaste = zurück`,
+
+
+                `Stellen Sie sich vor: Regelmäßig Freitagsabends gehen Sie mit guten Freunden und Freundinnen essen. 
+                <br>
+                <br>
+                Ihr Stammlokal nimmt leider keine Kartenzahlung an, das heißt: Sie brauchen Bargeld.`,
+
+
+                `Im Stress der Arbeitswoche vergessen Sie oft, für Freitag Geld abzuheben. 
+                <br>
+                <br>
+                Der nächste Bankautomat ist von Ihnen zu Hause leider eine halbe Stunde entfernt. 
+                <br>
+                <br>
+                Regelmäßig stehen Sie Freitags also vor der Frage: Wo treibe ich schnell noch etwas Bargeld auf, um entspannt essenzugehen?`,
+
+
+                `Glücklicherweise haben Sie es sich zur Routine gemacht, Bargeld unter der Woche an Ihren Geheimverstecken zu hinterlegen - für den Notfall sozusagen. 
+                <br>
+                <br>
+                In welchen Zimmern Sie wie viel hinterlegt haben, vergessen Sie in der Hektik des Alltags aber oft.
+                <br>
+                <br>
+                Freitags suchen Sie daher regelmäßig kurz vor Aufbruch zum Restaurant Ihr Haus ab.`,
+
+                
+                `Ihr Ziel ist es jeden Freitag, so viel Bargeld wie möglich zu finden. 
+                <br>
+                <br>
+                Je mehr Geld Sie im gesamten Spiel finden, desto höher die Wahrscheinlichkeit, dass Sie nach Ihrer Teilnahme den Bonus im Wert von 25€ gewinnen, den wir unter den besten 5 Teilnehmenden verlosen.`,
+
+                `Ihr Haus hat insgesamt 10 Zimmer. Sobald Sie ein Zimmer betreten, leuchten Ihre Handlungsoptionen nach kurzer Zeit GELB auf.
+                <br>
+                <br>
+                In manchen Zimmern können Sie zwischen ZWEI Handlungsoptionen wählen: Zwei Türen, die zu verschiedenen nächsten Zimmern führen.
+                <br>
+                <br>
+                In anderen Zimmern können Sie nur EINE Handlungsoption wählen: Eine bestimmte Stelle (z.B. ein Regal), an der Sie nach Bargeld suchen. Nachdem Sie die Stelle abgesucht haben, sehen Sie, ob und wie viel Geld Sie gefunden haben. Dann gehen Sie automatisch zum nächsten Raum weiter.`,
+
+
+                `An den ersten Freitagen geben wir Ihnen in allen Räumen vor, welche Option Sie wählen sollen. In Räumen, die eigentlich zwei Optionen enthalten, beudetet das: Eine der Optionen ist ausgegraut und kann nicht gewählt werden. Die Option, die Sie wählen können, leuchtet GELB auf. 
+                <br>
+                <br>
+                Prägen Sie sich an diesen ersten Freitagen gut ein, wo Sie am meisten Geld finden. Wie viel Geld Sie in einem Raum finden, hängt nicht davon ab, auf welchem Weg Sie in den Raum gelangt sind.`,
+
+                `An den darauffolgenden Freitagen lassen wir Ihnen dann die freie Wahl: In Räumen mit zwei Handlungsoptionen sind beide Optionen verfügbar und GELB markiert.
+                <br>
+                <br>
+                An diesen Freitagen haben Sie die Möglichkeit, so viel Geld wie möglich für Ihren Restaurantbesuch einzusammeln. Wählen Sie die Optionen, die Sie zum höchsten Geldbetrag führen. 
+                `,
+
+                `Den Grundriss Ihres Hauses mit 10 Zimmern sehen Sie auf der nächsten Seite. Sie starten unten und gehen dann einen Weg, der Sie bis zu Raum 10 (oben) führt.`
+            ];
+        </script>
+
+    </body>
+</html>
+

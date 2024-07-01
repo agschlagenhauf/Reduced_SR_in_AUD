@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+
+<!-- Start of HTML Document -->
+<html>
+    <head>
+        <!-- Load Style -->
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <link href="https://fonts.googleapis.com/css?family=Open Sans" rel="stylesheet">
+        <link rel="stylesheet" href="css/main.css">
+
+        <!-- Load Jatos -->
+        <script src="js/main.js"></script>
+        <script src="jatos.js"></script>
+    </head>
+
+    <!-- Start of Page Content (Visible on Screen) -->
+    <body>
+
+        <div id="message" class="full_screen_message" style="text-align: center;">
+            Sehr gut, dank Ihres Suchtalents konnten Sie erneut viele Freitagabende im Restaurant mit Freunden und Freundinnen genießen. 
+            <br>
+            <br>
+            In der Zeit, in der Sie in anderen Häusern gelebt haben, sind Sie auf den Geschmack gekommen! Sie haben online ein gutes Angebot gefunden und sind erneut umgezogen, diesmal in Ihr Traumhaus.
+            <br>
+            <br>
+            Auch im neuen Haus sind Sie regelmäßig Freitagabends auf der Suche nach Bargeld an Ihren neuen Geheimverstecken.
+            <br>
+            <br>
+            Auch im neuen Haus gilt: Sammeln Sie so viel Geld wie möglich. Prägen Sie sich dazu ein, wo Sie aktuell am meisten Geld finden. Bemerken Sie eventuelle Veränderungen und verhalten Sie sich entsprechend.
+            <br>
+            <br>
+            Viel Erfolg!
+        </div>
+
+        <script>
+            loadComponent(function() {
+
+                let componentData = {
+                    'participant_ID':participantID, 
+                    'running_ID':runningID,
+                    'back_code': backCode,
+                    'variation':variationID, 
+                    'component':componentFlow[componentIndex]
+                };
+
+                const message = document.getElementById("message");
+                
+                document.onkeydown = function(event) { // navigation through intro
+                    if (event.key == Keyboard.RightArrow) {
+                        disableInput(); // disable any further input
+                        fadeOut(message, function() {
+                            showNextComponent(componentData);
+                        });
+                    }
+                };
+
+            });
+        </script>
+
+    </body>
+</html>

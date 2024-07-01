@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+
+<!-- Start of HTML Document -->
+<html>
+    <head>
+        <!-- Load Style -->
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <link href="https://fonts.googleapis.com/css?family=Open Sans" rel="stylesheet">
+        <link rel="stylesheet" href="css/main.css">
+
+        <!-- Load Jatos -->
+        <script src="js/main.js"></script>
+        <script src="jatos.js"></script>
+    </head>
+
+    <!-- Start of Page Content (Visible on Screen) -->
+    <body>
+
+        <div id="quiz_screen">
+            <div id="question" class="quiz_question">
+            </div>
+            <div class="quiz_option_outer_container">
+                <div class="quiz_option_inner_container">
+                    <div id="option_left" class="quiz_option">
+                        richtig
+                    </div>
+                </div>
+                <div class="quiz_option_inner_container">
+                    <div id="option_right" class="quiz_option">
+                        falsch
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <script>
+            loadComponent(function() {
+
+                let componentData = {
+                    'participant_ID':participantID, 
+                    'running_ID':runningID,
+                    'back_code': backCode,
+                    'variation':variationID, 
+                    'component':componentFlow[componentIndex],
+                };
+
+                let questionIndex = 0;
+
+                const question = document.getElementById("question");
+                question.innerHTML = questions[questionIndex];
+
+                const optionLeft = document.getElementById("option_left");
+                const optionRight = document.getElementById("option_right");
+
+                let quizAnswers = [];
+                const correctAnswers = [false, true, true, false, true, false, true, false]
+                let currentSelection = null;
+                
+                document.onkeydown = function(event) { // navigation through intro
+
+                    if (event.key == Keyboard.LeftArrow) {
+                        currentSelection = true;
+                        optionLeft.classList.add("quiz_option_selected");
+                        optionRight.classList.remove("quiz_option_selected");
+                    }
+                    else if (event.key == Keyboard.RightArrow) {
+                        currentSelection = false;
+                        optionRight.classList.add("quiz_option_selected");
+                        optionLeft.classList.remove("quiz_option_selected");
+                        
+                    }
+                    else if (currentSelection != null && event.key == Keyboard.Enter) {
+                        quizAnswers.push(currentSelection);
+                        currentSelection = null;
+                        optionRight.classList.remove("quiz_option_selected");
+                        optionLeft.classList.remove("quiz_option_selected");
+
+                        questionIndex += 1;
+
+                        if (questionIndex < questions.length) {    
+                            question.innerHTML = questions[questionIndex];
+                        }
+                        else { // once we reach last paragraph, right arrow leads to intro 3 or quir_wrong
+                            disableInput(); // disable any further input
+
+                            if (compareArrays(quizAnswers, correctAnswers)) {
+                                fadeOut(document.getElementById("quiz_screen"), function() {
+                                    showSecondNextComponent(componentData);
+                                });
+                            }
+                            else {
+                                fadeOut(document.getElementById("quiz_screen"), function() {
+                                    showNextComponent(componentData);
+                                });
+                            }
+                        }
+                    }
+                };
+            });
+
+
+
+            const questions = [
+                "Ich werde während des Spiels 6 verschiedene Bar-Lokale besuchen.",
+                "Jedes Bar-Lokal hat 10 Räume.",
+                "Ich soll so VIELE Gläser Alkohol wie möglich erhalten.",
+                "Ich soll so LANGSAM auswählen, wie möglich.",
+                "Während ich in einem Bar-Lokal bin, wird sich manchmal etwas verändern. Um so viele Gläser Akohol wie möglich zu erhalten, muss ich diese VERÄNDERUNGEN BEMERKEN und mich ENTSPRECHEND VERHALTEN.",
+                "Die verschiedenen Bar-Lokale unterscheiden sich NICHT darin, wo ich wie viele Gläser Alkohol erhalte.",
+                "Wie viele Gläser ich in einem Raum erhalte, hängt NICHT davon ab, auf welchem Weg ich in diesen Raum gelangt bin.",
+                "Wie hoch die Wahrscheinlichkeit ist, einen Getränkemarkt-Gutschein im Wert von 25€ zu gewinnen, hängt davon ab, wie viele Gläser Alkohol ich im ERSTEN Bar-Lokal erhalte."
+            ];
+        </script>
+
+    </body>
+</html>
