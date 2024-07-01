@@ -9,7 +9,6 @@ code-fold: true
 embed-resources: true
 execute: 
   warning: false
-
 ---
 
 ```{r}
@@ -35,7 +34,7 @@ load(file.path(demo_path, "demo_psych_data.RData"))
 
 ## Percent correct overall
 
-- ~20% higher compared to pilot 1
+-   \~20% higher compared to pilot 1
 
 ```{r}
 learning_correct_df <- trial_df %>%
@@ -58,7 +57,7 @@ learning_correct_df %>%
 
 ## Percent correct per component (and state)
 
-- no differences in % correct decisions from states 1, 2, 3 between conditions
+-   no differences in % correct decisions from states 1, 2, 3 between conditions
 
 ```{r}
 learning_correct_component_state_df <- trial_df %>%
@@ -150,7 +149,7 @@ tab_model(log_model_learning_transition, transform = NULL, show.est = T, show.st
 
 ## Percent correct paths per component
 
-- no differences in % correct paths (correct state 1 and state 2/3 choice) between conditions
+-   no differences in % correct paths (correct state 1 and state 2/3 choice) between conditions
 
 ```{r}
 learning_correct_path_component_df <- trial_df %>%
@@ -187,8 +186,8 @@ ggplot(learning_correct_path_component_df, aes(x=component, y=mean_correct)) +
 
 ### Percent correct all states per component over time
 
-- slight increase in % correct all states from earlier to later conditions
-- % correct already starts off > 75% (because of previous foced choice trials)
+-   slight increase in % correct all states from earlier to later conditions
+-   \% correct already starts off \> 75% (because of previous foced choice trials)
 
 ```{r}
 # get percent correct over time
@@ -228,8 +227,8 @@ ggplot(learning_correct_component_time_df, aes(x=component, y=mean_correct, fill
 
 ### Percent correct state 1 over time
 
-- slight increase from earlier to later trials
-- already starts off >75%
+-   slight increase from earlier to later trials
+-   already starts off \>75%
 
 ```{r}
 # get percent correct over time
@@ -266,7 +265,7 @@ ggplot(learning_state1_correct_component_time_df, aes(x=accumulated_state1_visit
 
 ### Percent correct state 2 over time
 
-- ceiling effect after ~ half of trials
+-   ceiling effect after \~ half of trials
 
 ```{r}
 # get percent correct over time
@@ -303,7 +302,7 @@ ggplot(learning_state2_correct_component_time_df, aes(x=accumulated_state2_visit
 
 ### Percent correct state 3 over time
 
-- ceiling effect after ~ half of trials
+-   ceiling effect after \~ half of trials
 
 ```{r}
 # get percent correct over time
@@ -342,8 +341,8 @@ ggplot(learning_state3_correct_component_time_df, aes(x=accumulated_state3_visit
 
 ### Percent correct all states per condition index
 
-- lower % correct in 1st condition
-- transition revaluation lower % correct when last condition --> should be balanced out in final study (every condition equally often in every position)
+-   lower % correct in 1st condition
+-   transition revaluation lower % correct when last condition --\> should be balanced out in final study (every condition equally often in every position)
 
 ```{r}
 # get percent correct over time
@@ -379,8 +378,8 @@ ggplot(learning_correct_component_index_df, aes(x=condition_index, y=mean_correc
 
 ### Percent correct all states per environment
 
-- no consistent effects
-- differences should be balanced out in final study (every condition equally often paired with every environment)
+-   no consistent effects
+-   differences should be balanced out in final study (every condition equally often paired with every environment)
 
 ```{r}
 # get percent correct over time
@@ -416,8 +415,8 @@ ggplot(learning_correct_component_environment_df, aes(x=environment, y=mean_corr
 
 ### Balancing check: variations
 
-- variations = latin square matching between condition order and environment order
-- mostly successful 
+-   variations = latin square matching between condition order and environment order
+-   mostly successful
 
 ```{r}
 # get percent correct over time
@@ -436,8 +435,8 @@ balancing_variations_df %>%
 
 ### Balancing check: Condition index per condition
 
-- mostly successful
-- in final study, we should collect data until equal n per cell
+-   mostly successful
+-   in final study, we should collect data until equal n per cell
 
 ```{r}
 # get percent correct over time
@@ -457,8 +456,8 @@ balancing_index_df %>%
 
 ### Balancing check: Condition index per environment
 
-- mostly successful
-- in final study, we should collect data until equal n per cell
+-   mostly successful
+-   in final study, we should collect data until equal n per cell
 
 ```{r}
 # get percent correct over time
@@ -557,12 +556,13 @@ percent_component_excluded_a
 ```{r}
 percent_IDs_excluded_a
 ```
-- Even though >90% correct in learning, we still loose a lot of participants when applying the original exclusion criterion
+
+-   Even though \>90% correct in learning, we still loose a lot of participants when applying the original exclusion criterion
 
 #### Excluded components per condition
 
-- we loose most participants in reward/goal-state/control
-- transition/policy might be easier to learn as both rewards follow the same state 1 action
+-   we loose most participants in reward/goal-state/control
+-   transition/policy might be easier to learn as both rewards follow the same state 1 action
 
 ```{r}
 learning_last4_correct_condition_df_excl <- learning_last4_correct_component_df_excl %>%
@@ -578,7 +578,7 @@ learning_last4_correct_condition_df_excl %>%
 
 #### Excluded components per component index
 
-- we loose most participants in the first condition 
+-   we loose most participants in the first condition
 
 ```{r}
 learning_last4_correct_component_index_df_excl <- learning_last4_correct_component_df_excl %>%
@@ -594,7 +594,7 @@ learning_last4_correct_component_index_df_excl %>%
 
 #### Excluded components per environment
 
-- we loose most participants in the orange_tile environment --> should be balanced out
+-   we loose most participants in the orange_tile environment --\> should be balanced out
 
 ```{r}
 learning_last4_correct_component_environment_df_excl <- learning_last4_correct_component_df_excl %>%
@@ -726,7 +726,7 @@ learning_correct_component_environment_df_excl %>%
 
 ### Final exclusion
 
-We use the alternative exclusion criterion for the remaining analyses (>75% correct overall during learning).
+We use the alternative exclusion criterion for the remaining analyses (\>75% correct overall during learning).
 
 ```{r}
 ################ CHOOSE EXCLUSION CRITERION ####################################
@@ -779,9 +779,8 @@ length(unique(df$ID))
 
 ### State 1 switches in all 5 test trials per component
 
-- % switches (from state 1 optimal learning action to state 1 optimal test action) in reward > transition revaluation
-- but % switches in policy more comparable to reward than to transition revaluation -> participants might have used a MB strategy with a higher learning rate for the weight vector compared to the transition matrix
-
+-   \% switches (from state 1 optimal learning action to state 1 optimal test action) in reward \> transition revaluation
+-   but % switches in policy more comparable to reward than to transition revaluation -\> participants might have used a MB strategy with a higher learning rate for the weight vector compared to the transition matrix
 
 ```{r}
 test_switch_component_df <- df %>%
@@ -864,11 +863,10 @@ log_model_transition <- glmer(switch ~ condition + (1 | ID), data = logreg_test_
 tab_model(log_model_transition, transform = NULL, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
 ```
 
-
 ### State 1 % switches across 5 test trials within participant per component
 
-- same pattern as when considering all test trials across participants
-- large variation in % correct transition revaluation between participants
+-   same pattern as when considering all test trials across participants
+-   large variation in % correct transition revaluation between participants
 
 ```{r}
 test_switch_ID_component_df <- df %>%
@@ -899,7 +897,7 @@ ggplot(test_switch_ID_component_df, aes(x=component, y=percent_switch)) +
 
 ### State 1 switches in first test trial per component
 
-- same pattern as when considering all test trials across participants
+-   same pattern as when considering all test trials across participants
 
 ```{r}
 test_switch_component_trial1_df <- df %>%
@@ -932,8 +930,8 @@ ggplot(test_switch_component_trial1_df, aes(x=component, y=percent_switch)) +
 
 ### State 1 switches per trial per component
 
-- pattern between conditions does not depend on number of test trial (no obvious extinction effects)
-- trial 1 seems to be most meaningful as lowest % switch in control condition
+-   pattern between conditions does not depend on number of test trial (no obvious extinction effects)
+-   trial 1 seems to be most meaningful as lowest % switch in control condition
 
 ```{r}
 test_switch_component_trial_df <- df %>%
@@ -965,7 +963,7 @@ ggplot(test_switch_component_trial_df, aes(x=trial, y=percent_switch, fill=compo
 
 ## Correct paths starting from state 1
 
-- same pattern as when considering % correct in all states or in state 1 only
+-   same pattern as when considering % correct in all states or in state 1 only
 
 ```{r}
 test_correct_path_component_df <- trial_df %>%
@@ -1002,7 +1000,7 @@ ggplot(test_correct_path_component_df, aes(x=component, y=mean_correct)) +
 
 ### Switches per condition index
 
-- switch rate intearcts unsystematically with condition index
+-   switch rate intearcts unsystematically with condition index
 
 ```{r}
 # get percent correct over time
@@ -1037,7 +1035,7 @@ ggplot(test_switch_component_index_df, aes(x=condition_index, y=mean_switch, fil
 
 ### Time on task \* condition (changes in strategy over time)
 
--   condition effects on switch rate interact with time on task --> changes in strategy over time
+-   condition effects on switch rate interact with time on task --\> changes in strategy over time
 -   but relatively low n per condition order
 
 #### LogReg: Switches per accumulated state visits on task \* difference from control
@@ -1341,7 +1339,7 @@ ggplot(df, aes(x=phase, y=RT, fill = condition)) +
 
 ### RT in 2-choice states per condition and phase
 
-- no differences between learning and test RT --> participants had enough time to prepare their response during the 15 sec instruction before test?
+-   no differences between learning and test RT --\> participants had enough time to prepare their response during the 15 sec instruction before test?
 
 ```{r}
 twochoice_RT_condition_phase_df <- df %>%

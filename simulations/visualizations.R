@@ -7,9 +7,9 @@ lapply(packages, library, character.only = TRUE)
 
 
 # read in csv files
-full_sr <- read_csv("results/full_sr.csv")
-model_free <- read_csv("results/model_free.csv")
-model_based <- read_csv("results/model_based.csv")
+full_sr <- read_csv("Reduced_SR_in_AUD/simulations/results/full_sr.csv")
+model_free <- read_csv("Reduced_SR_in_AUD/simulations/results/model_free.csv")
+model_based <- read_csv("Reduced_SR_in_AUD/simulations/results/model_based.csv")
 
 full_sr_control <- full_sr[full_sr$condition=="control",]
 full_sr_reward <- full_sr[full_sr$condition=="reward",]

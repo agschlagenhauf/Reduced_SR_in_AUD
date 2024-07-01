@@ -31,6 +31,7 @@ demo_df <- demo_df %>%
   mutate(ID = as.factor(ID),
          age = as.numeric(age),
          sex = as.factor(sex)) %>%
+
   select(ID,
          redcap_ID,
          prolific_pid,
