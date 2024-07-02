@@ -35,6 +35,7 @@ let environmentMap = {
 let componentFlow = []; // list of component titles (reward learning etc.)
 let componentIndex = 0; // current component index
 let componentOnset = null; // onset time for each component
+let drink = null;
 
 
 
@@ -46,8 +47,8 @@ function prepareComponentFlow() { // prepare list of what we should show
 
     // read out link components
     // example link: https://studies.bccn-berlin.de/publix/HG5A1FTtOIL?participant=30620126hqIHzHP2GhTvxYt
-    let urlQuery = jatos.urlQueryParameters.participant;
-    // let urlQuery = '30620126hqIHzHP2GhTvxYt';
+    // let urlQuery = jatos.urlQueryParameters.participant;
+    let urlQuery = '30620126hqIHzHP2GhTvxYt';
     participantID = Number(urlQuery.substr(0,4)); 
     runningID = Number(urlQuery.substr(4,3));
     console.log(runningID);
@@ -56,6 +57,7 @@ function prepareComponentFlow() { // prepare list of what we should show
     componentFlow.push( // add StaticComponents to componentFlow array
         StaticComponents.Intro1, 
         StaticComponents.FloorPlan,
+        StaticComponents.DrinkSelection,
         StaticComponents.Intro2,  
         StaticComponents.Tutorial, 
         StaticComponents.Intro3, 
@@ -93,6 +95,7 @@ function prepareComponentFlow() { // prepare list of what we should show
         "environment_map": environmentMap,
         "component_flow": componentFlow,
         "component_index": componentIndex,
+        "drink": drink,
     };
 
     const correctFirstStateActionLearning = shuffle(["left", "left", "right", "right", "right"]);; // which state 1 action is correct after learning
@@ -282,6 +285,9 @@ function configure(stateName, states, trialResults, trialResultHandler) {
     image.style.opacity = 1;
     setImageFromEnvironment("image", `${state.imageName}`, stateName);
 
+    drink = jatos.studySessionData["drink"]; // which drink should be used as reward
+    console.log(drink)
+
     // wait for a choice to be made
     doAfter(state.preChoiceTime, function() { // after delay defined per state, do...
 
@@ -394,7 +400,7 @@ function configure(stateName, states, trialResults, trialResultHandler) {
                 // rewarded trial
                 if (state.reward) {
                     let rewardImage = document.getElementById("reward"); // we want to write sth into reward_image in body
-                    rewardImage.src = `${getImagesPath()}/${state.reward}_euro.png`; // get image according to reward
+                    rewardImage.src = `${getImagesPath()}/${state.reward}_${drink}.png`; // get image according to reward
 
                     doAfter(state.afterChoiceTimeReward, function() { // after reward offset
                         rewardImage.removeAttribute("src");
@@ -592,6 +598,7 @@ const Keyboard = { // allows to use Keyboard.F etc.
     J: "j",
     LeftArrow: "ArrowLeft",
     RightArrow: "ArrowRight",
+    DownArrow: "ArrowDown",
     Space: " ",
     Enter: "Enter"
 };
@@ -938,6 +945,7 @@ function compareArrays(a, b) {
 const StaticComponents = {
     Intro1: "intro1",
     FloorPlan: "floor-plan",
+    DrinkSelection: "drink-selection",
     Intro2: "intro2",
     Tutorial: "tutorial",
     Intro3: "intro3",
