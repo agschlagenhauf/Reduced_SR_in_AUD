@@ -30,7 +30,7 @@ let runningID = null; // running ID generated in RedCap
 let backCode = null; // code leading back to individual RedCap questionnaires when appended to RedCap backLink
 let variationID = null; // which condition order and matching of condition and environment (see 'variations' at bottom of main.js)
 let environmentMap = {
-    "tutorial": "light_blue"
+    "tutorial": "tapas"
 }; // mapping btw component & environment; environment of tutorial is always the same
 let componentFlow = []; // list of component titles (reward learning etc.)
 let componentIndex = 0; // current component index
@@ -47,8 +47,8 @@ function prepareComponentFlow() { // prepare list of what we should show
 
     // read out link components
     // example link: https://studies.bccn-berlin.de/publix/HG5A1FTtOIL?participant=30620126hqIHzHP2GhTvxYt
-    // let urlQuery = jatos.urlQueryParameters.participant;
-    let urlQuery = '30620126hqIHzHP2GhTvxYt';
+    let urlQuery = jatos.urlQueryParameters.participant;
+    // let urlQuery = '30620126hqIHzHP2GhTvxYt';
     participantID = Number(urlQuery.substr(0,4)); 
     runningID = Number(urlQuery.substr(4,3));
     console.log(runningID);
@@ -963,12 +963,12 @@ const StaticComponents = {
  */
 
 const Environments = [ // all envs incl tutorial env
-    "light_blue",
-    "orange_tile",
-    "red_brown",
-    "white_modern",
-    "blue_floral",
-    "messy_green"
+    "alternative",
+    "brauhaus",
+    "fancy_green",
+    "hip_purple",
+    "sports_bar",
+    "tapas"
 ];
 
 
@@ -995,227 +995,227 @@ const Variations = [
     
     {
        "A1": [
-           {"reward": "white_modern"},
-           {"transition": "blue_floral"},
-           {"policy": "messy_green"},
-           {"goal-state": "orange_tile"},
-           {"control": "red_brown"}
+           {"reward": "alternative"},
+           {"transition": "brauhaus"},
+           {"policy": "fancy_green"},
+           {"goal-state": "hip_purple"},
+           {"control": "sports_bar"}
        ]
    },
    {
        "A2": [
-           {"reward": "blue_floral"},
-           {"transition": "messy_green"},
-           {"policy": "orange_tile"},
-           {"goal-state": "red_brown"},
-           {"control": "white_modern"}
+           {"reward": "brauhaus"},
+           {"transition": "fancy_green"},
+           {"policy": "hip_purple"},
+           {"goal-state": "sports_bar"},
+           {"control": "alternative"}
        ]
    },
    {
        "A3": [
-           {"reward": "messy_green"},
-           {"transition": "orange_tile"},
-           {"policy": "red_brown"},
-           {"goal-state": "white_modern"},
-           {"control": "blue_floral"}
+           {"reward": "fancy_green"},
+           {"transition": "hip_purple"},
+           {"policy": "sports_bar"},
+           {"goal-state": "alternative"},
+           {"control": "brauhaus"}
        ]
    },
    {
        "A4": [
-           {"reward": "orange_tile"},
-           {"transition": "red_brown"},
-           {"policy": "white_modern"},
-           {"goal-state": "blue_floral"},
-           {"control": "messy_green"}
+           {"reward": "hip_purple"},
+           {"transition": "sports_bar"},
+           {"policy": "alternative"},
+           {"goal-state": "brauhaus"},
+           {"control": "fancy_green"}
        ]
    },
    {
        "A5": [
-           {"reward": "red_brown"},
-           {"transition": "white_modern"},
-           {"policy": "blue_floral"},
-           {"goal-state": "messy_green"},
-           {"control": "orange_tile"}
+           {"reward": "sports_bar"},
+           {"transition": "alternative"},
+           {"policy": "brauhaus"},
+           {"goal-state": "fancy_green"},
+           {"control": "hip_purple"}
        ]
    },
    {
        "B1": [
-           {"transition": "white_modern"},
-           {"policy": "blue_floral"},
-           {"goal-state": "messy_green"},
-           {"control": "orange_tile"},
-           {"reward": "red_brown"}
+           {"transition": "alternative"},
+           {"policy": "brauhaus"},
+           {"goal-state": "fancy_green"},
+           {"control": "hip_purple"},
+           {"reward": "sports_bar"}
        ]
    },
    {
        "B2": [
-           {"transition": "blue_floral"},
-           {"policy": "messy_green"},
-           {"goal-state": "orange_tile"},
-           {"control": "red_brown"},
-           {"reward": "white_modern"}
+           {"transition": "brauhaus"},
+           {"policy": "fancy_green"},
+           {"goal-state": "hip_purple"},
+           {"control": "sports_bar"},
+           {"reward": "alternative"}
        ]
    },
    {
        "B3": [
-           {"transition": "messy_green"},
-           {"policy": "orange_tile"},
-           {"goal-state": "red_brown"},
-           {"control": "white_modern"},
-           {"reward": "blue_floral"}
+           {"transition": "fancy_green"},
+           {"policy": "hip_purple"},
+           {"goal-state": "sports_bar"},
+           {"control": "alternative"},
+           {"reward": "brauhaus"}
        ]
    },
    {
        "B4": [
-           {"transition": "orange_tile"},
-           {"policy": "red_brown"},
-           {"goal-state": "white_modern"},
-           {"control": "blue_floral"},
-           {"reward": "messy_green"}
+           {"transition": "hip_purple"},
+           {"policy": "sports_bar"},
+           {"goal-state": "alternative"},
+           {"control": "brauhaus"},
+           {"reward": "fancy_green"}
        ]
    },
    {
        "B5": [
-           {"transition": "red_brown"},
-           {"policy": "white_modern"},
-           {"goal-state": "blue_floral"},
-           {"control": "messy_green"},
-           {"reward": "orange_tile"}
+           {"transition": "sports_bar"},
+           {"policy": "alternative"},
+           {"goal-state": "brauhaus"},
+           {"control": "fancy_green"},
+           {"reward": "hip_purple"}
        ]
    },
    {
        "C1": [
-           {"policy": "white_modern"},
-           {"goal-state": "blue_floral"},
-           {"control": "messy_green"},
-           {"reward": "orange_tile"},
-           {"transition": "red_brown"}
+           {"policy": "alternative"},
+           {"goal-state": "brauhaus"},
+           {"control": "fancy_green"},
+           {"reward": "hip_purple"},
+           {"transition": "sports_bar"}
        ]
    },
    {
        "C2": [
-           {"policy": "blue_floral"},
-           {"goal-state": "messy_green"},
-           {"control": "orange_tile"},
-           {"reward": "red_brown"},
-           {"transition": "white_modern"}
+           {"policy": "brauhaus"},
+           {"goal-state": "fancy_green"},
+           {"control": "hip_purple"},
+           {"reward": "sports_bar"},
+           {"transition": "alternative"}
        ]
    },
    {
        "C3": [
-           {"policy": "messy_green"},
-           {"goal-state": "orange_tile"},
-           {"control": "red_brown"},
-           {"reward": "white_modern"},
-           {"transition": "blue_floral"}
+           {"policy": "fancy_green"},
+           {"goal-state": "hip_purple"},
+           {"control": "sports_bar"},
+           {"reward": "alternative"},
+           {"transition": "brauhaus"}
        ]
    },
    {
        "C4": [
-           {"policy": "orange_tile"},
-           {"goal-state": "red_brown"},
-           {"control": "white_modern"},
-           {"reward": "blue_floral"},
-           {"transition": "messy_green"}
+           {"policy": "hip_purple"},
+           {"goal-state": "sports_bar"},
+           {"control": "alternative"},
+           {"reward": "brauhaus"},
+           {"transition": "fancy_green"}
        ]
    },
    {
        "C5": [
-           {"policy": "red_brown"},
-           {"goal-state": "white_modern"},
-           {"control": "blue_floral"},
-           {"reward": "messy_green"},
-           {"transition": "orange_tile"}
+           {"policy": "sports_bar"},
+           {"goal-state": "alternative"},
+           {"control": "brauhaus"},
+           {"reward": "fancy_green"},
+           {"transition": "hip_purple"}
        ]
    },
    {
        "D1": [
-           {"goal-state": "white_modern"},
-           {"control": "blue_floral"},
-           {"reward": "messy_green"},
-           {"transition": "orange_tile"},
-           {"policy": "red_brown"}
+           {"goal-state": "alternative"},
+           {"control": "brauhaus"},
+           {"reward": "fancy_green"},
+           {"transition": "hip_purple"},
+           {"policy": "sports_bar"}
        ]
    },
    {
        "D2": [
-           {"goal-state": "blue_floral"},
-           {"control": "messy_green"},
-           {"reward": "orange_tile"},
-           {"transition": "red_brown"},
-           {"policy": "white_modern"}
+           {"goal-state": "brauhaus"},
+           {"control": "fancy_green"},
+           {"reward": "hip_purple"},
+           {"transition": "sports_bar"},
+           {"policy": "alternative"}
        ]
    },
    {
        "D3": [
-           {"goal-state": "messy_green"},
-           {"control": "orange_tile"},
-           {"reward": "red_brown"},
-           {"transition": "white_modern"},
-           {"policy": "blue_floral"}
+           {"goal-state": "fancy_green"},
+           {"control": "hip_purple"},
+           {"reward": "sports_bar"},
+           {"transition": "alternative"},
+           {"policy": "brauhaus"}
        ]
    },
    {
        "D4": [
-           {"goal-state": "orange_tile"},
-           {"control": "red_brown"},
-           {"reward": "white_modern"},
-           {"transition": "blue_floral"},
-           {"policy": "messy_green"}
+           {"goal-state": "hip_purple"},
+           {"control": "sports_bar"},
+           {"reward": "alternative"},
+           {"transition": "brauhaus"},
+           {"policy": "fancy_green"}
        ]
    },
    {
        "D5": [
-           {"goal-state": "red_brown"},
-           {"control": "white_modern"},
-           {"reward": "blue_floral"},
-           {"transition": "messy_green"},
-           {"policy": "orange_tile"}
+           {"goal-state": "sports_bar"},
+           {"control": "alternative"},
+           {"reward": "brauhaus"},
+           {"transition": "fancy_green"},
+           {"policy": "hip_purple"}
        ]
    },
    {
        "E1": [
-           {"control": "white_modern"},
-           {"reward": "blue_floral"},
-           {"transition": "messy_green"},
-           {"policy": "orange_tile"},
-           {"goal-state": "red_brown"}
+           {"control": "alternative"},
+           {"reward": "brauhaus"},
+           {"transition": "fancy_green"},
+           {"policy": "hip_purple"},
+           {"goal-state": "sports_bar"}
        ]
    },
    {
        "E2": [
-           {"control": "blue_floral"},
-           {"reward": "messy_green"},
-           {"transition": "orange_tile"},
-           {"policy": "red_brown"},
-           {"goal-state": "white_modern"}
+           {"control": "brauhaus"},
+           {"reward": "fancy_green"},
+           {"transition": "hip_purple"},
+           {"policy": "sports_bar"},
+           {"goal-state": "alternative"}
        ]
    },
    {
        "E3": [
-           {"control": "messy_green"},
-           {"reward": "orange_tile"},
-           {"transition": "red_brown"},
-           {"policy": "white_modern"},
-           {"goal-state": "blue_floral"}
+           {"control": "fancy_green"},
+           {"reward": "hip_purple"},
+           {"transition": "sports_bar"},
+           {"policy": "alternative"},
+           {"goal-state": "brauhaus"}
        ]
    },
    {
        "E4": [
-           {"control": "orange_tile"},
-           {"reward": "red_brown"},
-           {"transition": "white_modern"},
-           {"policy": "blue_floral"},
-           {"goal-state": "messy_green"}
+           {"control": "hip_purple"},
+           {"reward": "sports_bar"},
+           {"transition": "alternative"},
+           {"policy": "brauhaus"},
+           {"goal-state": "fancy_green"}
        ]
    },
    {
        "E5": [
-           {"control": "red_brown"},
-           {"reward": "white_modern"},
-           {"transition": "blue_floral"},
-           {"policy": "messy_green"},
-           {"goal-state": "orange_tile"}
+           {"control": "sports_bar"},
+           {"reward": "alternative"},
+           {"transition": "brauhaus"},
+           {"policy": "fancy_green"},
+           {"goal-state": "hip_purple"}
        ]
    }
 ];
