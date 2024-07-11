@@ -39,13 +39,14 @@ def reduce_weight_and_feat(feat, weight, rewards):
     return np.transpose(reduced_sr), reduced_weight
 
 
-def run_trial(phase, gamma, alpha, explore_chance, end_state, start_state, rewards, transitions, num_pairs, v_state, feat, weight):
+def run_trial(phase, gamma, alpha, alpha_sr, explore_chance, end_state, start_state, rewards, transitions, num_pairs, v_state, feat, weight):
     '''
     Simulates a single trial, from the given start state until the end state is reached.
 
     Arguments:
         gamma: the time discounting constant
         alpha: the learning rate constant
+        alpha_sr: the learning rate for SR
         explore_chance: probability that the agent will choose a random action instead of the highest-value one
         end_state: terminal state
         start_state: state that the agent starts in
@@ -110,7 +111,7 @@ def run_trial(phase, gamma, alpha, explore_chance, end_state, start_state, rewar
 
             ###### Fill in transition log line ######
             transition_log_lines.append(
-                f"{current_state + 1},{next_move + 1},{weight_delta},{comma_separate(v_state)},{comma_separate(weight)},{comma_separate(flatten(feat))}"
+                f"{current_state + 1},{next_move + 1},{reward},{weight_delta},{comma_separate(v_state)},{comma_separate(weight)},{comma_separate(flatten(feat))}"
             )
 
             ###### Move to the next state ######
@@ -141,7 +142,7 @@ def run_trial(phase, gamma, alpha, explore_chance, end_state, start_state, rewar
                 feat_delta = one_hot + gamma * feat[get_flattened_index(transitions, current_state, next_move)] - feat[
                     get_flattened_index(transitions, last_state, last_move)]
                 feat[get_flattened_index(transitions, last_state,
-                                         last_move)] += alpha * feat_delta
+                                         last_move)] += alpha_sr * feat_delta
 
             ###### Update weights with TD learning ######
             reward = rewards[current_state][next_move]
@@ -162,7 +163,7 @@ def run_trial(phase, gamma, alpha, explore_chance, end_state, start_state, rewar
 
             ###### Fill in transition log line ######
             transition_log_lines.append(
-                f"{current_state + 1},{next_move + 1},{weight_delta},{comma_separate(v_state)},{comma_separate(weight)},{comma_separate(flatten(feat))}"
+                f"{current_state + 1},{next_move + 1},{reward},{weight_delta},{comma_separate(v_state)},{comma_separate(weight)},{comma_separate(flatten(feat))}"
             )
 
             ###### Move to the next state ######
@@ -181,7 +182,7 @@ def run_trial(phase, gamma, alpha, explore_chance, end_state, start_state, rewar
                 one_hot[get_flattened_index(transitions, last_state, last_move)] = 1
                 feat_delta = one_hot + gamma * feat[get_flattened_index(transitions, current_state, next_move)] - feat[
                     get_flattened_index(transitions, last_state, last_move)]
-                feat[get_flattened_index(transitions, last_state, last_move)] += alpha * feat_delta
+                feat[get_flattened_index(transitions, last_state, last_move)] += alpha_sr * feat_delta
 
             ###### Update weights with TD learning ######
             reward = rewards[current_state][next_move]
@@ -214,13 +215,14 @@ def run_trial(phase, gamma, alpha, explore_chance, end_state, start_state, rewar
     return v_state, feat, weight, transition_log_lines
 
 
-def learning(gamma, alpha, explore_chance, end_state, rewards, transitions, model_parameters):
+def learning(gamma, alpha, alpha_sr, explore_chance, end_state, rewards, transitions, model_parameters):
     '''
     Simulates the learning phase, where the agent has access to the starting state.
 
     Arguments:
         - gamma: the time discounting constant
         - alpha: the learning rate constant
+        - alpha_sr: the learning rate for SR
         - explore_chance: probability that the agent will choose a random action instead of the highest-value one
         - end_state: terminal state
         - rewards: list of rewards corresponding to each action
@@ -262,6 +264,7 @@ def learning(gamma, alpha, explore_chance, end_state, rewards, transitions, mode
             phase,
             gamma,
             alpha,
+            alpha_sr,
             explore_chance,
             end_state,
             start_state,
@@ -285,13 +288,13 @@ def learning(gamma, alpha, explore_chance, end_state, rewards, transitions, mode
 #
 def update_parameters(condition, rewards, transitions):
     if condition == "reward":
-        rewards = [[0, 0], [0, 0], [0, 0], [0], [0], [0], [40], [0], [30], [0]]
+        rewards = [[0, 0], [0, 0], [0, 0], [0], [0], [0], [90], [0], [30], [0]]
     elif condition == "transition":
         transitions = [[2, 3], [5, 6], [4, 5], [7], [8], [9], [10], [10], [10], [11]]
     elif condition == "policy":
-        rewards = [[0, 0], [0, 0], [0, 0], [0], [0], [0], [40], [20], [30], [0]]
+        rewards = [[0, 0], [0, 0], [0, 0], [0], [0], [0], [90], [20], [30], [0]]
     elif condition == "goal":
-        rewards = [[0, 0], [0, 0], [0, 0], [20], [0], [0], [20], [0], [30], [0]]
+        rewards = [[0, 0], [0, 0], [0, 0], [70], [0], [0], [20], [0], [30], [0]]
     else:
         rewards = [[0, 0], [0, 0], [0, 0], [0], [0], [0], [20], [0], [40], [0]]
         
@@ -299,7 +302,7 @@ def update_parameters(condition, rewards, transitions):
 
 
 
-def relearning(condition, gamma, alpha, explore_chance, end_state, rewards, transitions, model_parameters):
+def relearning(condition, gamma, alpha, alpha_sr, explore_chance, end_state, rewards, transitions, model_parameters):
     '''
     Simulates the relearning phase, where the agent does not directly experience the starting state.
 
@@ -307,6 +310,7 @@ def relearning(condition, gamma, alpha, explore_chance, end_state, rewards, tran
         - condition: string representing the relearning condition
         - gamma: the time discounting constant
         - alpha: the learning rate constant
+        - alpha_sr: the learning rate for SR
         - explore_chance: probability that the agent will choose a random action instead of the highest-value one
         - end_state: terminal state
         - rewards: list of rewards corresponding to each action
@@ -346,6 +350,7 @@ def relearning(condition, gamma, alpha, explore_chance, end_state, rewards, tran
             phase,
             gamma,
             alpha,
+            alpha_sr,
             explore_chance,
             end_state,
             start_state,
