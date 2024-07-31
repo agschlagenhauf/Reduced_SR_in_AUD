@@ -296,6 +296,17 @@ trial_df <- trial_df %>%
                                   (state == 1 & correct == 0) ~ 0,
                                   (state == 1 & lead(correct) == 0) ~ 0))
 
+# add drink selection per participant
+drink_df <- data_df %>%
+  select(participant_ID, version, component, drink) %>%
+  mutate(ID = participant_ID) %>%
+  filter(component == "drink-selection") %>%
+  group_by(ID) %>%
+  slice_tail(n = 1) %>%
+  select(ID, drink)
+
+trial_df <- merge(trial_df, drink_df, by = "ID", all.x = T)
+
 ##############################  rating df ##############################  
         
 rating_df <- rating_df %>%
@@ -468,6 +479,7 @@ component_df <- data_df %>%
                                     (version == "alcohol" & variation %in% c("A4", "B4", "C4", "D4", "E4") & condition_index == 2) |
                                     (version == "alcohol" & variation %in% c("A5", "B5", "C5", "D5", "E5") & condition_index == 1)) ~ "sports_bar"))
 
+component_df <- merge(component_df, drink_df, by = "ID", all.x = T)
 
 ##############################  save   ##############################  
 save(trial_df, rating_df, component_df, file = file.path(data_path, "pilot_data_complete.RData"))

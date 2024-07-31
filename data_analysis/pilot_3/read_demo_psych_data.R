@@ -15,9 +15,18 @@ psychometric_data_path <- "WP3_DATA/PILOT_3/psychometric_data"
 behav_data_path <- "WP3_DATA/PILOT_3/behavioral_data"
 
 ##### read files
-demo_df <- read.csv(file.path(demo_data_path, "TRR265B01WP3aPilot1C-Demo_DATA_2024-06-20_2021.csv"))
-aud_df <- read.csv(file.path(psychometric_data_path, "TRR265B01WP3aPilot1Q-AUDCriteriaDetox_DATA_2024-06-20_2021.csv"))
-audit_df <- read.csv(file.path(psychometric_data_path, "TRR265B01WP3aPilot1Q-AUDIT_DATA_2024-06-20_2022.csv"))
+demo_df_alc <- read.csv(file.path(demo_data_path, "alcohol_TRR265B01WP3aOnlineS-Demo_DATA_2024-07-09_1548.csv"))
+demo_df_con <- read.csv(file.path(demo_data_path, "control_TRR265B01WP3aOnlineS-Demo_DATA_2024-07-07_1408.csv"))
+demo_df <- rbind(demo_df_alc, demo_df_con)
+
+aud_df_alc <- read.csv(file.path(psychometric_data_path, "alcohol_TRR265B01WP3aOnlineS-AUDCriteriaDetox_DATA_2024-07-09_1544.csv"))
+aud_df_con <- read.csv(file.path(psychometric_data_path, "control_TRR265B01WP3aOnlineS-AUDCriteriaDetox_DATA_2024-07-07_1439.csv"))
+aud_df <- rbind(aud_df_alc, aud_df_con)
+
+audit_df_alc <- read.csv(file.path(psychometric_data_path, "alcohol_TRR265B01WP3aOnlineS-AUDIT_DATA_2024-07-09_1547.csv"))
+audit_df_con <- read.csv(file.path(psychometric_data_path, "control_TRR265B01WP3aOnlineS-AUDIT_DATA_2024-07-07_1439.csv"))
+audit_df <- rbind(audit_df_alc, audit_df_con)
+
 load(file.path(behav_data_path, "pilot_data_complete.RData"))
 
 #### summarize demographic data
@@ -30,8 +39,7 @@ demo_df <- demo_df %>%
          sex = screen_gender) %>%
   mutate(ID = as.factor(ID),
          age = as.numeric(age),
-         sex = as.factor(sex)) %>%
-
+         sex = factor(sex, labels = c("female", "male"))) %>%
   select(ID,
          redcap_ID,
          prolific_pid,
@@ -67,7 +75,10 @@ audit_df <- audit_df %>%
                          b01_wp3_audit07,
                          b01_wp3_audit08,
                          b01_wp3_audit09,
-                         b01_wp3_audit10))
+                         b01_wp3_audit10)) %>%
+  mutate(audit_group = case_when((audit_sum < 8) ~ "low-risk",
+                                 (audit_sum > 7) ~ "harmful")) %>%
+  mutate(audit_group = as.factor(audit_group))
 
 # filter demo_df to only include participants who completed questionnaires
 demo_df <- demo_df %>%

@@ -1,7 +1,7 @@
 ---
-title: "Reduced SR in AUD Pilot 2: Behavioral Data Analysis"
+title: "Reduced SR in AUD Pilot 3: Behavioral Data Analysis"
 author: "Milena Musial"
-date: 06.06.2024
+date: 10.07.2024
 format: html
 editor: visual
 toc: TRUE
@@ -10,7 +10,7 @@ embed-resources: true
 execute: 
   warning: false
 editor_options: 
-  chunk_output_type: console
+  chunk_output_type: inline
 ---
 
 ```{r}
@@ -25,11 +25,14 @@ lapply(packages, library, character.only = TRUE)
 
 # define paths
 data_path <- "C:/Users/musialm/OneDrive - Charité - Universitätsmedizin Berlin/PhD/04_B01/WP3/WP3_DATA/PILOT_3/behavioral_data"
-#demo_path <- "C:/Users/musialm/OneDrive - Charité - Universitätsmedizin Berlin/PhD/04_B01/WP3/WP3_DATA/PILOT_3/demo_data"
+demo_path <- "C:/Users/musialm/OneDrive - Charité - Universitätsmedizin Berlin/PhD/04_B01/WP3/WP3_DATA/PILOT_3/demo_data"
 
 # read dfs
 load(file.path(data_path, "pilot_data_complete.RData"))
-#load(file.path(demo_path, "demo_psych_data.RData"))
+load(file.path(demo_path, "demo_psych_data.RData"))
+
+# add demo info trial df
+trial_df <- merge(trial_df, demo_psych_df[,c("ID", "age", "sex", "audit_sum", "audit_group")], by = "ID", all.x=TRUE)
 ```
 
 # Learning Phase
@@ -57,7 +60,7 @@ learning_correct_df %>%
                 latex_options = "scale_down")
 ```
 
-## Percent correct per component
+## Percent correct choices across states 1, 2, 3 per component
 
 -   no differences in % correct decisions from states 1, 2, 3 between conditions
 
@@ -88,11 +91,16 @@ ggplot(learning_correct_component_df, aes(x=component, y=mean_correct)) +
   geom_errorbar(aes(ymin=ci_l, ymax=ci_u), width=.2) +
   facet_wrap(~ version) +
   scale_y_continuous("% correct", limits = c(0, 1)) +
-  theme_light(base_size = 16)
+  theme_light(base_size = 16) +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
   
 ```
 
 ### LogReg: Difference from control condition
+
+-   better learning performance in policy compared to control condition across versions
+
+-   better learning performance in goal-state compared to control condition in alcohol version
 
 ```{r}
 logreg_learning_correct_condition_df <- trial_df %>%
@@ -105,15 +113,20 @@ logreg_learning_correct_condition_df <- trial_df %>%
          condition,
          version)
 
-contrasts(logreg_learning_correct_condition_df$version) <- contr.treatment(2, base = 1)
+contrasts(logreg_learning_correct_condition_df$version) <- contr.treatment(2, base = 2)
 contrasts(logreg_learning_correct_condition_df$condition) <- contr.treatment(5, base = 1)
 
 log_model_learning_control <- glmer(correct ~ condition*version + (1 | ID), data = logreg_learning_correct_condition_df, family = "binomial")
-
 tab_model(log_model_learning_control, transform = NULL, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
 ```
 
 ### LogReg: Difference from goal-state condition
+
+-   better learning performance in goal-state condition in alcohol compared to control version
+
+-   better learning performance in policy compared to goal-state condition
+
+-   better learning performance in goal-state compared to control condition in alcohol version, reverse effect in control version
 
 ```{r}
 contrasts(logreg_learning_correct_condition_df$condition) <- contr.treatment(5, base = 2)
@@ -123,6 +136,8 @@ tab_model(log_model_learning_goalstate, transform = NULL, show.est = T, show.sta
 ```
 
 ### LogReg: Difference from policy condition
+
+-   lower learning performance in control and goal-state conditions compared to policy condition
 
 ```{r}
 contrasts(logreg_learning_correct_condition_df$condition) <- contr.treatment(5, base = 3)
@@ -149,7 +164,7 @@ log_model_learning_transition <- glmer(correct ~ condition*version + (1 | ID), d
 tab_model(log_model_learning_transition, transform = NULL, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
 ```
 
-## Percent correct paths per component
+## Percent correct paths from state 1 per component
 
 -   no differences in % correct paths (correct state 1 and state 2/3 choice) between conditions
 
@@ -180,16 +195,93 @@ ggplot(learning_correct_path_component_df, aes(x=component, y=mean_correct)) +
                 position=position_dodge(.9)) +
   facet_wrap(~ version) +
   scale_y_continuous("% correct paths", limits = c(0, 1)) +
-  theme_light(base_size = 16)
+  theme_light(base_size = 16) +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
 
+```
+
+### LogReg: Difference from control condition
+
+-   better learning performance in policy compared to control condition across versions, but stronger in alcohol version
+
+-   better learning performance in goal-state compared to control condition in alcohol version
+
+```{r}
+logreg_learning_correct_paths_condition_df <- trial_df %>%
+  filter(phase == "learning",
+         state == 1
+         ) %>%
+  mutate(correct_path = as.factor(correct_path),
+         condition = as.factor(condition),
+         version = as.factor(version)) %>%
+  select(ID,
+         correct_path,
+         condition,
+         version)
+
+contrasts(logreg_learning_correct_paths_condition_df$version) <- contr.treatment(2, base = 2)
+contrasts(logreg_learning_correct_paths_condition_df$condition) <- contr.treatment(5, base = 1)
+
+log_model_learning_control <- glmer(correct_path ~ condition*version + (1 | ID), data = logreg_learning_correct_paths_condition_df, family = "binomial")
+tab_model(log_model_learning_control, transform = NULL, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
+```
+
+### LogReg: Difference from goal-state condition
+
+-   better learning performance in goal-state condition in alcohol compared to control version
+
+-   better learning performance in policy compared to goal-state condition
+
+-   better learning performance in goal-state compared to control condition in alcohol version, reverse effect in control version
+
+-   worse learning performance in reward compared to goal-state condition in alcohol version, reverse effect in control version
+
+```{r}
+contrasts(logreg_learning_correct_paths_condition_df$condition) <- contr.treatment(5, base = 2)
+
+log_model_learning_goalstate <- glmer(correct_path ~ condition*version + (1 | ID), data = logreg_learning_correct_paths_condition_df, family = "binomial")
+tab_model(log_model_learning_goalstate, transform = NULL, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
+```
+
+### LogReg: Difference from policy condition
+
+-   lower learning performance in control condition compared to policy condition, stronger in alcohol version
+
+-   lower learning performance in goal-state condition compared to policy condition
+
+```{r}
+contrasts(logreg_learning_correct_paths_condition_df$condition) <- contr.treatment(5, base = 3)
+
+log_model_learning_reward <- glmer(correct_path ~ condition*version + (1 | ID), data = logreg_learning_correct_paths_condition_df, family = "binomial")
+tab_model(log_model_learning_reward, transform = NULL, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
+```
+
+### LogReg: Difference from reward condition
+
+-   higher learning performance in goal-state compared to reward condition in acohol version, reverse effect in control version
+
+```{r}
+contrasts(logreg_learning_correct_paths_condition_df$condition) <- contr.treatment(5, base = 4)
+
+log_model_learning_transition <- glmer(correct_path ~ condition*version + (1 | ID), data = logreg_learning_correct_paths_condition_df, family = "binomial")
+tab_model(log_model_learning_transition, transform = NULL, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
+```
+
+### LogReg: Difference from transition condition
+
+```{r}
+contrasts(logreg_learning_correct_paths_condition_df$condition) <- contr.treatment(5, base = 5)
+
+log_model_learning_transition <- glmer(correct_path ~ condition*version + (1 | ID), data = logreg_learning_correct_paths_condition_df, family = "binomial", control=glmerControl(optimizer="bobyqa"))
+tab_model(log_model_learning_transition, transform = NULL, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
 ```
 
 ## Time effects
 
 ### Percent correct all states per component over time
 
--   slight increase in % correct all states from earlier to later conditions
--   \% correct already starts off \> 75% (because of previous foced choice trials)
+-   slight increase in % correct all states from earlier to later time bins across all conditions and both versions
+-   \% correct already starts off \> 75% (because of single forced choice trial per path)
 
 ```{r}
 # get percent correct over time
@@ -199,8 +291,8 @@ learning_correct_component_time_df <- trial_df %>%
          ) %>%
   mutate(time_bin = cut(
     trial,
-    breaks = 4,
-    labels = c("T1", "T2", "T3", "T4")
+    breaks = 5,
+    labels = c("T1", "T2", "T3", "T4", "T5")
     )
   ) %>%
   group_by(version, component, time_bin) %>%
@@ -224,8 +316,9 @@ ggplot(learning_correct_component_time_df, aes(x=component, y=mean_correct, fill
                 position=position_dodge(.9)) +
   facet_wrap(~ version) +
   scale_y_continuous(limits = c(0, 1)) +
-  theme_light() +
-  scale_fill_manual(values=c('lightblue','#E69F00','seagreen','grey'))
+  theme_light(base_size = 16) +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) +
+  scale_fill_manual(values=c('lightblue','#E69F00','seagreen','grey', 'pink'))
 ```
 
 ### Percent correct state 1 over time
@@ -262,9 +355,78 @@ ggplot(learning_state1_correct_component_time_df, aes(x=accumulated_state1_visit
   geom_line(aes(color=condition), size=1) +
   scale_y_continuous(limits = c(0, 1)) +
   facet_wrap(~ version) +
-  theme_light() +
+  theme_light(base_size = 16) +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) +
   scale_fill_manual(values=c('lightblue','#E69F00','seagreen','grey','pink'))
 
+```
+
+#### LogReg: Correct per accumulated state visits on task
+
+-   slower increase in correct choices in alcohol compared to control condition
+
+```{r}
+logreg_learning_state1_correct_component_time_df <- trial_df %>%
+    filter(phase == "learning",
+         state %in% c(1)
+         ) %>%
+  group_by(ID, condition) %>%
+  mutate(accumulated_state1_visits = row_number(),
+         correct = as.factor(correct),
+         condition = as.factor(condition),
+         version = as.factor(version)) %>%
+  select(version, 
+         ID,
+         correct,
+         condition,
+         accumulated_state1_visits)
+
+contrasts(logreg_learning_state1_correct_component_time_df$version) <- contr.treatment(2, base = 2)
+contrasts(logreg_learning_state1_correct_component_time_df$condition) <- contr.treatment(5, base = 1)
+
+log_model_accumulated_state1_visits_control <- glmer(correct ~ 1 + accumulated_state1_visits*version + (1|ID), data = logreg_learning_state1_correct_component_time_df, family = "binomial", control=glmerControl(optimizer="bobyqa", optCtrl=list(maxfun=2e5)))
+
+tab_model(log_model_accumulated_state1_visits_control, transform = NULL, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 10;'))
+```
+
+### Percent correct state 1 per ID over time
+
+```{r}
+learning_state1_correct_component_ID_time_df <- trial_df %>%
+  filter(phase == "learning",
+         state %in% c(1)
+         ) %>%
+  group_by(ID, condition) %>%
+  mutate(accumulated_state1_visits = row_number()
+         ) %>%
+ mutate(bin = cut(
+    trial,
+    breaks = 4,
+    labels = c("T1", "T2", "T3", "T4")
+    )
+  ) %>%
+  group_by(ID, condition, bin) %>%
+  mutate(bin = as.factor(bin)) %>%
+  summarise(mean_correct = mean(correct_path, na.rm = TRUE),
+            se_correct = sd(correct_path, na.rm = TRUE)/sqrt(n()),
+            ci_l = ci(correct_path, na.rm=TRUE)[2],
+            ci_u = ci(correct_path, na.rm=TRUE)[3],
+            n = n()
+            )
+
+learning_state1_correct_component_ID_time_df %>%
+  kable("html") %>%
+  kable_styling(font_size = 14,
+                latex_options = "scale_down")
+```
+
+```{r}
+ggplot(learning_state1_correct_component_ID_time_df, aes(x = bin, y = mean_correct, group = condition)) +
+  geom_line(aes(color=condition)) +
+  facet_wrap(~ID) +
+  ylim(0,1) +
+  theme_light(base_size = 14) +
+  scale_fill_manual(values=c('lightblue','#E69F00','seagreen','grey','pink'))
 ```
 
 ### Percent correct state 2 over time
@@ -300,7 +462,8 @@ ggplot(learning_state2_correct_component_time_df, aes(x=accumulated_state2_visit
   geom_line(aes(color=condition), size=1) +
   scale_y_continuous(limits = c(0, 1)) +
   facet_wrap(~ version) +
-  theme_light() +
+  theme_light(base_size = 16) +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) +
   scale_fill_manual(values=c('lightblue','#E69F00','seagreen','grey','pink'))
 
 ```
@@ -338,7 +501,8 @@ ggplot(learning_state3_correct_component_time_df, aes(x=accumulated_state3_visit
   geom_line(aes(color=condition), size=1) +
   scale_y_continuous(limits = c(0, 1)) +
   facet_wrap(~ version) +
-  theme_light() +
+  theme_light(base_size = 16) +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) +
   scale_fill_manual(values=c('lightblue','#E69F00','seagreen','grey','pink'))
 
 ```
@@ -348,7 +512,6 @@ ggplot(learning_state3_correct_component_time_df, aes(x=accumulated_state3_visit
 ### Percent correct all states per condition index
 
 -   lower % correct in 1st condition
--   transition revaluation lower % correct when last condition --\> should be balanced out in final study (every condition equally often in every position)
 
 ```{r}
 # get percent correct over time
@@ -378,7 +541,8 @@ ggplot(learning_correct_component_index_df, aes(x=condition_index, y=mean_correc
   geom_errorbar(aes(ymin=ci_l, ymax=ci_u), width=.2, position=position_dodge(.9)) +
   scale_y_continuous(limits = c(0, 1.1)) +
   facet_wrap(~ version) +
-  theme_light() +
+  theme_light(base_size = 16) +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) +
   scale_fill_manual(values=c('lightblue','#E69F00','seagreen','grey','pink'))
 
 ```
@@ -395,7 +559,7 @@ learning_correct_component_environment_df <- trial_df %>%
   filter(phase == "learning",
          state %in% c(1,2,3)
          ) %>%
-  group_by(version, component, environment) %>%
+  group_by(version, environment) %>%
   summarise(mean_correct = mean(correct, na.rm = TRUE),
             se_correct = sd(correct, na.rm = TRUE)/sqrt(n()),
             ci_l = ci(correct, na.rm=TRUE)[2],
@@ -411,20 +575,18 @@ learning_correct_component_environment_df %>%
 
 ```{r}
 # bar plot
-ggplot(learning_correct_component_environment_df, aes(x=environment, y=mean_correct, fill=component)) +
-  geom_bar(stat="identity", position=position_dodge()) +
+ggplot(learning_correct_component_environment_df, aes(x=environment, y=mean_correct)) +
+  geom_bar(stat="identity", position=position_dodge(), fill='lightblue') +
   geom_errorbar(aes(ymin=ci_l, ymax=ci_u), width=.2, position=position_dodge(.9)) +
   scale_y_continuous(limits = c(0, 1)) +
   facet_wrap(~ version) +
-  theme_light() +
-  scale_fill_manual(values=c('lightblue','#E69F00','seagreen','grey','pink'))
-
+  theme_light(base_size = 16) +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) 
 ```
 
 ### Balancing check: variations
 
 -   variations = latin square matching between condition order and environment order
--   mostly successful
 
 ```{r}
 # get percent correct over time
@@ -442,9 +604,6 @@ balancing_variations_df %>%
 ```
 
 ### Balancing check: Condition index per condition
-
--   mostly successful
--   in final study, we should collect data until equal n per cell
 
 ```{r}
 # get percent correct over time
@@ -464,9 +623,6 @@ balancing_index_df %>%
 
 ### Balancing check: Condition index per environment
 
--   mostly successful
--   in final study, we should collect data until equal n per cell
-
 ```{r}
 # get percent correct over time
 balancing_environment_df <- component_df %>%
@@ -474,6 +630,28 @@ balancing_environment_df <- component_df %>%
   filter(phase == "learning"
          ) %>%
   group_by(condition_index, environment) %>%
+  summarise(n = n()
+            )
+
+balancing_environment_df %>%
+  kable("html") %>%
+  kable_styling(font_size = 14,
+                latex_options = "scale_down")
+```
+
+### Balancing check: Condition per environment
+
+-   in final study, we should collect data until equal n per cell
+
+-   e.g. policy most often in well-learnable hip_purple environment
+
+```{r}
+# get percent correct over time
+balancing_environment_df <- component_df %>%
+  mutate(condition = as.factor(condition)) %>%
+  filter(phase == "learning"
+         ) %>%
+  group_by(condition, environment) %>%
   summarise(n = n()
             )
 
@@ -616,6 +794,96 @@ learning_last4_correct_component_environment_df_excl %>%
                 latex_options = "scale_down")
 ```
 
+### Alternative criterion: \>2 correct paths from state 1 in last five trials
+
+We choose this as final exclusion criterion!
+
+```{r}
+# get last paths
+learning_paths_last4_df <- trial_df %>%
+  filter(phase == "learning",
+         state == 1) %>%
+  group_by(ID, component) %>%
+  slice_tail(n=5)
+
+# who does not pass criterion
+learning_paths_last4_correct_component_df <- learning_paths_last4_df %>%
+  group_by(ID, component, condition_index, condition, environment) %>%
+  summarise(sum_correct = sum(correct_path))
+
+learning_paths_last4_correct_component_df_excl <- learning_paths_last4_correct_component_df %>% 
+  filter(sum_correct < 3) %>%
+  mutate(ID_condition_combo = paste(ID, "-", condition, sep=""))
+
+# excluded components
+learning_paths_last4_correct_component_df_excl <- learning_paths_last4_correct_component_df_excl %>%
+  select(! sum_correct) %>%
+  distinct()
+
+excluded_components_b <- learning_paths_last4_correct_component_df_excl$ID_condition_combo
+
+percent_component_excluded_b <- length(excluded_components_b)/nrow(learning_paths_last4_correct_component_df)
+
+# excluded subjects
+excluded_IDs_b <- unique(learning_paths_last4_correct_component_df_excl$ID)
+
+percent_IDs_excluded_b <- length(excluded_IDs_b)/length(unique(trial_df$ID))
+```
+
+-   \% excluded components
+
+```{r}
+percent_component_excluded_b
+```
+
+-   \% excluded IDs
+
+```{r}
+percent_IDs_excluded_b
+```
+
+#### Excluded components per condition
+
+```{r}
+learning_correct_condition_df_excl <- learning_paths_last4_correct_component_df_excl %>%
+  group_by(condition) %>%
+  summarise(n = n()
+            )
+  
+learning_correct_condition_df_excl %>%
+  kable("html") %>%
+  kable_styling(font_size = 18,
+                latex_options = "scale_down")
+```
+
+#### Excluded components per component index
+
+```{r}
+learning_correct_component_index_df_excl <- learning_paths_last4_correct_component_df_excl %>%
+  group_by(condition_index) %>%
+  summarise(n = n()
+            )
+  
+learning_correct_component_index_df_excl %>%
+  kable("html") %>%
+  kable_styling(font_size = 18,
+                latex_options = "scale_down")
+```
+
+#### Excluded components per environment
+
+```{r}
+learning_correct_component_environment_df_excl <- learning_paths_last4_correct_component_df_excl %>%
+  group_by(environment) %>%
+  summarise(n = n()
+            )
+  
+learning_correct_component_environment_df_excl %>%
+  kable("html") %>%
+  kable_styling(font_size = 18,
+                latex_options = "scale_down")
+```
+
 ### Alternative criterion: \>= 65% correct during learning overall
 
 ```{r}
@@ -638,7 +906,7 @@ learning_state1_correct_component_df <- learning_state1_df %>%
   summarise(mean_correct = mean(correct_state_1))
 
 learning_state1_correct_component_df_excl <- learning_state1_correct_component_df %>% 
-  filter(mean_correct < 0.50) %>%
+  filter(mean_correct < 0.65) %>%
   mutate(ID_condition_combo = paste(ID, "-", condition, sep=""))
 
 # who does not pass state 2 criterion
@@ -647,7 +915,7 @@ learning_state2_correct_component_df <- learning_state2_df %>%
   summarise(mean_correct = mean(correct_state_2))
 
 learning_state2_correct_component_df_excl <- learning_state2_correct_component_df %>% 
-  filter(mean_correct < 0.50) %>%
+  filter(mean_correct < 0.65) %>%
   mutate(ID_condition_combo = paste(ID, "-", condition, sep=""))
 
 # who does not pass state 3 criterion
@@ -656,7 +924,7 @@ learning_state3_correct_component_df <- learning_state3_df %>%
   summarise(mean_correct = mean(correct_state_3))
 
 learning_state3_correct_component_df_excl <- learning_state3_correct_component_df %>% 
-  filter(mean_correct < 0.50) %>%
+  filter(mean_correct < 0.65) %>%
   mutate(ID_condition_combo = paste(ID, "-", condition, sep=""))
 
 # excluded components
@@ -668,26 +936,26 @@ learning_correct_component_df_excl <- learning_correct_component_df_excl %>%
   select(! mean_correct) %>%
   distinct()
 
-excluded_components_b <- learning_correct_component_df_excl$ID_condition_combo
+excluded_components_c <- learning_correct_component_df_excl$ID_condition_combo
 
-percent_component_excluded_b <- length(excluded_components_b)/nrow(learning_state1_correct_component_df)
+percent_component_excluded_c <- length(excluded_components_c)/nrow(learning_state1_correct_component_df)
 
 # how many subjects don't pass criterion in at least one condition
-excluded_IDs_b <- unique(learning_correct_component_df_excl$ID)
+excluded_IDs_c <- unique(learning_correct_component_df_excl$ID)
 
-percent_IDs_excluded_b <- length(excluded_IDs_b)/length(unique(trial_df$ID))
+percent_IDs_excluded_c <- length(excluded_IDs_c)/length(unique(trial_df$ID))
 ```
 
 -   \% excluded components
 
 ```{r}
-percent_component_excluded_b
+percent_component_excluded_c
 ```
 
 -   \% excluded IDs
 
 ```{r}
-percent_IDs_excluded_b
+percent_IDs_excluded_c
 ```
 
 #### Excluded components per condition
@@ -778,7 +1046,16 @@ df <- trial_df_excl # trial_df, trial_df_excl
 -   Further analyses based on n =
 
 ```{r}
-length(unique(df$ID))
+summary <- df %>%
+  select(ID, version)
+
+summary <- unique(summary) 
+
+summary <- summary %>%
+  group_by(version) %>%
+  summarise(n = n())
+
+summary
 ```
 
 # Test Phase
@@ -787,8 +1064,8 @@ length(unique(df$ID))
 
 ### State 1 switches in all 5 test trials per component
 
--   \% switches (from state 1 optimal learning action to state 1 optimal test action) in reward \> transition revaluation
--   but % switches in policy more comparable to reward than to transition revaluation -\> participants might have used a MB strategy with a higher learning rate for the weight vector compared to the transition matrix
+-   \% switches (from state 1 optimal learning action to state 1 optimal test action) in reward \> transition revaluation in control, but not in alcohol version
+-   \% switches in policy more comparable to reward than to transition revaluation in both versions -\> participants might have used a MB strategy with a higher learning rate for the weight vector compared to the transition matrix
 
 ```{r}
 test_switch_component_df <- df %>%
@@ -816,7 +1093,8 @@ ggplot(test_switch_component_df, aes(x=component, y=percent_switch)) +
   geom_errorbar(aes(ymin=ci_l, ymax=ci_u), width=.2, position=position_dodge(.9)) +
   facet_wrap(~ version) +
   scale_y_continuous(limits = c(-0.2, 1)) +
-  theme_light()
+  theme_light(base_size = 16) +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
 ```
 
 #### LogReg: Difference from control condition {.smaller}
@@ -832,10 +1110,10 @@ logreg_test_switch_condition_df <- df %>%
          switch,
          condition)
 
-contrasts(logreg_test_switch_condition_df$version) <- contr.treatment(2, base = 1)
+contrasts(logreg_test_switch_condition_df$version) <- contr.treatment(2, base = 2)
 contrasts(logreg_test_switch_condition_df$condition) <- contr.treatment(5, base = 1)
 
-log_model_control <- glmer(switch ~ condition*version + (1 | ID), data = logreg_test_switch_condition_df, family = "binomial")
+log_model_control <- glmer(switch ~ condition*version + (1 + condition | ID), data = logreg_test_switch_condition_df, family = "binomial", control=glmerControl(optimizer="bobyqa"))
 tab_model(log_model_control, transform = NULL, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
 ```
 
@@ -844,34 +1122,40 @@ tab_model(log_model_control, transform = NULL, show.est = T, show.stat = T, auto
 ```{r}
 contrasts(logreg_test_switch_condition_df$condition) <- contr.treatment(5, base = 2)
 
-log_model_goalstate <- glmer(switch ~ condition*version + (1 | ID), data = logreg_test_switch_condition_df, family = "binomial")
+log_model_goalstate <- glmer(switch ~ condition*version + (1 | ID), data = logreg_test_switch_condition_df, family = "binomial", control=glmerControl(optimizer="bobyqa"))
 tab_model(log_model_goalstate, transform = NULL, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
 ```
 
 #### LogReg: Difference from policy condition
 
+-   policy different from transition (stronger in control version), not from reward
+
 ```{r}
 contrasts(logreg_test_switch_condition_df$condition) <- contr.treatment(5, base = 3)
 
-log_model_reward <- glmer(switch ~ condition*version + (1 | ID), data = logreg_test_switch_condition_df, family = "binomial")
+log_model_reward <- glmer(switch ~ condition*version + (1 | ID), data = logreg_test_switch_condition_df, family = "binomial", control=glmerControl(optimizer="bobyqa"))
 tab_model(log_model_reward, transform = NULL, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
 ```
 
 #### LogReg: Difference from reward condition
 
+-   reward different from transition (stronger in control version), not from policy
+
 ```{r}
 contrasts(logreg_test_switch_condition_df$condition) <- contr.treatment(5, base = 4)
 
-log_model_transition <- glmer(switch ~ condition*version + (1 | ID), data = logreg_test_switch_condition_df, family = "binomial")
+log_model_transition <- glmer(switch ~ condition*version + (1 | ID), data = logreg_test_switch_condition_df, family = "binomial", control=glmerControl(optimizer="bobyqa"))
 tab_model(log_model_transition, transform = NULL, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
 ```
 
 #### LogReg: Difference from transition condition
 
+-   transition different from reward and policy (stronger in control)
+
 ```{r}
 contrasts(logreg_test_switch_condition_df$condition) <- contr.treatment(5, base = 5)
 
-log_model_transition <- glmer(switch ~ condition*version + (1 | ID), data = logreg_test_switch_condition_df, family = "binomial")
+log_model_transition <- glmer(switch ~ condition*version + (1 | ID), data = logreg_test_switch_condition_df, family = "binomial", control=glmerControl(optimizer="bobyqa"))
 tab_model(log_model_transition, transform = NULL, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
 ```
 
@@ -902,15 +1186,17 @@ test_switch_ID_component_df %>%
 ```{r}
 # bar plot
 ggplot(test_switch_ID_component_df, aes(x=component, y=percent_switch)) +
-  geom_violin(fill="lightblue") +
+  geom_boxplot(fill="lightblue") +
+  geom_jitter(width = 0.1) +
   scale_y_continuous(labels = scales::comma) +
   facet_wrap(~ version) +
-  theme_light() 
+  theme_light(base_size = 16) +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
 ```
 
 ### State 1 switches in first test trial per component
 
--   same pattern as when considering all test trials across participants
+-   similar pattern as when considering all test trials across participants, but no strong difference between reward and transition in alcohol condition
 
 ```{r}
 test_switch_component_trial1_df <- df %>%
@@ -939,13 +1225,14 @@ ggplot(test_switch_component_trial1_df, aes(x=component, y=percent_switch)) +
   geom_errorbar(aes(ymin=ci_l, ymax=ci_u), width=.2, position=position_dodge(.9)) +
   scale_y_continuous(limits = c(-0.2, 1.3)) +
   facet_wrap(~ version) +
-  theme_light()
+  theme_light(base_size = 16) +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
 ```
 
 ### State 1 switches per trial per component
 
--   pattern between conditions does not depend on number of test trial (no obvious extinction effects)
--   trial 1 seems to be most meaningful as lowest % switch in control condition
+-   middle trials are less reliable (higher % switch in control condition)
+-   trial 1 or 5 seem to be most meaningful as lowest % switch in control condition
 
 ```{r}
 test_switch_component_trial_df <- df %>%
@@ -976,14 +1263,119 @@ ggplot(test_switch_component_trial_df, aes(x=trial, y=percent_switch, fill=compo
   scale_fill_manual(values=c('lightblue','#E69F00','seagreen','grey','pink'))
 ```
 
-## Correct paths starting from state 1
+## Correct paths starting from state 1 across all 5 test trials
 
 -   same pattern as when considering % correct in all states or in state 1 only
+
+-   stronger difference between policy and reward in control version
 
 ```{r}
 test_correct_path_component_df <- trial_df %>%
   filter(phase == "test",
          state %in% c(1)
+         ) %>%
+  group_by(version, component, audit_group) %>%
+  summarise(mean_correct = mean(correct_path, na.rm = TRUE),
+            se_correct = sd(correct_path, na.rm = TRUE)/sqrt(n()),
+            ci_l = ci(correct_path, na.rm=TRUE)[2],
+            ci_u = ci(correct_path, na.rm=TRUE)[3],
+            n = n()
+            )
+
+test_correct_path_component_df %>%
+  kable("html") %>%
+  kable_styling(font_size = 18,
+                latex_options = "scale_down")
+```
+
+```{r}
+# bar plot
+ggplot(test_correct_path_component_df, aes(x=component, y=mean_correct)) +
+  geom_bar(stat="identity", fill="lightblue") +
+  geom_errorbar(aes(ymin=ci_l, ymax=ci_u), width=.2,
+                position=position_dodge(.9)) +
+  facet_wrap(~ version + audit_group) +
+  scale_y_continuous("% correct paths", limits = c(0, 1)) +
+  theme_light(base_size = 16) +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+
+```
+
+#### LogReg: Difference from control condition {.smaller}
+
+```{r}
+logreg_test_path_switch_condition_df <- trial_df %>%
+  filter(phase == "test",
+         state == 1) %>%
+  mutate(correct_path = as.factor(correct_path),
+         condition = as.factor(condition),
+         version = as.factor(version)) %>%
+  select(version,
+         ID,
+         correct_path,
+         condition,
+         audit_sum,
+         audit_group)
+
+contrasts(logreg_test_path_switch_condition_df$version) <- contr.treatment(2, base = 2)
+contrasts(logreg_test_path_switch_condition_df$audit_group) <- contr.treatment(2, base = 1)
+contrasts(logreg_test_path_switch_condition_df$condition) <- contr.treatment(5, base = 5)
+
+log_model_control <- glmer(correct_path ~ condition*version*audit_group + (1 | ID), data = logreg_test_path_switch_condition_df, family = "binomial")
+tab_model(log_model_control, transform = NULL, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
+```
+
+#### LogReg: Difference from goal-state condition
+
+```{r}
+contrasts(logreg_test_path_switch_condition_df$condition) <- contr.treatment(5, base = 2)
+
+log_model_goalstate <- glmer(correct_path ~ condition*version + (1 | ID), data = logreg_test_path_switch_condition_df, family = "binomial")
+tab_model(log_model_goalstate, transform = NULL, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
+```
+
+#### LogReg: Difference from policy condition
+
+```{r}
+contrasts(logreg_test_path_switch_condition_df$condition) <- contr.treatment(5, base = 3)
+
+log_model_reward <- glmer(correct_path ~ condition*version + (1 | ID), data = logreg_test_path_switch_condition_df, family = "binomial")
+tab_model(log_model_reward, transform = NULL, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
+```
+
+#### LogReg: Difference from reward condition
+
+```{r}
+contrasts(logreg_test_path_switch_condition_df$condition) <- contr.treatment(5, base = 4)
+
+log_model_transition <- glmer(correct_path ~ condition*version + (1 | ID), data = logreg_test_path_switch_condition_df, family = "binomial")
+tab_model(log_model_transition, transform = NULL, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
+```
+
+#### LogReg: Difference from transition condition
+
+-   transition different from reward, not from policy across versions
+
+-   transition different from policy only in control version
+
+```{r}
+contrasts(logreg_test_path_switch_condition_df$condition) <- contr.treatment(5, base = 5)
+
+log_model_transition <- glmer(correct_path ~ condition*version + (1 | ID), data = logreg_test_path_switch_condition_df, family = "binomial")
+tab_model(log_model_transition, transform = NULL, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
+```
+
+## Correct test trial 1 paths starting from state 1
+
+-   same pattern as when considering % correct in all states or in state 1 only
+
+-   stronger difference between policy and reward in control version
+
+```{r}
+test_correct_path_component_df <- trial_df %>%
+  filter(phase == "test",
+         state %in% c(1),
+         trial == 1
          ) %>%
   group_by(version, component) %>%
   summarise(mean_correct = mean(correct_path, na.rm = TRUE),
@@ -1006,9 +1398,9 @@ ggplot(test_correct_path_component_df, aes(x=component, y=mean_correct)) +
   geom_errorbar(aes(ymin=ci_l, ymax=ci_u), width=.2,
                 position=position_dodge(.9)) +
   facet_wrap(~ version) +
-  scale_y_continuous(limits = c(0, 1)) +
-  theme_light()
-
+  scale_y_continuous("% correct paths", limits = c(-0.1, 1.1)) +
+  theme_light(base_size = 16) +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
 ```
 
 ## Rule out confounding variables / alternative explanations
@@ -1042,10 +1434,12 @@ test_switch_component_index_df %>%
 ggplot(test_switch_component_index_df, aes(x=condition_index, y=mean_switch, fill=component)) +
   geom_bar(stat="identity", position=position_dodge()) +
   geom_errorbar(aes(ymin=ci_l, ymax=ci_u), width=.2, position=position_dodge(.9)) +
-  scale_y_continuous(limits = c(-2, 3)) +
+  scale_y_continuous(limits = c(-0.25, 1.5)) +
   facet_wrap(~ version) +
-  theme_light() +
-  scale_fill_manual(values=c('lightblue','#E69F00','seagreen','grey','pink'))
+  scale_fill_manual(values=c('lightblue','#E69F00','seagreen','grey','pink')) +
+  theme_light(base_size = 16) +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+ 
 
 ```
 
@@ -1068,7 +1462,7 @@ logreg_test_switch_condition_accumulatedtrial_df <- df %>%
          condition,
          accumulated_states_visited)
 
-contrasts(logreg_test_switch_condition_accumulatedtrial_df$version) <- contr.treatment(2, base = 1)
+contrasts(logreg_test_switch_condition_accumulatedtrial_df$version) <- contr.treatment(2, base = 2)
 contrasts(logreg_test_switch_condition_accumulatedtrial_df$condition) <- contr.treatment(5, base = 1)
 
 log_model_accumulated_states_visited_control <- glm(switch ~ 1 + accumulated_states_visited*condition*version, data = logreg_test_switch_condition_accumulatedtrial_df, family = "binomial")
@@ -1140,10 +1534,12 @@ test_switch_component_environment_df %>%
 ggplot(test_switch_component_environment_df, aes(x=environment, y=mean_switch, fill=component)) +
   geom_bar(stat="identity", position=position_dodge()) +
   geom_errorbar(aes(ymin=ci_l, ymax=ci_u), width=.2, position=position_dodge(.9)) +
-  scale_y_continuous(limits = c(-2, 2.5)) +
+  scale_y_continuous(limits = c(-0.25, 1.5)) +
   facet_wrap(~ version) +
-  theme_light() +
+  theme_light(base_size = 16) +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) +
   scale_fill_manual(values=c('lightblue','#E69F00','seagreen','grey','pink'))
+  
 
 ```
 
@@ -1151,7 +1547,7 @@ ggplot(test_switch_component_environment_df, aes(x=environment, y=mean_switch, f
 
 -   rating diff = optimal state 1 action rating - suboptimal state 1 action rating
 -   reflects same pattern as test trials
--   negative score for transition revaluation: suboptimal action rated better than optimal action
+-   negative score = suboptimal action rated better than optimal action
 
 ## Rating difference optimal - suboptimal action state 1
 
@@ -1177,9 +1573,10 @@ rating_state1_component_df %>%
 ggplot(rating_state1_component_df, aes(x=component, y=mean_rating_diff)) +
   geom_bar(stat="identity", fill="lightblue") +
   geom_errorbar(aes(ymin=ci_l, ymax=ci_u), width=.2, position=position_dodge(.9)) +
-  scale_y_continuous(limits = c(-75, 75)) +
+  scale_y_continuous("Optimal-suboptimal rating", limits = c(-75, 75)) +
   facet_wrap(~ version) +
-  theme_light()
+  theme_light(base_size = 16) +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
 ```
 
 ### Relation to test choices
@@ -1206,7 +1603,7 @@ test_rating_state1_df <- merge(test_state1_df, rating_diff_state1_df, by = c("ID
 ggplot(test_rating_state1_df, aes(x=percent_correct, y=rating_diff_state1)) +
   geom_point() +
   geom_smooth() +
-  theme_light()
+  theme_light(base_size = 16)
 ```
 
 # Reaction times
@@ -1247,7 +1644,7 @@ ggplot(df, aes(x=phase, y=RT, fill = condition)) +
   geom_boxplot() +
   scale_y_continuous(labels = scales::comma) +
   facet_wrap(~ version) +
-  theme_light() +
+  theme_light(base_size = 16) +
   scale_fill_manual(values=c('lightblue','#E69F00','seagreen','grey','pink'))
 ```
 
@@ -1255,7 +1652,7 @@ ggplot(df, aes(x=phase, y=RT, fill = condition)) +
 
 ### RT in 2-choice states per condition and phase
 
--   no differences between learning and test RT --\> participants had enough time to prepare their response during the 15 sec instruction before test?
+-   slight differences between learning and test RT
 
 ```{r}
 twochoice_RT_condition_phase_df <- df %>%
@@ -1300,11 +1697,13 @@ ggplot(twochoice_RT_df, aes(x=phase, y=RT, fill = condition)) +
   geom_boxplot() +
   scale_y_continuous(labels = scales::comma) +
   facet_wrap(~ version) +
-  theme_light() +
+  theme_light(base_size = 16) +
   scale_fill_manual(values=c('lightblue','#E69F00','seagreen','grey','pink'))
 ```
 
 ### RT in state 1 per condition and phase
+
+-   higher RT in test trials (more effortful?)
 
 ```{r}
 state1_RT_condition_phase_df <- df %>%
@@ -1349,7 +1748,7 @@ ggplot(state1_RT_df, aes(x=phase, y=RT, fill = condition)) +
   geom_boxplot() +
   scale_y_continuous(labels = scales::comma) +
   facet_wrap(~ version) +
-  theme_light() +
+  theme_light(base_size = 16) +
   scale_fill_manual(values=c('lightblue','#E69F00','seagreen','grey','pink'))
 ```
 
@@ -1393,7 +1792,7 @@ ggplot(learning_twochoice_RT_df, aes(x=phase, y=RT, fill = correct)) +
   geom_boxplot() +
   scale_y_continuous(labels = scales::comma) +
   facet_wrap(~ version) +
-  theme_light() +
+  theme_light(base_size = 16) +
   scale_fill_manual(values=c('lightblue','#E69F00','seagreen','grey','pink'))
 ```
 
@@ -1433,7 +1832,7 @@ ggplot(learning_state1_RT_df, aes(x=phase, y=RT, fill = correct)) +
   geom_boxplot() +
   scale_y_continuous(labels = scales::comma) +
   facet_wrap(~ version) +
-  theme_light() +
+  theme_light(base_size = 16) +
   scale_fill_manual(values=c('lightblue','#E69F00','seagreen','grey','pink'))
 ```
 
@@ -1472,8 +1871,9 @@ test_RT_df <- df %>%
 ggplot(test_RT_df, aes(x=condition, y=RT, fill = correct)) +
   geom_boxplot() +
   scale_y_continuous(labels = scales::comma) +
-    facet_wrap(~ version) +
-  theme_light() +
+  facet_wrap(~ version) +
+  theme_light(base_size = 16) +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) +
   scale_fill_manual(values=c('lightblue','#E69F00','seagreen','grey','pink'))
 ```
 
@@ -1514,7 +1914,8 @@ ggplot(test_state1_RT_df, aes(x=condition, y=RT, fill = correct)) +
   geom_boxplot() +
   scale_y_continuous(labels = scales::comma) +
     facet_wrap(~ version) +
-  theme_light() +
+   theme_light(base_size = 16) +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) +
   scale_fill_manual(values=c('lightblue','#E69F00','seagreen','grey','pink'))
 ```
 
@@ -1565,6 +1966,18 @@ ggplot(onechoice_RT_df, aes(x=phase, y=RT, fill = condition)) +
   geom_boxplot() +
   scale_y_continuous(labels = scales::comma) +
   facet_wrap(~ version) +
-  theme_light() +
+   theme_light(base_size = 16) +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) +
   scale_fill_manual(values=c('lightblue','#E69F00','seagreen','grey','pink'))
 ```
+
+# Payment criterion
+```{r}
+payment_df <- trial_df %>%
+  group_by(version, ID) %>%
+  summarise(mean_correct = mean(correct, na.rm = TRUE))
+
+payment_df[payment_df$mean_correct==max(payment_df$mean_correct[payment_df$version=="alcohol"]),]
+payment_df[payment_df$mean_correct==max(payment_df$mean_correct[payment_df$version=="control"]),]
+```
+

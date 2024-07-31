@@ -46,8 +46,8 @@ function prepareComponentFlow() { // prepare list of what we should show
 
     // read out link components
     // example link: https://studies.bccn-berlin.de/publix/HG5A1FTtOIL?participant=30620126hqIHzHP2GhTvxYt
-    let urlQuery = jatos.urlQueryParameters.participant;
-    // let urlQuery = '30620126hqIHzHP2GhTvxYt';
+    // let urlQuery = jatos.urlQueryParameters.participant;
+    let urlQuery = '30620126hqIHzHP2GhTvxYt';
     participantID = Number(urlQuery.substr(0,4)); 
     runningID = Number(urlQuery.substr(4,3));
     console.log(runningID);
