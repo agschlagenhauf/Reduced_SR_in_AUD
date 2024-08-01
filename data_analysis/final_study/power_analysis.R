@@ -40,11 +40,7 @@ audit_sum <- c(audit_sum_low, audit_sum_high)
 
 power_df <- data.frame(id=as.factor(subj_full), trial=as.factor(trial_full), condition=as.factor(condition_full), version=as.factor(version_full), group=as.factor(group_full), audit_sum=audit_sum)
 
-contrasts(power_df$condition) <- contr.treatment(5, base = 5)
-contrasts(power_df$version) <- contr.treatment(2, base = 2)
-contrasts(power_df$group) <- contr.treatment(2, base = 1)
-
-###### create categorical model ######
+###### categorical model for SR hypotheses ######
 
 # intercept
 # condition2
@@ -67,10 +63,14 @@ contrasts(power_df$group) <- contr.treatment(2, base = 1)
 # condition4*version1*group2
 # condition5*version1*group2
 
+contrasts(power_df$condition) <- contr.treatment(5, base = 5)
+contrasts(power_df$version) <- contr.treatment(2, base = 2)
+contrasts(power_df$group) <- contr.treatment(2, base = 1)
+
 fixed <- c(-2,
            4, 2.5, 2, 2.5,
            1,
-           -16,
+           -5,
            0.5, -1, -1, -1,
            33, 8, -3, 8,
            -0.5,
@@ -78,47 +78,60 @@ fixed <- c(-2,
 rand <- list(1)
 res <- 3
 
-model <- simr::makeGlmer(y ~ condition*version*group + (1 | id), family="binomial", fixef=fixed, VarCorr=rand, data=power_df)
-model
+model1 <- simr::makeGlmer(y ~ condition*version*group + (1 | id), family="binomial", fixef=fixed, VarCorr=rand, data=power_df)
+model1
 
-###### power analysis ######
+### power analysis ###
 
-sim_condition <- powerSim(model, nsim=100, test = fcompare(y ~ group*version))
-sim_condition
+sim_condition2vs5 <- powerSim(model1, nsim=100, test = fixed("condition2", "z"))
+sim_condition2vs5
+sim_condition4vs5 <- powerSim(model1, nsim=100, test = fixed("condition4", "z"))
+sim_condition4vs5
 
-sim_group <- powerSim(model, nsim=100, test = fcompare(y ~ condition*version + group))
-sim_group
+sim_group_condition2vs5 <- powerSim(model1, nsim=100, test = fixed("condition2:group2"))
+sim_group_condition2vs5
+sim_group_condition4vs5 <- powerSim(model1, nsim=100, test = fixed("condition4:group2"))
+sim_group_condition4vs5
 
-sim_version <- powerSim(model, nsim=100, test = fcompare(y ~ condition*group + version))
-sim_version
+sim_group_condition2vs5_version <- powerSim(model1, nsim=100, test = fixed("condition2:version1:group2"))
+sim_group_condition2vs5_version
+sim_group_condition4vs5_version <- powerSim(model1, nsim=100, test = fixed("condition4:version1:group2"))
+sim_group_condition4vs5_version
 
-###### create continuous model ######
+###### categorical model for reduced SR hypotheses ######
 
-# intercept
-# condition2
-# condition3
-# condition4
-# condition5
-# version1
-# audit_sum
-# condition2*version1
-# condition3*version1
-# condition4*version1
-# condition5*version1
-# condition2*audit_sum
-# condition3*audit_sum
-# condition4*audit_sum
-# condition5*audit_sum
-# version2*audit_sum
-# condition2*version1*audit_sum
-# condition3*version1*audit_sum
-# condition4*version1*audit_sum
-# condition5*version1*audit_sum
+contrasts(power_df$condition) <- contr.treatment(5, base = 4)
+
+fixed <- c(0.5,
+           1, -2, 1, -2.5,
+           -1,
+           -5,
+           2, 0.5, 0.5, 1.5,
+           20, -8, -12, -8,
+           3,
+           -5, -10, -3, -5)
+rand <- list(1)
+res <- 3
+
+model2 <- simr::makeGlmer(y ~ condition*version*group + (1 | id), family="binomial", fixef=fixed, VarCorr=rand, data=power_df)
+model2
+
+### power analysis ###
+
+sim_group_condition2vs4 <- powerSim(model2, nsim=100, test = fixed("condition2:group2"))
+sim_group_condition2vs4
+
+sim_group_condition2vs4_version <- powerSim(model2, nsim=100, test = fixed("condition2:version1:group2"))
+sim_group_condition2vs4_version
+
+###### continuous model for SR hypotheses ######
+
+contrasts(power_df$condition) <- contr.treatment(5, base = 5)
 
 fixed <- c(-2,
            4, 2.5, 2, 2.5,
            1,
-           -16,
+           -5,
            0.5, -1, -1, -1,
            33, 8, -3, 8,
            -0.5,
@@ -126,16 +139,48 @@ fixed <- c(-2,
 rand <- list(1)
 res <- 3
 
-model <- simr::makeGlmer(y ~ condition*version*audit_sum + (1 | id), family="binomial", fixef=fixed, VarCorr=rand, data=power_df)
-model
+model3 <- simr::makeGlmer(y ~ condition*version*audit_sum + (1 | id), family="binomial", fixef=fixed, VarCorr=rand, data=power_df)
+model3
 
-###### power analysis ######
+### power analysis ###
 
-sim_condition <- powerSim(model, nsim=10, test = fcompare(y ~ audit_sum*version))
-sim_condition
+sim_condition2vs5_cont <- powerSim(model3, nsim=100, test = fixed("condition2", "z"))
+sim_condition2vs5_cont
+sim_condition4vs5_cont <- powerSim(model3, nsim=100, test = fixed("condition4", "z"))
+sim_condition4vs5_cont
 
-sim_audit_sum <- powerSim(model, nsim=10, test = fcompare(y ~ condition*version + audit_sum))
-sim_audit_sum
+sim_group_condition2vs5_cont <- powerSim(model3, nsim=100, test = fixed("condition2:audit_sum"))
+sim_group_condition2vs5_cont
+sim_group_condition4vs5_cont <- powerSim(model3, nsim=100, test = fixed("condition4:audit_sum"))
+sim_group_condition4vs5_cont
 
-sim_version <- powerSim(model, nsim=10, test = fcompare(y ~ condition*audit_sum + version))
-sim_version
+sim_group_condition2vs5_version_cont <- powerSim(model3, nsim=100, test = fixed("condition2:version1:audit_sum"))
+sim_group_condition2vs5_version_cont
+sim_group_condition4vs5_version_cont <- powerSim(model3, nsim=100, test = fixed("condition4:version1:audit_sum"))
+sim_group_condition4vs5_version_cont
+
+###### continuous model for reduced SR hypotheses ######
+
+contrasts(power_df$condition) <- contr.treatment(5, base = 4)
+
+fixed <- c(0.5,
+           1, -2, 1, -2.5,
+           -1,
+           -5,
+           2, 0.5, 0.5, 1.5,
+           20, -8, -12, -8,
+           3,
+           -5, -10, -3, -5)
+rand <- list(1)
+res <- 3
+
+model4 <- simr::makeGlmer(y ~ condition*version*group + (1 | id), family="binomial", fixef=fixed, VarCorr=rand, data=power_df)
+model4
+
+### power analysis ###
+
+sim_group_condition2vs4_cont <- powerSim(model4, nsim=100, test = fixed("condition2:group2"))
+sim_group_condition2vs4_cont
+
+sim_group_condition2vs4_version_cont <- powerSim(model4, nsim=100, test = fixed("condition2:version1:group2"))
+sim_group_condition2vs4_version_cont

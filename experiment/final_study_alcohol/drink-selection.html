@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+
+<!-- Start of HTML Document -->
+<html>
+    <head>
+        <!-- Load Style -->
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <link href="https://fonts.googleapis.com/css?family=Open Sans" rel="stylesheet">
+        <link rel="stylesheet" href="css/main.css">
+
+        <!-- Load Jatos -->
+        <script src="js/main.js"></script>
+        <script src="jatos.js"></script>
+    </head>
+
+    <!-- Start of Page Content (Visible on Screen) -->
+    <body>
+
+        <div id="drink_selection_screen">
+            <div id="question" class="drink_selection_question">
+            </div>
+            <div class="drink_option_outer_container">
+                <div class="drink_option_inner_container">
+                    <div id="option_left" class="drink_option">
+                        Bier / Biermischgetränk
+                    </div>
+                </div>
+                <div class="drink_option_inner_container">
+                    <div id="option_middle" class="drink_option">
+                        Wein
+                    </div>
+                </div>
+                <div class="drink_option_inner_container">
+                    <div id="option_right" class="drink_option">
+                        Cocktails / Longdrinks
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <script>
+            loadComponent(function() {
+
+                let componentData = {
+                    'participant_ID':participantID, 
+                    'running_ID':runningID,
+                    'back_code': backCode,
+                    'variation':variationID, 
+                    'component':componentFlow[componentIndex],
+                    'drink': null
+                };
+
+                let questionIndex = 0;
+
+                const question = document.getElementById("question");
+                question.innerHTML = questions[questionIndex];
+
+                const optionLeft = document.getElementById("option_left");
+                const optionMiddle = document.getElementById("option_middle");
+                const optionRight = document.getElementById("option_right");
+
+                let drinkSelection = null;
+                
+                document.onkeydown = function(event) { // navigation through intro
+
+                    if (event.key == Keyboard.LeftArrow) {
+                        drinkSelection = "beer";
+                        optionLeft.classList.add("quiz_option_selected");
+                        optionMiddle.classList.remove("quiz_option_selected");
+                        optionRight.classList.remove("quiz_option_selected");
+                    }
+                    else if (event.key == Keyboard.DownArrow) {
+                        drinkSelection = "wine";
+                        optionMiddle.classList.add("quiz_option_selected");
+                        optionLeft.classList.remove("quiz_option_selected");
+                        optionRight.classList.remove("quiz_option_selected");
+                    }
+                    else if (event.key == Keyboard.RightArrow) {
+                        drinkSelection = "cocktail";
+                        optionRight.classList.add("quiz_option_selected");
+                        optionLeft.classList.remove("quiz_option_selected");
+                        optionMiddle.classList.remove("quiz_option_selected");
+                        
+                    }
+                    else if (drinkSelection != null && event.key == Keyboard.Enter) {
+                        jatos.studySessionData.drink = drinkSelection;
+                        componentData['drink'] = drinkSelection;
+
+                        drinkSelection = null;
+                        optionRight.classList.remove("quiz_option_selected");
+                        optionLeft.classList.remove("quiz_option_selected");
+                        optionMiddle.classList.remove("quiz_option_selected");
+
+                        questionIndex += 1;
+
+                        if (questionIndex < questions.length) {    
+                            question.innerHTML = questions[questionIndex];
+                        }
+                        else { // once we reach last paragraph, forwarde to next intro page
+                            disableInput(); // disable any further input
+                            fadeOut(document.getElementById("drink_selection_screen"), function() {
+                                showNextComponent(componentData);
+                            });
+                            
+                        }
+                    }
+                };
+            });
+
+
+
+            const questions = [
+                `Wählen Sie nun bitte das Getränk aus, das Sie am liebsten trinken. So können wir das Spiel individuell für Sie vorbereiten. 
+                <br>
+                (linke / untere / rechte Pfeiltaste zur Auswahl, Enter zur Eingabe)`
+            ];
+        </script>
+
+    </body>
+</html>

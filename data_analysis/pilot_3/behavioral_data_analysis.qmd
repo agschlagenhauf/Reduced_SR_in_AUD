@@ -1319,7 +1319,7 @@ logreg_test_path_switch_condition_df <- trial_df %>%
 
 contrasts(logreg_test_path_switch_condition_df$version) <- contr.treatment(2, base = 2)
 contrasts(logreg_test_path_switch_condition_df$audit_group) <- contr.treatment(2, base = 1)
-contrasts(logreg_test_path_switch_condition_df$condition) <- contr.treatment(5, base = 5)
+contrasts(logreg_test_path_switch_condition_df$condition) <- contr.treatment(5, base = 4)
 
 log_model_control <- glmer(correct_path ~ condition*version*audit_group + (1 | ID), data = logreg_test_path_switch_condition_df, family = "binomial")
 tab_model(log_model_control, transform = NULL, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
