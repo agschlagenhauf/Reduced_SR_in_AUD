@@ -230,15 +230,6 @@ def learning(gamma, alpha, explore_chance, end_state, rewards, transitions, mode
     v_state, t_counts, t_matrix, weight = model_parameters
 
     ##### Create start states #####
-    start_states_1 = np.array([1, 1])
-
-    start_states_2 = np.array([1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7, 8, 8, 9, 9])
-    np.random.shuffle(start_states_2)
-
-    start_states_3 = np.array([1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3])
-    np.random.shuffle(start_states_3)
-
-    #start_states = np.concatenate([start_states_1, start_states_2, start_states_3])
     start_states = np.ones(30, dtype=np.int8)
 
     # Run trials
@@ -268,16 +259,16 @@ def learning(gamma, alpha, explore_chance, end_state, rewards, transitions, mode
 
 def update_parameters(condition, rewards, transitions):
     if condition == "reward":
-        rewards = [[0, 0], [0, 0], [0, 0], [0], [0], [0], [40], [0], [30], [0]]
+        rewards = [[0, 0], [0, 0], [0, 0], [0], [0], [0], [45], [0], [30], [0]]
     elif condition == "transition":
-        transitions = [[2, 3], [5, 6], [4, 5], [7], [8], [9], [10], [10], [10], [11]]
+        transitions = [[2, 3], [4, 5], [5, 6], [9], [7], [8], [10], [10], [10], [11]]
     elif condition == "policy":
-        rewards = [[0, 0], [0, 0], [0, 0], [0], [0], [0], [40], [20], [30], [0]]
+        rewards = [[0, 0], [0, 0], [0, 0], [0], [0], [0], [45], [15], [30], [0]]
     elif condition == "goal":
-        rewards = [[0, 0], [0, 0], [0, 0], [20], [0], [0], [20], [0], [30], [0]]
+        rewards = [[0, 0], [0, 0], [0, 0], [45], [0], [0], [15], [0], [30], [0]]
     else:
-        rewards = [[0, 0], [0, 0], [0, 0], [0], [0], [0], [20], [0], [40], [0]]
-        
+        rewards = [[0, 0], [0, 0], [0, 0], [0], [0], [0], [15], [0], [45], [0]]
+
     return rewards, transitions
 
 

@@ -77,10 +77,10 @@ def run_simulations(model, condition, num_simulations):
         #
         transitions = [[2, 3], [4, 5], [5, 6], [7], [8], [9], [10], [10], [10], [11]]
 
-        if condition == "policy":
-            rewards = [[0, 0], [0, 0], [0, 0], [0], [0], [0], [10], [20], [30], [0]]
+        if condition == "policy" or condition == "transition":
+            rewards = [[0, 0], [0, 0], [0, 0], [0], [0], [0], [0], [15], [30], [0]]
         else:
-            rewards = [[0, 0], [0, 0], [0, 0], [0], [0], [0], [20], [0], [30], [0]]
+            rewards = [[0, 0], [0, 0], [0, 0], [0], [0], [0], [15], [0], [30], [0]]
 
         #
         # Initialize Model-Specific Parameters

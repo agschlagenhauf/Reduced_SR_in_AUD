@@ -8,6 +8,7 @@ lapply(packages, library, character.only = TRUE)
 
 # read in csv files
 full_sr <- read_csv("Reduced_SR_in_AUD/simulations/results/full_sr.csv")
+reduced_sr <- read_csv("Reduced_SR_in_AUD/simulations/results/reduced_sr.csv")
 model_free <- read_csv("Reduced_SR_in_AUD/simulations/results/model_free.csv")
 model_based <- read_csv("Reduced_SR_in_AUD/simulations/results/model_based.csv")
 
