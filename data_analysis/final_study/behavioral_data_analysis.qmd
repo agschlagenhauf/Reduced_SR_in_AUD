@@ -1,5 +1,4 @@
 ---
-h---
 title: "Reduced SR in AUD Pilot 3: Behavioral Data Analysis"
 author: "Milena Musial"
 date: 10.07.2024
@@ -1302,10 +1301,10 @@ ggplot(test_correct_path_component_df, aes(x=component, y=mean_correct)) +
 
 ```
 
-#### LogReg: Difference from control condition {.smaller}
+### Logistic Regression
 
 ```{r}
-logreg_test_path_switch_condition_df <- trial_df %>%
+logreg_test_path_condition_df_full <- df %>%
   filter(phase == "test",
          state == 1) %>%
   mutate(correct_path = as.factor(correct_path),
@@ -1318,12 +1317,84 @@ logreg_test_path_switch_condition_df <- trial_df %>%
          audit_sum,
          audit_group)
 
-contrasts(logreg_test_path_switch_condition_df$version) <- contr.treatment(2, base = 2)
-contrasts(logreg_test_path_switch_condition_df$audit_group) <- contr.treatment(2, base = 1)
-contrasts(logreg_test_path_switch_condition_df$condition) <- contr.treatment(5, base = 4)
+logreg_test_path_condition_df_lowrisk_control <- df %>%
+  filter(phase == "test",
+         state == 1,
+         audit_group == "low-risk",
+         version == "control") %>%
+  mutate(correct_path = as.factor(correct_path),
+         condition = as.factor(condition),
+         version = as.factor(version)) %>%
+  select(version,
+         ID,
+         correct_path,
+         condition,
+         audit_sum,
+         audit_group)
 
-log_model_control <- glmer(correct_path ~ condition*version*audit_group + (1 | ID), data = logreg_test_path_switch_condition_df, family = "binomial")
-tab_model(log_model_control, transform = NULL, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
+logreg_test_path_condition_df_alcohol <- df %>%
+  filter(phase == "test",
+         state == 1,
+         version == "alcohol") %>%
+  mutate(correct_path = as.factor(correct_path),
+         condition = as.factor(condition),
+         version = as.factor(version)) %>%
+  select(version,
+         ID,
+         correct_path,
+         condition,
+         audit_sum,
+         audit_group)
+```
+
+#### Model 1: Low-risk drinkers and non-monetary context, compare against transition revaluation
+
+```{r}
+contrasts(logreg_test_path_condition_df_lowrisk_control$condition) <- contr.treatment(5, base = 5)
+
+model1 <- glmer(correct_path ~ condition + (1 | ID), data = logreg_test_path_condition_df_lowrisk_control, family = "binomial")
+tab_model(model1, transform = NULL, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
+```
+
+#### Model 2: Low-risk drinkers and non-monetary context, compare against policy revaluation
+
+```{r}
+contrasts(logreg_test_path_condition_df_lowrisk_control$condition) <- contr.treatment(5, base = 3)
+
+model2 <- glmer(correct_path ~ condition + (1 | ID), data = logreg_test_path_condition_df_lowrisk_control, family = "binomial")
+tab_model(model2, transform = NULL, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
+```
+
+#### Model 3: Full dataset, compare against transition revaluation
+
+```{r}
+contrasts(logreg_test_path_condition_df_full$version) <- contr.treatment(2, base = 2)
+contrasts(logreg_test_path_condition_df_full$audit_group) <- contr.treatment(2, base = 1)
+contrasts(logreg_test_path_condition_df_full$condition) <- contr.treatment(5, base = 5)
+
+model3 <- glmer(correct_path ~ condition*version*audit_group + (1 | ID), data = logreg_test_path_condition_df_full, family = "binomial")
+tab_model(model3, transform = NULL, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
+```
+
+#### Model 4: Alcohol context, compare against reward revaluation
+
+```{r}
+contrasts(logreg_test_path_condition_df_alcohol$audit_group) <- contr.treatment(2, base = 1)
+contrasts(logreg_test_path_condition_df_alcohol$condition) <- contr.treatment(5, base = 4)
+
+model4 <- glmer(correct_path ~ condition*audit_group + (1 | ID), data = logreg_test_path_condition_df_alcohol, family = "binomial")
+tab_model(model4, transform = NULL, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
+```
+
+#### Model 5: Full dataset, compare against reward revaluation
+
+```{r}
+contrasts(logreg_test_path_condition_df_full$version) <- contr.treatment(2, base = 2)
+contrasts(logreg_test_path_condition_df_full$audit_group) <- contr.treatment(2, base = 1)
+contrasts(logreg_test_path_condition_df_full$condition) <- contr.treatment(5, base = 4)
+
+model5 <- glmer(correct_path ~ condition*version*audit_group + (1 | ID), data = logreg_test_path_condition_df_full, family = "binomial")
+tab_model(model5, transform = NULL, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
 ```
 
 #### LogReg: Difference from goal-state condition
