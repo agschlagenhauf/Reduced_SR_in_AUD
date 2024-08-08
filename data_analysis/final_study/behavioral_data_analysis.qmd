@@ -1184,7 +1184,7 @@ test_switch_ID_component_df %>%
 ```
 
 ```{r}
-# bar plot
+# box plot
 ggplot(test_switch_ID_component_df, aes(x=component, y=percent_switch)) +
   geom_boxplot(fill="lightblue") +
   geom_jitter(width = 0.1) +
@@ -1365,6 +1365,16 @@ model2 <- glmer(correct_path ~ condition + (1 | ID), data = logreg_test_path_con
 tab_model(model2, transform = NULL, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
 ```
 
+#### Model 3a: Alcohol dataset, compare against transition revaluation
+
+```{r}
+contrasts(logreg_test_path_condition_df_alcohol$audit_group) <- contr.treatment(2, base = 1)
+contrasts(logreg_test_path_condition_df_alcohol$condition) <- contr.treatment(5, base = 5)
+
+model3a <- glmer(correct_path ~ condition*audit_sum + (1 | ID), data = logreg_test_path_condition_df_alcohol, family = "binomial", glmerControl(optCtrl=list(maxfun=1e5), optimizer = "bobyqa"))
+tab_model(model3a, transform = NULL, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
+```
+
 #### Model 3: Full dataset, compare against transition revaluation
 
 ```{r}
@@ -1372,7 +1382,7 @@ contrasts(logreg_test_path_condition_df_full$version) <- contr.treatment(2, base
 contrasts(logreg_test_path_condition_df_full$audit_group) <- contr.treatment(2, base = 1)
 contrasts(logreg_test_path_condition_df_full$condition) <- contr.treatment(5, base = 5)
 
-model3 <- glmer(correct_path ~ condition*version*audit_group + (1 | ID), data = logreg_test_path_condition_df_full, family = "binomial")
+model3 <- glmer(correct_path ~ condition*version*audit_sum + (1 | ID), data = logreg_test_path_condition_df_full, family = "binomial", glmerControl(optCtrl=list(maxfun=1e5), optimizer = "bobyqa"))
 tab_model(model3, transform = NULL, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
 ```
 
@@ -1382,7 +1392,7 @@ tab_model(model3, transform = NULL, show.est = T, show.stat = T, auto.label = FA
 contrasts(logreg_test_path_condition_df_alcohol$audit_group) <- contr.treatment(2, base = 1)
 contrasts(logreg_test_path_condition_df_alcohol$condition) <- contr.treatment(5, base = 4)
 
-model4 <- glmer(correct_path ~ condition*audit_group + (1 | ID), data = logreg_test_path_condition_df_alcohol, family = "binomial")
+model4 <- glmer(correct_path ~ condition*audit_sum + (1 | ID), data = logreg_test_path_condition_df_alcohol, family = "binomial")
 tab_model(model4, transform = NULL, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
 ```
 
@@ -1393,7 +1403,7 @@ contrasts(logreg_test_path_condition_df_full$version) <- contr.treatment(2, base
 contrasts(logreg_test_path_condition_df_full$audit_group) <- contr.treatment(2, base = 1)
 contrasts(logreg_test_path_condition_df_full$condition) <- contr.treatment(5, base = 4)
 
-model5 <- glmer(correct_path ~ condition*version*audit_group + (1 | ID), data = logreg_test_path_condition_df_full, family = "binomial")
+model5 <- glmer(correct_path ~ condition*version*audit_sum + (1 | ID), data = logreg_test_path_condition_df_full, family = "binomial", glmerControl(optCtrl=list(maxfun=1e5), optimizer = "bobyqa"))
 tab_model(model5, transform = NULL, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
 ```
 
@@ -1435,6 +1445,38 @@ contrasts(logreg_test_path_switch_condition_df$condition) <- contr.treatment(5, 
 
 log_model_transition <- glmer(correct_path ~ condition*version + (1 | ID), data = logreg_test_path_switch_condition_df, family = "binomial")
 tab_model(log_model_transition, transform = NULL, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
+```
+
+## Correst paths across 5 test trials within participant
+
+```{r}
+test_correct_path_ID_component_df <- df %>%
+  filter(phase == "test",
+         state == 1) %>%
+  group_by(version, ID, component) %>%
+  summarise(n = n(),
+            sum_correct = sum(correct, na.rm=T),
+            percent_correct = mean(correct, na.rm=T),
+            se_correct = sd(correct, na.rm = TRUE)/sqrt(n()),
+            ci_l = ci(correct, na.rm=TRUE)[2],
+            ci_u = ci(correct, na.rm=TRUE)[3]
+            )
+
+test_correct_path_ID_component_df %>%
+  kable("html") %>%
+  kable_styling(font_size = 18,
+                latex_options = "scale_down")
+```
+
+```{r}
+# box plot
+ggplot(test_correct_path_ID_component_df, aes(x=component, y=percent_correct)) +
+  geom_boxplot(fill="lightblue") +
+  geom_jitter(width = 0.1) +
+  scale_y_continuous(labels = scales::comma) +
+  facet_wrap(~ version) +
+  theme_light(base_size = 16) +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
 ```
 
 ## Correct test trial 1 paths starting from state 1
