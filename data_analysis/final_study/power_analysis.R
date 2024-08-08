@@ -3,12 +3,12 @@
 rm(list = ls(all = TRUE))
 
 # Load packages
-packages <- c("ggplot2", "dplyr", "tidyr", "lme4", "simr", "future")
+packages <- c("ggplot2", "dplyr", "tidyr", "lme4", "simr", "future", "gmodels")
 #install.packages(packages)
 lapply(packages, library, character.only = TRUE)
 
-sample <- 'unbalanced' # 'unbalanced'
-audit_coding <- 'continuous' # continuous
+sample <- 'balanced' # 'unbalanced'
+audit_coding <- 'binary' # continuous
 total_n <- 560
 dropout_rate <- 0.25
 
@@ -16,7 +16,7 @@ plan(multisession, workers = 2)
 simnum = 100
 glmerctrlist <- glmerControl(optCtrl=list(maxfun=1e5), optimizer = "bobyqa")
 
-###### create DF ######
+###### create full DF ######
 
 n <- total_n*(1-dropout_rate)
 
@@ -53,63 +53,196 @@ if (sample == 'balanced') {
   audit_full <- rep(audit_sum, each=25)
 }
 
-power_df_full <- data.frame(id=as.factor(subj_full), trial=as.factor(trial_full), condition=as.factor(condition_full), version=as.factor(version_full), group=as.factor(group_full), audit=audit_full)
-power_df_lowrisk_control <- power_df_full[(power_df_full$version == 1 & power_df_full$group == 1), ]
-power_df_alcohol <- power_df_full[power_df_full$version == 2, ]
+power_df_full <- data.frame(id=as.factor(subj_full), 
+                            trial=as.factor(trial_full), 
+                            condition=factor(condition_full, 
+                                             labels = c("control",
+                                                        "goal-state",
+                                                        "policy",
+                                                        "reward",
+                                                        "transition")), 
+                            version=factor(version_full, labels = c("alcohol",
+                                                                    "control")), 
+                            group=factor(group_full, labels = c("low-risk",
+                                                                "harmful")), 
+                            audit=audit_full)
+
+###### Simulate data based on model 3 ######
+
+# define contrasts
+
+contrasts(power_df_full$condition) <- contr.treatment(5, base = 5)
+contrasts(power_df_full$version) <- contr.treatment(2, base = 2)
+contrasts(power_df_full$group) <- contr.treatment(2, base = 1)
+  
+# define effects
+
+fixed <- c(-1.2,
+           3.5, 1.3, 0.6, 1.1,
+           0,
+           -0.15,
+           0, 0.2, 0, 0,
+           0.1, 0.1, 0, 0.1,
+           0,
+           0, -0.1, 0, 0.1)
+rand <- list(1.4)
+res <- 3.3
+
+# generate model
+
+model3 <- simr::makeGlmer(y ~ condition*version*audit + (1 | id), family="binomial", fixef=fixed, VarCorr=rand, data=power_df_full)
+model3
+
+# simulate data based on model and check if it fits expectations
+
+y <- simulate(model3, nsim = 1, seed = NULL,
+                     use.u = FALSE,
+                     newdata=NULL, newparams=NULL, family=binomial,
+                     allow.new.levels = FALSE, na.action = na.pass)
+
+power_df_full$correct_path <- y$sim_1
+
+aggr_power_df_full <- power_df_full %>%
+  group_by(condition, group, version) %>%
+  summarise(mean_correct = mean(correct_path, na.rm = TRUE),
+            se_correct = sd(correct_path, na.rm = TRUE)/sqrt(n()),
+            ci_l = ci(correct_path, na.rm=TRUE)[2],
+            ci_u = ci(correct_path, na.rm=TRUE)[3],
+            n = n()
+  )
+
+plot <- ggplot(aggr_power_df_full, aes(x=condition, y=mean_correct)) +
+  geom_bar(stat="identity", fill="lightblue") +
+  geom_errorbar(aes(ymin=ci_l, ymax=ci_u), width=.2,
+                position=position_dodge(.9)) +
+  facet_wrap(~ version + group) +
+  scale_y_continuous("% correct paths", limits = c(0, 1)) +
+  theme_light(base_size = 16) +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+plot
+
+###### Create sub DFs ######
+
+power_df_lowrisk_control <- power_df_full[(power_df_full$version == "control" & power_df_full$group == "low-risk"), ]
+power_df_alcohol <- power_df_full[power_df_full$version == "alcohol", ]
 
 ###### Model 1 ######
 
+# define contrasts
+
 contrasts(power_df_lowrisk_control$condition) <- contr.treatment(5, base = 5)
 
-fixed <- c(-1.9,
-           3.7, 2.4, 1.5, 2.6)
-rand <- list(1.1)
-res <- 3.3
+# fit model
 
-model1 <- simr::makeGlmer(y ~ condition + (1 | id), family="binomial", fixef=fixed, VarCorr=rand, data=power_df_lowrisk_control)
+model1 <- glmer(correct_path ~ condition + (1 | id), family = binomial, data=power_df_lowrisk_control, glmerControl(optCtrl=list(maxfun=1e5), optimizer = "bobyqa"))
 model1
+
+# plot data
+
+aggr_power_df_lowrisk_control <- power_df_lowrisk_control %>%
+  group_by(condition) %>%
+  summarise(mean_correct = mean(correct_path, na.rm = TRUE),
+            se_correct = sd(correct_path, na.rm = TRUE)/sqrt(n()),
+            ci_l = ci(correct_path, na.rm=TRUE)[2],
+            ci_u = ci(correct_path, na.rm=TRUE)[3],
+            n = n()
+  )
+
+plot_model1 <- ggplot(aggr_power_df_lowrisk_control, aes(x=condition, y=mean_correct)) +
+                    geom_bar(stat="identity", fill="lightblue") +
+                    geom_errorbar(aes(ymin=ci_l, ymax=ci_u), width=.2,
+                                  position=position_dodge(.9)) +
+                    scale_y_continuous("% correct paths", limits = c(0, 1)) +
+                    theme_light(base_size = 16) +
+                    theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+plot_model1
+
+# power analysis per effect
 
 sim_model1_condition2vs5 <- powerSim(model1, nsim=simnum, test = fixed("condition2", "z"), fitOpts=list(control=glmerctrlist))
 sim_model1_condition2vs5
+
 sim_model1_condition4vs5 <- powerSim(model1, nsim=simnum, test = fixed("condition4", "z"), fitOpts=list(control=glmerctrlist))
 sim_model1_condition4vs5
 
 ###### Model 2 ######
 
+# define contrasts
+
 contrasts(power_df_lowrisk_control$condition) <- contr.treatment(5, base = 3)
 
-fixed <- c(-0.4,
-           2.3, 0.9, 1.1, -1.5)
-rand <- list(1.1)
-res <- 3.3
+# fit model
 
-model2 <- simr::makeGlmer(y ~ condition + (1 | id), family="binomial", fixef=fixed, VarCorr=rand, data=power_df_lowrisk_control)
+model2 <- glmer(correct_path ~ condition + (1 | id), family = binomial, data=power_df_lowrisk_control, glmerControl(optCtrl=list(maxfun=1e5), optimizer = "bobyqa"))
 model2
+
+# plot data
+
+aggr_power_df_lowrisk_control <- power_df_lowrisk_control %>%
+  group_by(condition) %>%
+  summarise(mean_correct = mean(correct_path, na.rm = TRUE),
+            se_correct = sd(correct_path, na.rm = TRUE)/sqrt(n()),
+            ci_l = ci(correct_path, na.rm=TRUE)[2],
+            ci_u = ci(correct_path, na.rm=TRUE)[3],
+            n = n()
+  )
+
+plot_model2 <- ggplot(aggr_power_df_lowrisk_control, aes(x=condition, y=mean_correct)) +
+  geom_bar(stat="identity", fill="lightblue") +
+  geom_errorbar(aes(ymin=ci_l, ymax=ci_u), width=.2,
+                position=position_dodge(.9)) +
+  scale_y_continuous("% correct paths", limits = c(0, 1)) +
+  theme_light(base_size = 16) +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+plot_model2
+
+# power analysis per effect
 
 sim_model2_condition2vs3 <- powerSim(model2, nsim=simnum, test = fixed("condition2", "z"), fitOpts=list(control=glmerctrlist))
 sim_model2_condition2vs3
+
 sim_model2_condition4vs3 <- powerSim(model2, nsim=simnum, test = fixed("condition4", "z"), fitOpts=list(control=glmerctrlist))
 sim_model2_condition4vs3
 
 ###### Model 3 ######
 
-# Model 3a based on alcohol context data only
+### Model 3a based on alcohol context data only ###
+
+# define contrasts
 
 contrasts(power_df_alcohol$condition) <- contr.treatment(5, base = 5)
 contrasts(power_df_alcohol$version) <- contr.treatment(2, base = 2)
 contrasts(power_df_alcohol$group) <- contr.treatment(2, base = 1)
 
 if (audit_coding == 'binary') {
- 
-  fixed <- c(-1.9,
-             3.8, 2.4, 1.5, 2.7,
-             -5,
-             0, 20, 0, 20)
-  rand <- list(1.4)
-  res <- 3.3
+
+  # fit model
   
-  model3a <- simr::makeGlmer(y ~ condition*group + (1 | id), family="binomial", fixef=fixed, VarCorr=rand, data=power_df_alcohol)
+  model3a <- glmer(correct_path ~ condition*group + (1 | id), family = binomial, data=power_df_alcohol, glmerControl(optCtrl=list(maxfun=1e5), optimizer = "bobyqa"))
   model3a
+  
+  # plot data
+  
+  aggr_power_df_alcohol <- power_df_alcohol %>%
+    group_by(condition, group) %>%
+    summarise(mean_correct = mean(correct_path, na.rm = TRUE),
+              se_correct = sd(correct_path, na.rm = TRUE)/sqrt(n()),
+              ci_l = ci(correct_path, na.rm=TRUE)[2],
+              ci_u = ci(correct_path, na.rm=TRUE)[3],
+              n = n()
+    )
+  
+  plot_model3a <- ggplot(aggr_power_df_alcohol, aes(x=condition, y=mean_correct)) +
+    geom_bar(stat="identity", fill="lightblue") +
+    geom_errorbar(aes(ymin=ci_l, ymax=ci_u), width=.2,
+                  position=position_dodge(.9)) +
+    facet_wrap(~ group) +
+    scale_y_continuous("% correct paths", limits = c(0, 1)) +
+    theme_light(base_size = 16) +
+    theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+  plot_model3a
+  
+  # power analysis per effect
   
   sim_model3a_group_condition2vs5 <- powerSim(model3a, nsim=simnum, test = fixed("condition2:group2"), fitOpts=list(control=glmerctrlist))
   sim_model3a_group_condition2vs5
@@ -123,15 +256,33 @@ if (audit_coding == 'binary') {
   
 } else if (audit_coding == 'continuous') {
   
-  fixed <- c(-1.7,
-             4.6, 2.3, 1.2, 1.3,
-             0,
-             0, 0.5, 0, 0.5)
-  rand <- list(1.6)
-  res <- 3.3
+  # fit model
   
-  model3a <- simr::makeGlmer(y ~ condition*audit + (1 | id), family="binomial", fixef=fixed, VarCorr=rand, data=power_df_alcohol)
+  model3a <- glmer(correct_path ~ condition*audit + (1 | id), family = binomial, data=power_df_alcohol, glmerControl(optCtrl=list(maxfun=1e5), optimizer = "bobyqa"))
   model3a
+  
+  # plot data
+  
+  aggr_power_df_alcohol <- power_df_alcohol %>%
+    group_by(condition, group) %>%
+    summarise(mean_correct = mean(correct_path, na.rm = TRUE),
+              se_correct = sd(correct_path, na.rm = TRUE)/sqrt(n()),
+              ci_l = ci(correct_path, na.rm=TRUE)[2],
+              ci_u = ci(correct_path, na.rm=TRUE)[3],
+              n = n()
+    )
+  
+  plot_model3a <- ggplot(aggr_power_df_alcohol, aes(x=condition, y=mean_correct)) +
+    geom_bar(stat="identity", fill="lightblue") +
+    geom_errorbar(aes(ymin=ci_l, ymax=ci_u), width=.2,
+                  position=position_dodge(.9)) +
+    facet_wrap(~ group) +
+    scale_y_continuous("% correct paths", limits = c(0, 1)) +
+    theme_light(base_size = 16) +
+    theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+  plot_model3a
+  
+  # power analysis per effect
   
   sim_model3a_group_condition2vs5 <- powerSim(model3a, nsim=simnum, test = fixed("condition2:audit"), fitOpts=list(control=glmerctrlist))
   sim_model3a_group_condition2vs5
@@ -145,26 +296,43 @@ if (audit_coding == 'binary') {
 }
 
 
-# Original model 3 based on full data set
+### Original model 3 based on full data set ###
+
+# define contrasts
+
 contrasts(power_df_full$condition) <- contr.treatment(5, base = 5)
 contrasts(power_df_full$version) <- contr.treatment(2, base = 2)
 contrasts(power_df_full$group) <- contr.treatment(2, base = 1)
 
 if (audit_coding == 'binary') {
 
-  fixed <- c(-1.9,
-             3.8, 2.4, 1.5, 2.7,
-             0,
-             0,
-             0.7, -0.8, -0.8, -1.5,
-             0, 20, 0, 20,
-             1,
-             0, 30, 0, 30)
-  rand <- list(1.4)
-  res <- 3.3
+  # fit model
   
-  model3 <- simr::makeGlmer(y ~ condition*version*group + (1 | id), family="binomial", fixef=fixed, VarCorr=rand, data=power_df_full)
+  model3 <- glmer(correct_path ~ condition*group*version + (1 | id), family = binomial, data=power_df_full, glmerControl(optCtrl=list(maxfun=1e5), optimizer = "bobyqa"))
   model3
+  
+  # plot data
+  
+  aggr_power_df_full <- power_df_full %>%
+    group_by(condition, group, version) %>%
+    summarise(mean_correct = mean(correct_path, na.rm = TRUE),
+              se_correct = sd(correct_path, na.rm = TRUE)/sqrt(n()),
+              ci_l = ci(correct_path, na.rm=TRUE)[2],
+              ci_u = ci(correct_path, na.rm=TRUE)[3],
+              n = n()
+    )
+  
+  plot_model3 <- ggplot(aggr_power_df_full, aes(x=condition, y=mean_correct)) +
+    geom_bar(stat="identity", fill="lightblue") +
+    geom_errorbar(aes(ymin=ci_l, ymax=ci_u), width=.2,
+                  position=position_dodge(.9)) +
+    facet_wrap(~ version + group) +
+    scale_y_continuous("% correct paths", limits = c(0, 1)) +
+    theme_light(base_size = 16) +
+    theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+  plot_model3
+  
+  # power analysis per effect
   
   sim_model3_group_condition2vs5 <- powerSim(model3, nsim=simnum, test = fixed("condition2:group2"), fitOpts=list(control=glmerctrlist))
   sim_model3_group_condition2vs5
@@ -188,19 +356,33 @@ if (audit_coding == 'binary') {
 
 } else if (audit_coding == 'continuous') {
   
-  fixed <- c(-2,
-             4.3, 3.1, 1.7, 3.1,
-             0.4,
-             0,
-             0.2, -0.8, -0.5, -1.8,
-             -0.1, 0.5, 0, 0.5,
-             0,
-             0, 0.5, 0, 0.5)
-  rand <- list(1.4)
-  res <- 3.3
+  # fit model
   
-  model3 <- simr::makeGlmer(y ~ condition*version*audit + (1 | id), family="binomial", fixef=fixed, VarCorr=rand, data=power_df_full)
+  model3 <- glmer(correct_path ~ condition*audit*version + (1 | id), family = binomial, data=power_df_full, glmerControl(optCtrl=list(maxfun=1e5), optimizer = "bobyqa"))
   model3
+  
+  # plot data
+  
+  aggr_power_df_full <- power_df_full %>%
+    group_by(condition, group, version) %>%
+    summarise(mean_correct = mean(correct_path, na.rm = TRUE),
+              se_correct = sd(correct_path, na.rm = TRUE)/sqrt(n()),
+              ci_l = ci(correct_path, na.rm=TRUE)[2],
+              ci_u = ci(correct_path, na.rm=TRUE)[3],
+              n = n()
+    )
+  
+  plot_model3 <- ggplot(aggr_power_df_full, aes(x=condition, y=mean_correct)) +
+    geom_bar(stat="identity", fill="lightblue") +
+    geom_errorbar(aes(ymin=ci_l, ymax=ci_u), width=.2,
+                  position=position_dodge(.9)) +
+    facet_wrap(~ version + group) +
+    scale_y_continuous("% correct paths", limits = c(0, 1)) +
+    theme_light(base_size = 16) +
+    theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+  plot_model3
+  
+  # power analysis per effect
   
   sim_model3_group_condition2vs5 <- powerSim(model3, nsim=simnum, test = fixed("condition2:audit"), fitOpts=list(control=glmerctrlist))
   sim_model3_group_condition2vs5
@@ -226,19 +408,39 @@ if (audit_coding == 'binary') {
 
 ###### Model 4 ######
 
+# define contrasts 
+
 contrasts(power_df_alcohol$condition) <- contr.treatment(5, base = 4)
 
 if (audit_coding == 'binary') {
-
-  fixed <- c(-0.3,
-             3.2, 0.5, -0.5, -1.2,
-             0,
-             0, -20, 0, -15)
-  rand <- list(1.7)
-  res <- 3.3
   
-  model4 <- simr::makeGlmer(y ~ condition*group + (1 | id), family="binomial", fixef=fixed, VarCorr=rand, data=power_df_alcohol)
+  # fit model
+  
+  model4 <- glmer(correct_path ~ condition*group + (1 | id), family = binomial, data=power_df_alcohol, glmerControl(optCtrl=list(maxfun=1e5), optimizer = "bobyqa"))
   model4
+  
+  # plot data
+  
+  aggr_power_df_alcohol <- power_df_alcohol %>%
+    group_by(condition, group) %>%
+    summarise(mean_correct = mean(correct_path, na.rm = TRUE),
+              se_correct = sd(correct_path, na.rm = TRUE)/sqrt(n()),
+              ci_l = ci(correct_path, na.rm=TRUE)[2],
+              ci_u = ci(correct_path, na.rm=TRUE)[3],
+              n = n()
+    )
+  
+  plot_model4 <- ggplot(aggr_power_df_alcohol, aes(x=condition, y=mean_correct)) +
+    geom_bar(stat="identity", fill="lightblue") +
+    geom_errorbar(aes(ymin=ci_l, ymax=ci_u), width=.2,
+                  position=position_dodge(.9)) +
+    facet_wrap(~ group) +
+    scale_y_continuous("% correct paths", limits = c(0, 1)) +
+    theme_light(base_size = 16) +
+    theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+  plot_model4
+  
+  # power analysis per effect
   
   sim_model4_group_condition2vs4_version <- powerSim(model4, nsim=simnum, test = fixed("condition2:group2"), fitOpts=list(control=glmerctrlist))
   sim_model4_group_condition2vs4_version
@@ -247,15 +449,33 @@ if (audit_coding == 'binary') {
   
 }  else if (audit_coding == 'continuous') {
   
-  fixed <- c(-0.4,
-             3.3, 1, -0.1, -1.3,
-             0,
-             0, -0.2, 0, -0.05)
-  rand <- list(1.7)
-  res <- 3.3
+  # fit model
   
-  model4 <- simr::makeGlmer(y ~ condition*audit + (1 | id), family="binomial", fixef=fixed, VarCorr=rand, data=power_df_alcohol)
+  model4 <- glmer(correct_path ~ condition*audit + (1 | id), family = binomial, data=power_df_alcohol, glmerControl(optCtrl=list(maxfun=1e5), optimizer = "bobyqa"))
   model4
+  
+  # plot data
+  
+  aggr_power_df_alcohol <- power_df_alcohol %>%
+    group_by(condition, group) %>%
+    summarise(mean_correct = mean(correct_path, na.rm = TRUE),
+              se_correct = sd(correct_path, na.rm = TRUE)/sqrt(n()),
+              ci_l = ci(correct_path, na.rm=TRUE)[2],
+              ci_u = ci(correct_path, na.rm=TRUE)[3],
+              n = n()
+    )
+  
+  plot_model4 <- ggplot(aggr_power_df_alcohol, aes(x=condition, y=mean_correct)) +
+    geom_bar(stat="identity", fill="lightblue") +
+    geom_errorbar(aes(ymin=ci_l, ymax=ci_u), width=.2,
+                  position=position_dodge(.9)) +
+    facet_wrap(~ group) +
+    scale_y_continuous("% correct paths", limits = c(0, 1)) +
+    theme_light(base_size = 16) +
+    theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+  plot_model4
+  
+  # power analysis per effect
   
   sim_model4_group_condition2vs4_version <- powerSim(model4, nsim=simnum, test = fixed("condition2:group2"), fitOpts=list(control=glmerctrlist))
   sim_model4_group_condition2vs4_version
@@ -266,23 +486,39 @@ if (audit_coding == 'binary') {
 
 ###### Model 5 ######
 
+# define contrasts
+
 contrasts(power_df_full$condition) <- contr.treatment(5, base = 4)
 
 if (audit_coding == 'binary') {
 
-  fixed <- c(0.8,
-             1.1, -0.3, -1.1, -2.7,
-             0,
-             -1,
-             2, 0.7, 0.7, 1.5,
-             0, -20, 0, -5,
-             1,
-             0, -30, 0, -5)
-  rand <- list(1.4)
-  res <- 3.3
+  # fit model
   
-  model5 <- simr::makeGlmer(y ~ condition*version*group + (1 | id), family="binomial", fixef=fixed, VarCorr=rand, data=power_df_full)
+  model5 <- glmer(correct_path ~ condition*group*version + (1 | id), family = binomial, data=power_df_full, glmerControl(optCtrl=list(maxfun=1e5), optimizer = "bobyqa"))
   model5
+  
+  # plot data
+  
+  aggr_power_df_full <- power_df_full %>%
+    group_by(condition, group, version) %>%
+    summarise(mean_correct = mean(correct_path, na.rm = TRUE),
+              se_correct = sd(correct_path, na.rm = TRUE)/sqrt(n()),
+              ci_l = ci(correct_path, na.rm=TRUE)[2],
+              ci_u = ci(correct_path, na.rm=TRUE)[3],
+              n = n()
+    )
+  
+  plot_model5 <- ggplot(aggr_power_df_full, aes(x=condition, y=mean_correct)) +
+    geom_bar(stat="identity", fill="lightblue") +
+    geom_errorbar(aes(ymin=ci_l, ymax=ci_u), width=.2,
+                  position=position_dodge(.9)) +
+    facet_wrap(~ version + group) +
+    scale_y_continuous("% correct paths", limits = c(0, 1)) +
+    theme_light(base_size = 16) +
+    theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+  plot_model5
+  
+  # power analyses per effect
   
   sim_model5_group_condition2vs4_version <- powerSim(model5, nsim=simnum, test = fixed("condition2:version1:group2"), fitOpts=list(control=glmerctrlist))
   sim_model5_group_condition2vs4_version
@@ -291,19 +527,33 @@ if (audit_coding == 'binary') {
   
 } else if (audit_coding == 'continuous') {
   
-  fixed <- c(1,
-             1.2, -0.03, -1.4, -3.1,
-             0,
-             -1,
-             2, 1, 1.3, 1.8,
-             0, -0.2, 0, -0.05,
-             0.2,
-             0, -0.2, 0, -0.05)
-  rand <- list(1.4)
-  res <- 3.3
+  # fit model
   
-  model5 <- simr::makeGlmer(y ~ condition*version*group + (1 | id), family="binomial", fixef=fixed, VarCorr=rand, data=power_df_full)
+  model5 <- glmer(correct_path ~ condition*audit*version + (1 | id), family = binomial, data=power_df_full, glmerControl(optCtrl=list(maxfun=1e5), optimizer = "bobyqa"))
   model5
+  
+  # plot data
+  
+  aggr_power_df_full <- power_df_full %>%
+    group_by(condition, group, version) %>%
+    summarise(mean_correct = mean(correct_path, na.rm = TRUE),
+              se_correct = sd(correct_path, na.rm = TRUE)/sqrt(n()),
+              ci_l = ci(correct_path, na.rm=TRUE)[2],
+              ci_u = ci(correct_path, na.rm=TRUE)[3],
+              n = n()
+    )
+  
+  plot_model5 <- ggplot(aggr_power_df_full, aes(x=condition, y=mean_correct)) +
+    geom_bar(stat="identity", fill="lightblue") +
+    geom_errorbar(aes(ymin=ci_l, ymax=ci_u), width=.2,
+                  position=position_dodge(.9)) +
+    facet_wrap(~ version + group) +
+    scale_y_continuous("% correct paths", limits = c(0, 1)) +
+    theme_light(base_size = 16) +
+    theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+  plot_model5
+  
+  # power analyses per effect
   
   sim_model5_group_condition2vs4_version <- powerSim(model5, nsim=simnum, test = fixed("condition2:version1:group2"), fitOpts=list(control=glmerctrlist))
   sim_model5_group_condition2vs4_version
@@ -311,3 +561,10 @@ if (audit_coding == 'binary') {
   #curve_group_condition2vs4_version
   
 }
+
+
+
+
+
+
+
