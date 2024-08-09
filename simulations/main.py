@@ -17,7 +17,7 @@ SUCCESS_COUNT_FILENAME = "success_counts.txt"
 # Parameters
 #
 NUM_SIMULATIONS = 100
-MODELS = ["reduced_sr"] # "full_sr", "reduced_sr", "model_based", "model_free"
+MODELS = ["full_sr", "reduced_sr", "model_based", "model_free"] # "full_sr", "reduced_sr", "model_based", "model_free"
 CONDITIONS = ["control", "reward", "transition", "policy", "goal"] # "control", "reward", "transition", "policy", "goal"
 
 #

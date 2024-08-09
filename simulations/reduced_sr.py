@@ -270,10 +270,6 @@ def learning(gamma, alpha, explore_chance, end_state, rewards, transitions, mode
 
     # create reduced SR
     reduced_feat, reduced_weight = reduce_weight_and_feat(feat, weight, rewards)
-    print(f"SR: {feat} \n"
-          f"reduced SR: {reduced_feat} \n"
-          f"weight: {weight} \n"
-          f"reduced weight: {reduced_weight}")
 
     new_params = [num_pairs, v_state, feat, reduced_feat, weight, reduced_weight]
         
@@ -328,7 +324,7 @@ def relearning(condition, gamma, alpha, explore_chance, end_state, rewards, tran
     phase = "relearning"
 
     # Create start states
-    start_states = np.array([4, 4, 4, 4, 4, 4, 5, 5, 5, 5, 5, 5, 6, 6, 6, 6, 6, 6])
+    start_states = np.array([4, 4, 4, 5, 5, 5, 6, 6, 6])
     np.random.shuffle(start_states)
 
     # Run trials
