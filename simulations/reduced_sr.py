@@ -12,7 +12,8 @@ from utilities import *
 
 def reduce_weight_and_feat(feat, weight, rewards):
     '''
-    Deletes all columns of the successor matrix that don't correspond to a reward-giving action, converting a full to a reduced successor matrix
+    Deletes all columns of the successor matrix and the reward vector
+    that don't correspond to a reward-giving action, converting a full to a reduced successor matrix
 
     Arguments:
         - sr: the full successor matrix
@@ -56,8 +57,8 @@ def run_trial(phase, gamma, alpha, explore_chance, end_state, start_state, rewar
         weight: the weight vector
 
     Returns: (
-        - feat: value updated after the current trial
-        - weight: value updated after the current trial
+        - feat: successor matrix updated after the current trial
+        - weight: weight vector updated after the current trial
         - transition_log_lines: [str]
     )
     '''
@@ -67,7 +68,6 @@ def run_trial(phase, gamma, alpha, explore_chance, end_state, start_state, rewar
     while True:
 
         ###### First state ######
-
         if (current_state + 1) == start_state:
 
             ###### Determine next and second next state ######
@@ -79,7 +79,6 @@ def run_trial(phase, gamma, alpha, explore_chance, end_state, start_state, rewar
             else:
                 next_move = np.argmax(next_values)
             next_state = transitions[current_state][next_move] - 1
-
             # Determine the second next state
             second_next_move_index = get_flattened_index(transitions, next_state, 0)
             second_next_values = v_state[second_next_move_index:(second_next_move_index + len(transitions[next_state]))]
@@ -110,7 +109,7 @@ def run_trial(phase, gamma, alpha, explore_chance, end_state, start_state, rewar
 
             ###### Fill in transition log line ######
             transition_log_lines.append(
-                f"{current_state + 1},{next_move + 1},{weight_delta},{comma_separate(v_state)},{comma_separate(weight)},{comma_separate(flatten(feat))}"
+                f"{current_state + 1},{next_move + 1},{reward},{weight_delta},{comma_separate(v_state)},{comma_separate(weight)},{comma_separate(flatten(feat))}"
             )
 
             ###### Move to the next state ######
@@ -134,8 +133,8 @@ def run_trial(phase, gamma, alpha, explore_chance, end_state, start_state, rewar
                 second_next_move = np.argmax(second_next_values)
             second_next_state = transitions[next_state][second_next_move] - 1
 
+            ###### Update the successor matrix row correpsonding to last state ONLY during learning for rigid SR ######
             if phase == "learning":
-                ###### Update the successor matrix row correpsonding to last state ######
                 one_hot = np.zeros(num_pairs)
                 one_hot[get_flattened_index(transitions, last_state, last_move)] = 1
                 feat_delta = one_hot + gamma * feat[get_flattened_index(transitions, current_state, next_move)] - feat[
@@ -162,7 +161,7 @@ def run_trial(phase, gamma, alpha, explore_chance, end_state, start_state, rewar
 
             ###### Fill in transition log line ######
             transition_log_lines.append(
-                f"{current_state + 1},{next_move + 1},{weight_delta},{comma_separate(v_state)},{comma_separate(weight)},{comma_separate(flatten(feat))}"
+                f"{current_state + 1},{next_move + 1},{reward},{weight_delta},{comma_separate(v_state)},{comma_separate(weight)},{comma_separate(flatten(feat))}"
             )
 
             ###### Move to the next state ######
@@ -213,6 +212,9 @@ def run_trial(phase, gamma, alpha, explore_chance, end_state, start_state, rewar
     return v_state, feat, weight, transition_log_lines
 
 
+#
+# Learning
+#
 def learning(gamma, alpha, explore_chance, end_state, rewards, transitions, model_parameters):
     '''
     Simulates the learning phase, where the agent has access to the starting state.
@@ -239,7 +241,7 @@ def learning(gamma, alpha, explore_chance, end_state, rewards, transitions, mode
         - transition_log: [str]
     )
     '''
-    num_pairs, v_state, feat, weight = model_parameters
+    num_pairs, v_state, feat, reduced_feat, weight, reduced_weight = model_parameters
     phase = "learning"
 
     # Create start states
@@ -266,7 +268,14 @@ def learning(gamma, alpha, explore_chance, end_state, rewards, transitions, mode
         transition_log_lines = prefix_all(f"{trial_index + 1},", transition_log_lines)
         transition_log.extend(transition_log_lines)
 
-    new_params = [num_pairs, v_state, feat, weight]
+    # create reduced SR
+    reduced_feat, reduced_weight = reduce_weight_and_feat(feat, weight, rewards)
+    print(f"SR: {feat} \n"
+          f"reduced SR: {reduced_feat} \n"
+          f"weight: {weight} \n"
+          f"reduced weight: {reduced_weight}")
+
+    new_params = [num_pairs, v_state, feat, reduced_feat, weight, reduced_weight]
         
     return new_params, transition_log
 
@@ -286,7 +295,6 @@ def update_parameters(condition, rewards, transitions):
         rewards = [[0, 0], [0, 0], [0, 0], [0], [0], [0], [15], [0], [45], [0]]
 
     return rewards, transitions
-
 
 
 def relearning(condition, gamma, alpha, explore_chance, end_state, rewards, transitions, model_parameters):
@@ -316,17 +324,11 @@ def relearning(condition, gamma, alpha, explore_chance, end_state, rewards, tran
         - transition_log: [str]
     )
     '''
-    num_pairs, v_state, feat, weight = model_parameters
+    num_pairs, v_state, feat, reduced_feat, weight, reduced_weight = model_parameters
     phase = "relearning"
 
-    reduced_feat, reduced_weight = reduce_weight_and_feat(feat, weight, rewards)
-
     # Create start states
-    if condition == "transition":
-        start_states = np.array([2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3])
-    else:
-        start_states = np.array([4, 4, 4, 4, 4, 4, 4, 4, 5, 5, 5, 5, 5, 5, 5, 5, 6, 6, 6, 6, 6, 6, 6, 6])
-
+    start_states = np.array([4, 4, 4, 4, 4, 4, 5, 5, 5, 5, 5, 5, 6, 6, 6, 6, 6, 6])
     np.random.shuffle(start_states)
 
     # Run trials
@@ -350,10 +352,14 @@ def relearning(condition, gamma, alpha, explore_chance, end_state, rewards, tran
         transition_log_lines = prefix_all(f"{trial_index + 1},", transition_log_lines)
         transition_log.extend(transition_log_lines)
 
-    new_params = [num_pairs, v_state, feat, weight]
+    new_params = [num_pairs, v_state, feat, reduced_feat, weight, reduced_weight]
         
     return new_params, transition_log
 
+
+#
+# Test
+#
 def test(model_parameters):
     '''
     Simulates the test phase by comparing the action values of the two possible starting-state actions. The test state action is assumed to always be
@@ -371,7 +377,7 @@ def test(model_parameters):
         - transition_log: [str]
     )
     '''
-    num_pairs, v_state, feat, weight = model_parameters
+    num_pairs, v_state, feat, reduced_feat, weight, reduced_weight = model_parameters
 
     action_index = np.argmax(v_state[0:2])
 

@@ -199,11 +199,7 @@ def relearning(condition, gamma, alpha, explore_chance, end_state, rewards, tran
     v_state = model_parameters[0]
 
     # Create start states
-    if condition == "transition":
-        start_states = np.array([2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3])
-    else:
-        start_states = np.array([4, 4, 4, 4, 4, 4, 4, 4, 5, 5, 5, 5, 5, 5, 5, 5, 6, 6, 6, 6, 6, 6, 6, 6])
-
+    start_states = np.array([4, 4, 4, 5, 5, 5, 6, 6, 6])
     np.random.shuffle(start_states)
 
     transition_log = []

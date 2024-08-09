@@ -58,7 +58,7 @@ def run_trial(gamma, alpha, explore_chance, end_state, start_state, rewards, tra
     )
     '''
     current_state = start_state - 1
-    transition_log_lines = []  # all transitions per trial
+    transition_log_lines = []
 
     while True:
 
@@ -82,7 +82,6 @@ def run_trial(gamma, alpha, explore_chance, end_state, start_state, rewards, tra
             second_next_state = transitions[next_state][second_next_move] - 1  # get second next state
 
             ###### No update of transition matrix in first state, as we did not transition from anywhere ######
-            #t_matrix = np.zeros((len(flatten(rewards)), len(rewards)))
 
             ###### Update weights with TD learning ######
             reward = rewards[current_state][next_move]
@@ -306,11 +305,7 @@ def relearning(condition, gamma, alpha, explore_chance, end_state, rewards, tran
     v_state, t_counts, t_matrix, weight = model_parameters
 
     # Create start states
-    if condition == "transition":
-        start_states = np.array([2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3])
-    else:
-        start_states = np.array([4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6])
-
+    start_states = np.array([4, 4, 4, 5, 5, 5, 6, 6, 6])
     np.random.shuffle(start_states)
 
     transition_log = []

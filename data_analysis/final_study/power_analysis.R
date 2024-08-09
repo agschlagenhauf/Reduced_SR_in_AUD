@@ -344,12 +344,12 @@ if (audit_coding == 'binary') {
   # #curve_group_condition4vs5 <- powerCurve(model3, nsim=simnum, test = fixed("condition4:group2"), along = "id")
   # #curve_group_condition4vs5
   # 
-  sim_model3_group_condition2vs5_version <- powerSim(model3, nsim=simnum, test = fixed("condition2:version1:group2"), fitOpts=list(control=glmerctrlist))
+  sim_model3_group_condition2vs5_version <- powerSim(model3, nsim=simnum, test = fixed("condition2:group2:version1"), fitOpts=list(control=glmerctrlist))
   sim_model3_group_condition2vs5_version
   #curve_group_condition2vs5_version <- powerCurve(model3, nsim=simnum, test = fixed("condition2:version1:group2"), along = "id")
   #curve_group_condition2vs5_version
   
-  sim_model3_group_condition4vs5_version <- powerSim(model3, nsim=simnum, test = fixed("condition4:version1:group2"), fitOpts=list(control=glmerctrlist))
+  sim_model3_group_condition4vs5_version <- powerSim(model3, nsim=simnum, test = fixed("condition4:group2:version1"), fitOpts=list(control=glmerctrlist))
   sim_model3_group_condition4vs5_version
   #curve_group_condition4vs5_version <- powerCurve(model3, nsim=simnum, test = fixed("condition4:version1:group2"), along = "id")
   #curve_group_condition4vs5_version
@@ -394,12 +394,12 @@ if (audit_coding == 'binary') {
   # #curve_group_condition4vs5 <- powerCurve(model3, nsim=simnum, test = fixed("condition4:group2"), along = "id")
   # #curve_group_condition4vs5
   # 
-  sim_model3_group_condition2vs5_version <- powerSim(model3, nsim=simnum, test = fixed("condition2:version1:audit"), fitOpts=list(control=glmerctrlist))
+  sim_model3_group_condition2vs5_version <- powerSim(model3, nsim=simnum, test = fixed("condition2:audit:version1"), fitOpts=list(control=glmerctrlist))
   sim_model3_group_condition2vs5_version
   #curve_group_condition2vs5_version <- powerCurve(model3, nsim=simnum, test = fixed("condition2:version1:group2"), along = "id")
   #curve_group_condition2vs5_version
   
-  sim_model3_group_condition4vs5_version <- powerSim(model3, nsim=simnum, test = fixed("condition4:version1:audit"), fitOpts=list(control=glmerctrlist))
+  sim_model3_group_condition4vs5_version <- powerSim(model3, nsim=simnum, test = fixed("condition4:audit:version1"), fitOpts=list(control=glmerctrlist))
   sim_model3_group_condition4vs5_version
   #curve_group_condition4vs5_version <- powerCurve(model3, nsim=simnum, test = fixed("condition4:version1:group2"), along = "id")
   #curve_group_condition4vs5_version
@@ -520,7 +520,7 @@ if (audit_coding == 'binary') {
   
   # power analyses per effect
   
-  sim_model5_group_condition2vs4_version <- powerSim(model5, nsim=simnum, test = fixed("condition2:version1:group2"), fitOpts=list(control=glmerctrlist))
+  sim_model5_group_condition2vs4_version <- powerSim(model5, nsim=simnum, test = fixed("condition2:group2:version1"), fitOpts=list(control=glmerctrlist))
   sim_model5_group_condition2vs4_version
   #curve_group_condition2vs4_version <- powerCurve(model5, nsim=simnum, test = fixed("condition2:version1:group2"), along = "id")
   #curve_group_condition2vs4_version
@@ -555,7 +555,7 @@ if (audit_coding == 'binary') {
   
   # power analyses per effect
   
-  sim_model5_group_condition2vs4_version <- powerSim(model5, nsim=simnum, test = fixed("condition2:version1:group2"), fitOpts=list(control=glmerctrlist))
+  sim_model5_group_condition2vs4_version <- powerSim(model5, nsim=simnum, test = fixed("condition2:audit:version1"), fitOpts=list(control=glmerctrlist))
   sim_model5_group_condition2vs4_version
   #curve_group_condition2vs4_version <- powerCurve(model5, nsim=simnum, test = fixed("condition2:version1:group2"), along = "id")
   #curve_group_condition2vs4_version

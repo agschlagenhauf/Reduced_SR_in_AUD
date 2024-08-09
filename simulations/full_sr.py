@@ -82,7 +82,7 @@ def run_trial(gamma, alpha, explore_chance, end_state, start_state, rewards, tra
 
             ###### Fill in transition log line ######
             transition_log_lines.append(
-                f"{current_state + 1},{next_move + 1},{weight_delta},{comma_separate(v_state)},{comma_separate(weight)},{comma_separate(flatten(feat))}"
+                f"{current_state + 1},{next_move + 1},{reward},{weight_delta},{comma_separate(v_state)},{comma_separate(weight)},{comma_separate(flatten(feat))}"
             )
 
             ###### Move to the next state ######
@@ -131,7 +131,7 @@ def run_trial(gamma, alpha, explore_chance, end_state, start_state, rewards, tra
 
             ###### Fill in transition log line ######
             transition_log_lines.append(
-                f"{current_state + 1},{next_move + 1},{weight_delta},{comma_separate(v_state)},{comma_separate(weight)},{comma_separate(flatten(feat))}"
+                f"{current_state + 1},{next_move + 1},{reward},{weight_delta},{comma_separate(v_state)},{comma_separate(weight)},{comma_separate(flatten(feat))}"
             )
 
             ###### Move to the next state ######
@@ -150,18 +150,26 @@ def run_trial(gamma, alpha, explore_chance, end_state, start_state, rewards, tra
             feat_delta = one_hot + gamma * feat[get_flattened_index(transitions, current_state, next_move)] - feat[
                 get_flattened_index(transitions, last_state, last_move)]
             feat[get_flattened_index(transitions, last_state, last_move)] += alpha * feat_delta
+            #print(f"feat delta: {feat_delta}")
 
             ###### Update weights with TD learning ######
             reward = rewards[current_state][next_move]
             weight_delta = reward - v_state[get_flattened_index(transitions, current_state, next_move)]
+            #print(f"weight delta in state 10: {weight_delta}")
             # scale feature according to Russek et al. 2017
             feat_scaled = feat[get_flattened_index(transitions, current_state, next_move)] / np.matmul(
                 feat[get_flattened_index(transitions, current_state, next_move)],
                 np.transpose(feat[get_flattened_index(transitions, current_state, next_move)])
             )
+            #print(f"weight before update: {weight}")
+            #print(f"scaled feature in state 10: {feat_scaled}")
             weight += alpha * weight_delta * feat_scaled
+            #print(f"weight update in state 10: {alpha * weight_delta * feat_scaled}")
+            #print(f"weight after update: {weight}")
 
             ###### Update values of all state-action pairs ######
+            #print(f"weight: {weight} \n"
+            #      f"feature: {feat[k]}")
             for k in range(num_pairs):
                 v_state[k] = np.sum(weight * feat[k])
 
@@ -237,7 +245,6 @@ def learning(gamma, alpha, explore_chance, end_state, rewards, transitions, mode
 
     return new_params, transition_log
 
-
 #
 # Relearning
 #
@@ -286,11 +293,7 @@ def relearning(condition, gamma, alpha, explore_chance, end_state, rewards, tran
     num_pairs, v_state, feat, weight = model_parameters
 
     # Create start states
-    if condition == "transition":
-        start_states = np.array([2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3])
-    else:
-        start_states = np.array([4, 4, 4, 4, 4, 4, 4, 4, 5, 5, 5, 5, 5, 5, 5, 5, 6, 6, 6, 6, 6, 6, 6, 6])
-
+    start_states = np.array([4, 4, 4, 4, 4, 4, 5, 5, 5, 5, 5, 5, 6, 6, 6, 6, 6, 6])
     np.random.shuffle(start_states)
 
     # Run trials
@@ -323,7 +326,7 @@ def relearning(condition, gamma, alpha, explore_chance, end_state, rewards, tran
 #
 def test(model_parameters):
     '''
-    Simulates the test phase by comparing the action values of the two possible starting-state actions. The test state action is assumed to always be 
+    Simulates the test phase by comparing the action values of the two possible starting-state actions. The test state action is assumed to always be
     the higher-value choice.
 
     Arguments:

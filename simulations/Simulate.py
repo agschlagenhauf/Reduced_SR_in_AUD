@@ -47,7 +47,6 @@ def run_simulations(model, condition, num_simulations):
     #
     # Seed random number generator
     #
-
     np.random.seed(42)
 
     #
@@ -117,12 +116,21 @@ def run_simulations(model, condition, num_simulations):
 
 
         ###### full & reduced SR ######
-        else:
+        elif model == "full_sr":
             v_state = np.zeros(num_pairs)
             init_weight = np.zeros(num_pairs)
             init_sr = np.identity(num_pairs)  # init M with identity matrix as in Russek et al. 2017
 
             model_parameters = [num_pairs, v_state, init_sr, init_weight]
+
+        elif model == "reduced_sr":
+            v_state = np.zeros(num_pairs)
+            init_weight = np.zeros(num_pairs)
+            init_reduced_weight = np.zeros((num_pairs, 2)) # hard-coded number of columns - adapt!
+            init_sr = np.identity(num_pairs)  # init M with identity matrix as in Russek et al. 2017
+            init_reduced_sr = np.zeros((num_pairs, 2)) # hard-coded number of columns - adapt!
+
+            model_parameters = [num_pairs, v_state, init_sr, init_reduced_sr, init_weight, init_reduced_weight]
 
         #
         # Learning Phase
