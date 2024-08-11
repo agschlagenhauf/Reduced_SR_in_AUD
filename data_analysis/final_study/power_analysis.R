@@ -6,13 +6,14 @@ rm(list = ls(all = TRUE))
 packages <- c("ggplot2", "dplyr", "tidyr", "lme4", "simr", "future", "gmodels")
 #install.packages(packages)
 lapply(packages, library, character.only = TRUE)
+code_path <- "C:/Users/musialm/OneDrive - Charité - Universitätsmedizin Berlin/PhD/04_B01/WP3/Reduced_SR_in_AUD/data_analysis/final_study/"
 
 sample <- 'balanced' # 'unbalanced'
 audit_coding <- 'binary' # continuous
 total_n <- 560
 dropout_rate <- 0.25
 
-plan(multisession, workers = 2) 
+plan(multisession, workers = 4) 
 simnum = 100
 glmerctrlist <- glmerControl(optCtrl=list(maxfun=1e5), optimizer = "bobyqa")
 
@@ -80,11 +81,11 @@ contrasts(power_df_full$group) <- contr.treatment(2, base = 1)
 fixed <- c(-1.2,
            3.5, 1.3, 0.6, 1.1,
            0,
-           -0.15,
-           0, 0.2, 0, 0,
-           0.1, 0.1, 0, 0.1,
+           -0.1,
+           0, 0.15, 0, 0,
+           0.05, 0.05, 0, 0.08,
            0,
-           0, -0.1, 0, 0.1)
+           0, -0.05, 0, 0.05)
 rand <- list(1.4)
 res <- 3.3
 
@@ -442,8 +443,8 @@ if (audit_coding == 'binary') {
   
   # power analysis per effect
   
-  sim_model4_group_condition2vs4_version <- powerSim(model4, nsim=simnum, test = fixed("condition2:group2"), fitOpts=list(control=glmerctrlist))
-  sim_model4_group_condition2vs4_version
+  sim_model4_group_condition2vs4 <- powerSim(model4, nsim=simnum, test = fixed("condition2:group2"), fitOpts=list(control=glmerctrlist))
+  sim_model4_group_condition2vs4
   #curve_group_condition2vs4 <- powerCurve(model4, nsim=simnum, test = fixed("condition2:group2"), along = "id")
   #curve_group_condition2vs4
   
@@ -477,8 +478,8 @@ if (audit_coding == 'binary') {
   
   # power analysis per effect
   
-  sim_model4_group_condition2vs4_version <- powerSim(model4, nsim=simnum, test = fixed("condition2:group2"), fitOpts=list(control=glmerctrlist))
-  sim_model4_group_condition2vs4_version
+  sim_model4_group_condition2vs4 <- powerSim(model4, nsim=simnum, test = fixed("condition2:group2"), fitOpts=list(control=glmerctrlist))
+  sim_model4_group_condition2vs4
   #curve_group_condition2vs4 <- powerCurve(model4, nsim=simnum, test = fixed("condition2:group2"), along = "id")
   #curve_group_condition2vs4
   
@@ -562,7 +563,12 @@ if (audit_coding == 'binary') {
   
 }
 
-
+save(model1, model2, model3, model4, model5, sim_model1_condition2vs5, sim_model1_condition4vs5,
+     sim_model2_condition2vs3, sim_model2_condition4vs3, sim_model3_group_condition2vs5, sim_model3_group_condition4vs5,
+     sim_model3_group_condition2vs5_version, sim_model3_group_condition4vs5_version,
+     sim_model3a_group_condition2vs5, sim_model3a_group_condition4vs5,
+     sim_model4_group_condition2vs4, sim_model5_group_condition2vs4_version,
+     file = file.path(code_path, paste("power_analysis_", sample, "_", audit_coding, "_", total_n, "_3.RData", sep="")))
 
 
 

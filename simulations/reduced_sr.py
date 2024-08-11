@@ -99,6 +99,7 @@ def run_trial(phase, gamma, alpha, explore_chance, end_state, start_state, rewar
                 feat[get_flattened_index(transitions, current_state, next_move)],
                 np.transpose(feat[get_flattened_index(transitions, current_state, next_move)])
             )
+
             feat_scaled = feat[get_flattened_index(transitions, current_state, next_move)] * safe_divide(1, denominator)
 
             weight += alpha * weight_delta * feat_scaled
@@ -324,13 +325,13 @@ def relearning(condition, gamma, alpha, explore_chance, end_state, rewards, tran
     phase = "relearning"
 
     # Create start states
-    start_states = np.array([4, 4, 4, 5, 5, 5, 6, 6, 6])
+    start_states = np.array([4, 4, 4, 4, 4, 4, 5, 5, 5, 5, 5, 5, 6, 6, 6, 6, 6, 6])
     np.random.shuffle(start_states)
 
     # Run trials
     transition_log = []
     for trial_index, start_state in enumerate(start_states):
-        v_state, feat, weight, transition_log_lines = run_trial(
+        v_state, reduced_feat, reduced_weight, transition_log_lines = run_trial(
             phase,
             gamma,
             alpha,

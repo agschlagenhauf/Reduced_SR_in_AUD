@@ -1071,7 +1071,7 @@ summary
 test_switch_component_df <- df %>%
   filter(phase == "test",
          state == 1) %>%
-  group_by(version, component) %>%
+  group_by(version, component, audit_group) %>%
   summarise(n = n(),
             sum_switch = sum(switch, na.rm=T),
             percent_switch = mean(switch, na.rm=T),
@@ -1091,7 +1091,7 @@ test_switch_component_df %>%
 ggplot(test_switch_component_df, aes(x=component, y=percent_switch)) +
   geom_bar(stat="identity", fill="lightblue") +
   geom_errorbar(aes(ymin=ci_l, ymax=ci_u), width=.2, position=position_dodge(.9)) +
-  facet_wrap(~ version) +
+  facet_wrap(~ version + audit_group) +
   scale_y_continuous(limits = c(-0.2, 1)) +
   theme_light(base_size = 16) +
   theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
