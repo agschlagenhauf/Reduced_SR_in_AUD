@@ -1345,6 +1345,20 @@ logreg_test_path_condition_df_alcohol <- df %>%
          condition,
          audit_sum,
          audit_group)
+
+logreg_test_path_condition_df_lowrisk <- df %>%
+  filter(phase == "test",
+         state == 1,
+         audit_group == "low-risk") %>%
+  mutate(correct_path = as.factor(correct_path),
+         condition = as.factor(condition),
+         version = as.factor(version)) %>%
+  select(version,
+         ID,
+         correct_path,
+         condition,
+         audit_sum,
+         audit_group)
 ```
 
 #### Model 1: Low-risk drinkers and non-monetary context, compare against transition revaluation
@@ -1375,6 +1389,16 @@ model3a <- glmer(correct_path ~ condition*audit_sum + (1 | ID), data = logreg_te
 tab_model(model3a, transform = NULL, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
 ```
 
+#### Model 3b: Low-risk dataset, compare against transition revaluation
+
+```{r}
+contrasts(logreg_test_path_condition_df_lowrisk$version) <- contr.treatment(2, base = 2)
+contrasts(logreg_test_path_condition_df_lowrisk$condition) <- contr.treatment(5, base = 5)
+
+model3b <- glmer(correct_path ~ condition*version + (1 | ID), data = logreg_test_path_condition_df_lowrisk, family = "binomial", glmerControl(optCtrl=list(maxfun=1e5), optimizer = "bobyqa"))
+tab_model(model3b, transform = NULL, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
+```
+
 #### Model 3: Full dataset, compare against transition revaluation
 
 ```{r}
@@ -1382,7 +1406,31 @@ contrasts(logreg_test_path_condition_df_full$version) <- contr.treatment(2, base
 contrasts(logreg_test_path_condition_df_full$audit_group) <- contr.treatment(2, base = 1)
 contrasts(logreg_test_path_condition_df_full$condition) <- contr.treatment(5, base = 5)
 
-model3 <- glmer(correct_path ~ condition*version*audit_sum + (1 | ID), data = logreg_test_path_condition_df_full, family = "binomial", glmerControl(optCtrl=list(maxfun=1e5), optimizer = "bobyqa"))
+mm_version <- model.matrix(correct_path ~ 1 + version, data=logreg_test_path_condition_df_full)
+version_alc <- mm_version[,2] # version alc compared to version monetary
+
+mm_group <- model.matrix(correct_path ~ 1 + audit_group, data=logreg_test_path_condition_df_full)
+group_harmful <- mm_group[,2] # group harmful compared to low-risk
+
+mm_condition <- model.matrix(correct_path ~ 1 + condition, data=logreg_test_path_condition_df_full)
+condition_control <- mm_condition[,2] # condition control compared to transition
+condition_goalstate <- mm_condition[,3] # condition goalstate compared to transition
+condition_policy <- mm_condition[,4] # condition policy compared to transition
+condition_reward <- mm_condition[,5] # condition policy compared to transition
+
+# model3 <- glmer(correct_path ~ 
+#                   condition_control + condition_goalstate + condition_policy + condition_reward +
+#                   condition_control:group_harmful + condition_goalstate:group_harmful +
+#                   condition_policy:group_harmful + condition_reward:group_harmful +
+#                   condition_control:group_harmful:version_alc +
+#                   condition_goalstate:group_harmful:version_alc +
+#                   condition_policy:group_harmful:version_alc + condition_reward:group_harmful:version_alc + 
+#                   (1 | ID), data = logreg_test_path_condition_df_full, family = "binomial", glmerControl(optCtrl=list(maxfun=1e5), optimizer = "bobyqa"))
+
+model3 <- glmer(correct_path ~ 
+                  condition*audit_group*version + 
+                  (1 | ID), data = logreg_test_path_condition_df_full, family = "binomial", glmerControl(optCtrl=list(maxfun=1e5), optimizer = "bobyqa"))
+
 tab_model(model3, transform = NULL, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
 ```
 
