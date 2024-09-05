@@ -16,9 +16,10 @@ SUCCESS_COUNT_FILENAME = "success_counts.txt"
 #
 # Parameters
 #
-NUM_SIMULATIONS = 100
-MODELS = ["full_sr", "reduced_sr", "model_based", "model_free"] # "full_sr", "reduced_sr", "model_based", "model_free"
-CONDITIONS = ["control", "reward", "transition", "policy", "goal"] # "control", "reward", "transition", "policy", "goal"
+
+NUM_SIMULATIONS = 1 # number of participants to simulate
+MODELS = ["full_sr", "model_based"] # "full_sr", "reduced_sr", "model_based", "model_free"
+CONDITIONS = ["transition"] # "control", "reward", "transition", "policy", "goal"
 
 #
 # Transition Log Headers
@@ -168,4 +169,4 @@ def main(num_simulations, models, conditions):
         print("> Done\n")
 
 if __name__ == "__main__":
-    main(num_simulations=NUM_SIMULATIONS, models=MODELS, conditions=CONDITIONS)
+        main(num_simulations=NUM_SIMULATIONS, models=MODELS, conditions=CONDITIONS)

@@ -14,14 +14,14 @@ from utilities import *
 #
 # Run Trial
 #
-def run_trial(gamma, alpha, explore_chance, end_state, start_state, rewards, transitions, num_pairs, v_state, feat, weight):
+def run_trial(phase, trial_index, gamma, alpha, beta, end_state, start_state, rewards, transitions, num_pairs, v_state, feat, weight):
     '''
     Simulates a single trial, from the given start state until the end state is reached.
 
     Arguments:
         gamma: the time discounting constant
         alpha: the learning rate constant
-        explore_chance: probability that the agent will choose a random action instead of the highest-value one
+        beta: softmax inverse temperature
         end_state: terminal state
         start_state: state that the agent starts in
         rewards: list of rewards corresponding to each action
@@ -46,22 +46,54 @@ def run_trial(gamma, alpha, explore_chance, end_state, start_state, rewards, tra
         if (current_state + 1) == start_state:
 
             ###### Determine next and second next state ######
-            # Determine the next state
-            next_move_index = get_flattened_index(transitions, current_state,0)
-            next_values = v_state[next_move_index:(next_move_index + len(transitions[current_state]))]
-            if np.random.uniform() < explore_chance or np.all([i == next_values[0] for i in next_values]):
-                next_move = np.random.randint(len(transitions[current_state]))
+            if ((phase == "learning") and (trial_index == 0)):
+                # Determine the next state
+                next_move = 0 # forced left choice
+                next_state = transitions[current_state][next_move] - 1
+                # Determine the second next state
+                second_next_move = 0 # forced left choice
+                second_next_state = transitions[next_state][second_next_move] - 1
+            elif ((phase == "learning") and (trial_index == 1)):
+                # Determine the next state
+                next_move = 0  # forced left choice
+                next_state = transitions[current_state][next_move] - 1
+                # Determine the second next state
+                second_next_move = 1  # forced right choice
+                second_next_state = transitions[next_state][second_next_move] - 1
+            elif ((phase == "learning") and (trial_index == 2)):
+                # Determine the next state
+                next_move = 1  # forced right choice
+                next_state = transitions[current_state][next_move] - 1
+                # Determine the second next state
+                second_next_move = 0  # forced left choice
+                second_next_state = transitions[next_state][second_next_move] - 1
+            elif ((phase == "learning") and (trial_index == 3)):
+                # Determine the next state
+                next_move = 1  # forced right choice
+                next_state = transitions[current_state][next_move] - 1
+                # Determine the second next state
+                second_next_move = 1  # forced right choice
+                second_next_state = transitions[next_state][second_next_move] - 1
             else:
-                next_move = np.argmax(next_values)
-            next_state = transitions[current_state][next_move] - 1
-            # Determine the second next state
-            second_next_move_index = get_flattened_index(transitions, next_state, 0)
-            second_next_values = v_state[second_next_move_index:(second_next_move_index + len(transitions[next_state]))]
-            if np.random.uniform() < explore_chance or np.all([i == second_next_values[0] for i in second_next_values]):
-                second_next_move = np.random.randint(len(transitions[next_state]))
-            else:
-                second_next_move = np.argmax(second_next_values)
-            second_next_state = transitions[next_state][second_next_move] - 1
+                # Determine the next state
+                next_move_index = get_flattened_index(transitions, current_state,0)
+                next_values = v_state[next_move_index:(next_move_index + len(transitions[current_state]))]
+                if len(next_values) == 1:
+                    next_move = 0
+                else:
+                    next_choice_probs = softmax(beta, next_values)
+                    next_move = rng.choice([0, 1], p=next_choice_probs)
+                next_state = transitions[current_state][next_move] - 1
+
+                # Determine the second next state
+                second_next_move_index = get_flattened_index(transitions, next_state, 0)
+                second_next_values = v_state[second_next_move_index:(second_next_move_index + len(transitions[next_state]))]
+                if len(second_next_values) == 1:
+                    second_next_move = 0
+                else:
+                    second_next_choice_probs = softmax(beta, second_next_values)
+                    second_next_move = rng.choice([0, 1], p=second_next_choice_probs)
+                second_next_state = transitions[next_state][second_next_move] - 1
 
             ###### No update of successor matrix in first state, as we did not transition from anywhere ######
 
@@ -95,15 +127,16 @@ def run_trial(gamma, alpha, explore_chance, end_state, start_state, rewards, tra
         ###### Middle states ######
         elif (current_state + 1) != end_state:
 
-            ###### Determine second next state ######
-            # Next state determined in last state visit
+            ###### Determine next and second next state ######
+            # Next state determined in last state
             # Determine second next state
             second_next_move_index = get_flattened_index(transitions, next_state, 0)
             second_next_values = v_state[second_next_move_index:(second_next_move_index + len(transitions[next_state]))]
-            if np.random.uniform() < explore_chance or np.all([i == second_next_values[0] for i in second_next_values]):
-                second_next_move = np.random.randint(len(transitions[next_state]))
+            if len(second_next_values) == 1:
+                second_next_move = 0
             else:
-                second_next_move = np.argmax(second_next_values)
+                second_next_choice_probs = softmax(beta, second_next_values)
+                second_next_move = rng.choice([0, 1], p=second_next_choice_probs)
             second_next_state = transitions[next_state][second_next_move] - 1
 
             ###### Update the successor matrix row correpsonding to last state ######
@@ -190,14 +223,14 @@ def run_trial(gamma, alpha, explore_chance, end_state, start_state, rewards, tra
 #
 # Learning
 #
-def learning(gamma, alpha, explore_chance, end_state, rewards, transitions, model_parameters):
+def learning(gamma, alpha, beta, end_state, rewards, transitions, model_parameters):
     '''
     Simulates the learning phase, where the agent has access to the starting state.
 
     Arguments:
         - gamma: the time discounting constant
         - alpha: the learning rate constant
-        - explore_chance: probability that the agent will choose a random action instead of the highest-value one
+        - beta: softmax inverse temperature
         - end_state: terminal state
         - rewards: list of rewards corresponding to each action
         - transitions: list of valid transitions from each state
@@ -217,17 +250,22 @@ def learning(gamma, alpha, explore_chance, end_state, rewards, transitions, mode
     )
     '''
     num_pairs, v_state, feat, weight = model_parameters
+    phase = "learning"
 
     # Create start states
-    start_states = np.ones(30, dtype=np.int8)
+    start_states = np.ones(24, dtype=np.int8)
 
     # Run trials
     transition_log = []
+
+    # run free trials
     for trial_index, start_state in enumerate(start_states):
         v_state, feat, weight, transition_log_lines = run_trial(
+            phase,
+            trial_index,
             gamma,
             alpha,
-            explore_chance,
+            beta,
             end_state,
             start_state,
             rewards,
@@ -263,7 +301,7 @@ def update_parameters(condition, rewards, transitions):
     return rewards, transitions
 
 
-def relearning(condition, gamma, alpha, explore_chance, end_state, rewards, transitions, model_parameters):
+def relearning(condition, gamma, alpha, beta, end_state, rewards, transitions, model_parameters):
     '''
     Simulates the relearning phase, where the agent does not directly experience the starting state.
 
@@ -271,7 +309,7 @@ def relearning(condition, gamma, alpha, explore_chance, end_state, rewards, tran
         - condition: string representing the relearning condition
         - gamma: the time discounting constant
         - alpha: the learning rate constant
-        - explore_chance: probability that the agent will choose a random action instead of the highest-value one
+        - beta: softmax inverse temperature
         - end_state: terminal state
         - rewards: list of rewards corresponding to each action
         - transitions: list of valid transitions from each state
@@ -291,18 +329,21 @@ def relearning(condition, gamma, alpha, explore_chance, end_state, rewards, tran
     )
     '''
     num_pairs, v_state, feat, weight = model_parameters
+    phase = "relearning"
 
     # Create start states
-    start_states = np.array([4, 4, 4, 4, 4, 4, 5, 5, 5, 5, 5, 5, 6, 6, 6, 6, 6, 6])
+    start_states = np.array([4, 4, 4, 5, 5, 5, 6, 6, 6])
     np.random.shuffle(start_states)
 
     # Run trials
     transition_log = []
     for trial_index, start_state in enumerate(start_states):
         v_state, feat, weight, transition_log_lines = run_trial(
+            phase,
+            trial_index,
             gamma,
             alpha,
-            explore_chance,
+            beta,
             end_state,
             start_state,
             rewards,

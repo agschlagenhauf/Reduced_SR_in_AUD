@@ -12,36 +12,17 @@ from utilities import *
 
 from utilities import *
 
-def policy(values, explore_chance):
-    '''
-    Finds the probability of choosing each action of a given state under the current policy
-
-    Arguments:
-        values: 1D list of the calculated Q-values of all actions from a single state
-        explore-chance: probability that the current policy will choose a random action
-
-    Returns:
-        - policy - the probability that each action will be chosen
-    '''
-    if np.all([i == values[0] for i in values]):
-        policy = np.repeat((1 / len(values)), len(values))
-    else:
-        policy = np.repeat((explore_chance / len(values)), len(values))
-        policy[np.argmax(values)] += 1 - explore_chance
-    return policy
-
 #
 # Run Trial
 #
-def run_trial(gamma, alpha, explore_chance, end_state, start_state, rewards, transitions, v_state, t_counts, t_matrix, weight):
+def run_trial(phase, trial_index, gamma, alpha, beta, end_state, start_state, rewards, transitions, v_state, t_counts, t_matrix, weight):
     '''
     Simulates a single trial, from the given start state until the end state is reached.
 
     Arguments:
         gamma: the time discounting constant
         alpha: the learning rate constant
-        explore_chance: probability that the agent will choose a random action instead of the highest-value one
-        end_state: terminal state
+        beta: softmax inverse temperature        end_state: terminal state
         start_state: state that the agent starts in
         rewards: list of rewards corresponding to each action
         transitions: list of valid transitions from each state
@@ -66,20 +47,53 @@ def run_trial(gamma, alpha, explore_chance, end_state, start_state, rewards, tra
         if (current_state + 1) == start_state:
 
             ###### Determine next and second next state ######
-            # Determine the next state
-            next_values = v_state[current_state]
-            if np.random.uniform() < explore_chance or np.all([i == next_values[0] for i in next_values]):
-                next_move = np.random.randint(len(transitions[current_state]))
+            ###### Determine next and second next state ######
+            if ((phase == "learning") and (trial_index == 0)):
+                # Determine the next state
+                next_move = 0  # forced left choice
+                next_state = transitions[current_state][next_move] - 1
+                # Determine the second next state
+                second_next_move = 0  # forced left choice
+                second_next_state = transitions[next_state][second_next_move] - 1
+            elif ((phase == "learning") and (trial_index == 1)):
+                # Determine the next state
+                next_move = 0  # forced left choice
+                next_state = transitions[current_state][next_move] - 1
+                # Determine the second next state
+                second_next_move = 1  # forced right choice
+                second_next_state = transitions[next_state][second_next_move] - 1
+            elif ((phase == "learning") and (trial_index == 2)):
+                # Determine the next state
+                next_move = 1  # forced right choice
+                next_state = transitions[current_state][next_move] - 1
+                # Determine the second next state
+                second_next_move = 0  # forced left choice
+                second_next_state = transitions[next_state][second_next_move] - 1
+            elif ((phase == "learning") and (trial_index == 3)):
+                # Determine the next state
+                next_move = 1  # forced right choice
+                next_state = transitions[current_state][next_move] - 1
+                # Determine the second next state
+                second_next_move = 1  # forced right choice
+                second_next_state = transitions[next_state][second_next_move] - 1
             else:
-                next_move = np.argmax(next_values)  # get index of max value
-            next_state = transitions[current_state][next_move] - 1  # get next state
-            # Determine the second next state
-            second_next_values = v_state[next_state]
-            if np.random.uniform() < explore_chance or np.all([i == second_next_values[0] for i in second_next_values]):
-                second_next_move = np.random.randint(len(transitions[next_state]))
-            else:
-                second_next_move = np.argmax(second_next_values)  # get index of max value
-            second_next_state = transitions[next_state][second_next_move] - 1  # get second next state
+                # Determine the next state
+                next_values = v_state[current_state]
+                if len(next_values) == 1:
+                    next_move = 0
+                else:
+                    next_choice_probs = softmax(beta, next_values)
+                    next_move = rng.choice([0, 1], p=next_choice_probs)
+                next_state = transitions[current_state][next_move] - 1 
+
+                # Determine the second next state
+                second_next_values = v_state[next_state]
+                if len(second_next_values) == 1:
+                    second_next_move = 0
+                else:
+                    second_next_choice_probs = softmax(beta, second_next_values)
+                    second_next_move = rng.choice([0, 1], p=second_next_choice_probs)
+                second_next_state = transitions[next_state][second_next_move] - 1  # get second next state
 
             ###### No update of transition matrix in first state, as we did not transition from anywhere ######
 
@@ -90,8 +104,8 @@ def run_trial(gamma, alpha, explore_chance, end_state, start_state, rewards, tra
             weight[current_state][next_move] += alpha * weight_delta  # update weight
 
             ###### Update values of all state-action pairs (Bellman Equation) ######
-            # vector of values per state under a given policy (multiplies value of each action available from a state with its probability of being chosen and sums over all actions per state)
-            next_state_values = [np.sum(v_state[state] * policy(v_state[state], explore_chance)) for state in range(len(rewards))]
+            # vector of values per state under a given softmax policy (multiplies value of each action available from a state with its probability of being chosen and sums over all actions per state)
+            next_state_values = [np.sum(v_state[state] * softmax(beta, v_state[state])) for state in range(len(rewards))]
             for i in range(len(rewards)):
                 for j in range(len(rewards[i])):
                     # multiply transition probability from s to s' (all other = 0) by value of s'
@@ -116,11 +130,12 @@ def run_trial(gamma, alpha, explore_chance, end_state, start_state, rewards, tra
             # Next state determined in last state visit
             # Determine second next state
             second_next_values = v_state[next_state]
-            if np.random.uniform() < explore_chance or np.all([i == second_next_values[0] for i in second_next_values]):
-                second_next_move = np.random.randint(len(transitions[next_state]))
+            if len(second_next_values) == 1:
+                second_next_move = 0
             else:
-                second_next_move = np.argmax(second_next_values) # get index of max value
-            second_next_state = transitions[next_state][second_next_move] - 1 # get second next state
+                second_next_choice_probs = softmax(beta, second_next_values)
+                second_next_move = rng.choice([0, 1], p=second_next_choice_probs)
+            second_next_state = transitions[next_state][second_next_move] - 1
 
             ###### Update the transition counts row correpsonding to last state and re-normalize transition matrix ######
             t_counts[get_flattened_index(transitions, last_state, last_move), current_state] += 1
@@ -139,8 +154,7 @@ def run_trial(gamma, alpha, explore_chance, end_state, start_state, rewards, tra
             weight[current_state][next_move] += alpha * weight_delta # update weight
             
             ###### Update values of all state-action pairs (Bellman Equation) ######
-            next_state_values = [np.sum(v_state[state] * policy(v_state[state], explore_chance)) for state in
-                                 range(len(rewards))]
+            next_state_values = [np.sum(v_state[state] * softmax(beta, v_state[state])) for state in range(len(rewards))]
             for i in range(len(v_state)):
                 for j in range(len(v_state[i])):
                     v_state[i][j] = weight[i][j] + gamma * np.sum(t_matrix[get_flattened_index(v_state, i, j)] * next_state_values)
@@ -174,12 +188,10 @@ def run_trial(gamma, alpha, explore_chance, end_state, start_state, rewards, tra
             weight[current_state][next_move] += alpha * weight_delta  # update weight
 
             ###### Update values of all state-action pairs (Bellman Equation) ######
-            next_state_values = [np.sum(v_state[state] * policy(v_state[state], explore_chance)) for state in
-                                 range(len(rewards))]
+            next_state_values = [np.sum(v_state[state] * softmax(beta, v_state[state])) for state in range(len(rewards))]
             for i in range(len(v_state)):
                 for j in range(len(v_state[i])):
-                    v_state[i][j] = weight[i][j] + gamma * np.sum(
-                        t_matrix[get_flattened_index(v_state, i, j)] * next_state_values)
+                    v_state[i][j] = weight[i][j] + gamma * np.sum(t_matrix[get_flattened_index(v_state, i, j)] * next_state_values)
 
 
             ###### Fill in transition log line ######
@@ -197,14 +209,14 @@ def run_trial(gamma, alpha, explore_chance, end_state, start_state, rewards, tra
 
 
 
-def learning(gamma, alpha, explore_chance, end_state, rewards, transitions, model_parameters):
+def learning(gamma, alpha, beta, end_state, rewards, transitions, model_parameters):
     '''
     Simulates the learning phase, where the agent has access to the starting state.
 
     Arguments:
         - gamma: the time discounting constant
         - alpha: the learning rate constant
-        - explore_chance: probability that the agent will choose a random action instead of the highest-value one
+        - beta: softmax inverse temperature
         - end_state: terminal state
         - rewards: list of rewards corresponding to each action
         - transitions: list of valid transitions from each state
@@ -227,17 +239,20 @@ def learning(gamma, alpha, explore_chance, end_state, rewards, transitions, mode
     '''
     ##### initialize model parameters #####
     v_state, t_counts, t_matrix, weight = model_parameters
+    phase = "learning"
 
     ##### Create start states #####
-    start_states = np.ones(30, dtype=np.int8)
+    start_states = np.ones(24, dtype=np.int8)
 
     # Run trials
     transition_log = []
     for trial_index, start_state in enumerate(start_states):
         v_state, t_counts, t_matrix, weight, transition_log_lines = run_trial(
+            phase,
+            trial_index,
             gamma,
             alpha,
-            explore_chance,
+            beta,
             end_state,
             start_state,
             rewards,
@@ -272,7 +287,7 @@ def update_parameters(condition, rewards, transitions):
 
 
 
-def relearning(condition, gamma, alpha, explore_chance, end_state, rewards, transitions, model_parameters):
+def relearning(condition, gamma, alpha, beta, end_state, rewards, transitions, model_parameters):
     '''
     Simulates the relearning phase, where the agent does not directly experience the starting state.
 
@@ -280,7 +295,7 @@ def relearning(condition, gamma, alpha, explore_chance, end_state, rewards, tran
         - condition: string representing the relearning condition
         - gamma: the time discounting constant
         - alpha: the learning rate constant
-        - explore_chance: probability that the agent will choose a random action instead of the highest-value one
+        - beta: softmax inverse temperature
         - end_state: terminal state
         - rewards: list of rewards corresponding to each action
         - transitions: list of valid transitions from each state
@@ -303,6 +318,7 @@ def relearning(condition, gamma, alpha, explore_chance, end_state, rewards, tran
     '''
     # Unpack logging_lists and model parameters into component variables
     v_state, t_counts, t_matrix, weight = model_parameters
+    phase = "relearning"
 
     # Create start states
     start_states = np.array([4, 4, 4, 5, 5, 5, 6, 6, 6])
@@ -311,9 +327,11 @@ def relearning(condition, gamma, alpha, explore_chance, end_state, rewards, tran
     transition_log = []
     for trial_index, start_state in enumerate(start_states):
         v_state, t_counts, t_matrix, weight, transition_log_lines = run_trial(
+            phase,
+            trial_index,
             gamma,
             alpha,
-            explore_chance,
+            beta,
             end_state,
             start_state,
             rewards,

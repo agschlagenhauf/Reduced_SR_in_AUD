@@ -2,7 +2,7 @@
 # utilities.py
 #
 
-from enum import Enum
+import numpy as np
 
 CYAN="\033[36m"
 GREEN="\033[32m"
@@ -12,12 +12,17 @@ ACTION_LEFT = 1
 ACTION_RIGHT = 2
 ACTION_FORCED = 1
 
+seed = sum(map(ord, "SR_in_AUD"))
+rng = np.random.default_rng(seed)
+
+def softmax(beta, values):
+    return(np.exp(beta * np.array(values))/np.sum(np.exp(beta * np.array(values))))
+
 def safe_divide(numerator, denominator):
     if denominator == 0.0:
         return 0.0
     else:
         return float(numerator) / float(denominator)
-
 
 def comma_separate(items):
     return ",".join([str(item) for item in items])

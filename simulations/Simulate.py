@@ -53,8 +53,8 @@ def run_simulations(model, condition, num_simulations):
     # Initialize default parameters
     #
     alpha = 0.9
-    gamma = 0.95
-    explore_chance = 0.5
+    gamma = 0.5
+    beta = 1.0
     end_state = 10
     num_pairs = 13 # (state, action) pairs
     num_states = 10
@@ -138,7 +138,7 @@ def run_simulations(model, condition, num_simulations):
         learned_parameters, learning_transition_log = model_package.learning(
             gamma,
             alpha,
-            explore_chance,
+            beta,
             end_state,
             rewards,
             transitions,
@@ -156,7 +156,7 @@ def run_simulations(model, condition, num_simulations):
             condition,
             gamma,
             alpha,
-            explore_chance,
+            beta,
             end_state,
             new_rewards,
             new_transitions,
