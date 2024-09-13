@@ -18,8 +18,8 @@ SUCCESS_COUNT_FILENAME = "success_counts.txt"
 #
 
 NUM_SIMULATIONS = 1 # number of participants to simulate
-MODELS = ["full_sr", "model_based"] # "full_sr", "reduced_sr", "model_based", "model_free"
-CONDITIONS = ["transition"] # "control", "reward", "transition", "policy", "goal"
+MODELS = ["full_sr", "reduced_sr", "model_based"] # "full_sr", "reduced_sr", "model_based", "model_free"
+CONDITIONS = ["transition", "goal"] # "control", "reward", "transition", "policy", "goal"
 
 #
 # Transition Log Headers
@@ -113,7 +113,7 @@ def main(num_simulations, models, conditions):
             print(f"> Simulating model {GREEN}{format_model(model)}{RESET} for condition {GREEN}{format_condition(condition)}{RESET} ...")
             
             # Simulation results per model and condition: [SimulationResult]
-            simulation_results = run_simulations(model, condition, num_simulations)
+            simulation_results, alpha, beta, gamma = run_simulations(model, condition, num_simulations)
 
             successful_learning_results = [result for result in simulation_results if result.learning_test_result == True]
 
@@ -138,7 +138,7 @@ def main(num_simulations, models, conditions):
             model_simulation_results.extend(simulation_results)
 
         # Write model simulation results to .csv file
-        model_simulation_results_filepath = join(OUTPUT_DIR, f"{model}.csv")
+        model_simulation_results_filepath = join(OUTPUT_DIR, f"{model}_nsimulations{num_simulations}_alpha{alpha}_beta{beta}_gamma{gamma}.csv")
 
         print(f"> Writing transition log to {GREEN}{model_simulation_results_filepath}{RESET} ...")
         with open(model_simulation_results_filepath, "w") as model_simulation_results_file:

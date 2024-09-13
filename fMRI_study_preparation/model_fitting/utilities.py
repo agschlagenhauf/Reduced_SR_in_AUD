@@ -1,0 +1,65 @@
+#
+# utilities.py
+#
+
+import numpy as np
+import scipy
+
+CYAN="\033[36m"
+GREEN="\033[32m"
+RESET="\033[0m"
+
+ACTION_LEFT = 1
+ACTION_RIGHT = 2
+ACTION_FORCED = 1
+
+seed = sum(map(ord, "SR_in_AUD"))
+rng = np.random.default_rng(seed)
+
+def softmax(beta, values):
+    exp_Q = np.exp(beta * values)
+    return(exp_Q/np.sum(exp_Q))
+
+def log_prob(beta, values):
+    Q_ = beta * values
+    return(Q_ - scipy.special.logsumexp(Q_))
+
+def safe_divide(numerator, denominator):
+    if denominator == 0.0:
+        return 0.0
+    else:
+        return float(numerator) / float(denominator)
+
+def comma_separate(items):
+    return ",".join([str(item) for item in items])
+
+def prefix_all(prefix, items):
+    return [prefix + item for item in items]
+
+def suffix_all(items, suffix):
+    return [item + suffix for item in items]
+
+def format_model(model):
+    return model.replace("_", " ").title().replace("Sr", "SR")
+
+def flatten(list_input):
+    return [item for row in list_input for item in row]
+
+def get_flattened_index(list_input, row, item):
+    '''
+    Helper function that converts an index of a ragged 2d array into the equivalent index of the flattened array.
+
+    Arguments:
+        - list: a 2 dimensional list, which can be ragged
+        - row: desired row index of the list
+        - item: desired item index of the given row
+
+    Returns: int, the corresponding index in the flattened list
+    '''
+    index = 0
+    for i in range(row):
+        index += len(list_input[i])
+
+    index += item
+
+    return index

@@ -54,7 +54,7 @@ def run_simulations(model, condition, num_simulations):
     #
     alpha = 0.9
     gamma = 0.5
-    beta = 1.0
+    beta = 0.7
     end_state = 10
     num_pairs = 13 # (state, action) pairs
     num_states = 10
@@ -202,4 +202,4 @@ def run_simulations(model, condition, num_simulations):
     print(f"  > Done\n")
 
     # return results for one model, one condition with all phases, all simulations
-    return simulation_results
+    return simulation_results, alpha, beta, gamma

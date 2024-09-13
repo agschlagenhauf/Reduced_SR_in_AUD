@@ -220,8 +220,9 @@ for (n in unique(trial_df$ID)) {
 }
 
 
-# calculate correct for every 2-choice state
+
 trial_df <- trial_df %>%
+  # calculate correct for every 2-choice state
   mutate(correct_second_state_action = case_when((phase == "learning" & correct_first_state_action == "right" & condition %in% c("reward", "goal-state", "control")) ~ "left",
                                                  (phase == "learning" & correct_first_state_action == "right" & condition %in% c("transition", "policy")) ~ "right",
                                                  (phase == "learning" & correct_first_state_action == "left" & condition %in% c("reward", "goal-state", "control")) ~ "left",
@@ -239,16 +240,53 @@ trial_df <- trial_df %>%
                                                  (phase %in% c("test", "rating") & correct_first_state_action == "right" & condition %in% c("reward", "goal-state", "control")) ~ "right",
                                                  (phase %in% c("test", "rating") & correct_first_state_action == "right" & condition %in% c("transition", "policy")) ~ "right")
          ) %>%
-  mutate(correct_state_1 = if_else((state == 1 & correct_first_state_action == choice), 1,
-                                   if_else((state == 1 & correct_first_state_action != choice), 0, NA)),
-         correct_state_2 = if_else((state == 2 & correct_second_state_action == choice), 1,
-                                   if_else((state == 2 & correct_second_state_action != choice), 0, NA)),
-         correct_state_3 = if_else((state == 3 & correct_third_state_action == choice), 1,
-                                   if_else((state == 3 & correct_third_state_action != choice), 0, NA))) %>%
+  mutate(correct_state_1 = if_else((state %in% c(1, "1LeftTo2Left", "1LeftTo2Right", "1RightTo3Left", "1RightTo3Right") & correct_first_state_action == choice), 1,
+                                   if_else((state %in% c(1, "1LeftTo2Left", "1LeftTo2Right", "1RightTo3Left", "1RightTo3Right") & correct_first_state_action != choice), 0, NA)),
+         correct_state_2 = if_else((state %in% c(2, "2Left", "2Right") & correct_second_state_action == choice), 1,
+                                   if_else((state %in% c(2, "2Left", "2Right") & correct_second_state_action != choice), 0, NA)),
+         correct_state_3 = if_else((state %in% c(3, "3Left", "3Right") & correct_third_state_action == choice), 1,
+                                   if_else((state %in% c(3, "3Left", "3Right") & correct_third_state_action != choice), 0, NA))) %>%
   mutate(correct = coalesce(correct_state_1, correct_state_2, correct_state_3)) %>%
   # calculate switch for state 1 in test phase
   mutate(switch = if_else((state == 1 & component %in% c("control-test")), abs(correct-1), 
-                          if_else((state == 1 & phase %in% c("test")), correct, NA)))
+                          if_else((state == 1 & phase %in% c("test")), correct, NA))) %>%
+  # insert reward received in every state (deterministic)
+  mutate(reward = case_when((phase == "learning" & condition %in% c("reward", "goal-state", "control") & correct_first_state_action == "right" & state == 7) ~ 15,
+                            (phase == "learning" & condition %in% c("reward", "goal-state", "control") & correct_first_state_action == "right" & state == 9) ~ 30,
+                            (phase == "learning" & condition %in% c("transition", "policy") & correct_first_state_action == "right" & state == 8) ~ 15,
+                            (phase == "learning" & condition %in% c("transition", "policy") & correct_first_state_action == "right" & state == 9) ~ 30,
+                            
+                            (phase == "learning" & condition %in% c("reward", "goal-state", "control") & correct_first_state_action == "left" & state == 7) ~ 30,
+                            (phase == "learning" & condition %in% c("reward", "goal-state", "control") & correct_first_state_action == "left" & state == 9) ~ 15,
+                            (phase == "learning" & condition %in% c("transition", "policy") & correct_first_state_action == "left" & state == 8) ~ 15,
+                            (phase == "learning" & condition %in% c("transition", "policy") & correct_first_state_action == "left" & state == 7) ~ 30,
+                            
+                            (phase == "relearning" & condition == "reward" & correct_first_state_action == "right" & state == 7) ~ 45,
+                            (phase == "relearning" & condition == "reward" & correct_first_state_action == "right" & state == 9) ~ 30,
+                            (phase == "relearning" & condition == "goal-state" & correct_first_state_action == "right" & state == 4) ~ 45,
+                            (phase == "relearning" & condition == "goal-state" & correct_first_state_action == "right" & state == 7) ~ 15,
+                            (phase == "relearning" & condition == "goal-state" & correct_first_state_action == "right" & state == 9) ~ 30,
+                            (phase == "relearning" & condition == "control" & correct_first_state_action == "right" & state == 7) ~ 15,
+                            (phase == "relearning" & condition == "control" & correct_first_state_action == "right" & state == 9) ~ 45,
+                            (phase == "relearning" & condition == "transition" & correct_first_state_action == "right" & state == 8) ~ 15,
+                            (phase == "relearning" & condition == "transition" & correct_first_state_action == "right" & state == 9) ~ 30,
+                            (phase == "relearning" & condition == "policy" & correct_first_state_action == "right" & state == 7) ~ 45,
+                            (phase == "relearning" & condition == "policy" & correct_first_state_action == "right" & state == 8) ~ 15,
+                            (phase == "relearning" & condition == "policy" & correct_first_state_action == "right" & state == 9) ~ 30,
+                            
+                            (phase == "relearning" & condition == "reward" & correct_first_state_action == "left" & state == 7) ~ 30,
+                            (phase == "relearning" & condition == "reward" & correct_first_state_action == "left" & state == 9) ~ 45,
+                            (phase == "relearning" & condition == "goal-state" & correct_first_state_action == "left" & state == 6) ~ 45,
+                            (phase == "relearning" & condition == "goal-state" & correct_first_state_action == "left" & state == 7) ~ 30,
+                            (phase == "relearning" & condition == "goal-state" & correct_first_state_action == "left" & state == 9) ~ 15,
+                            (phase == "relearning" & condition == "control" & correct_first_state_action == "left" & state == 7) ~ 45,
+                            (phase == "relearning" & condition == "control" & correct_first_state_action == "left" & state == 9) ~ 15,
+                            (phase == "relearning" & condition == "transition" & correct_first_state_action == "left" & state == 8) ~ 15,
+                            (phase == "relearning" & condition == "transition" & correct_first_state_action == "left" & state == 7) ~ 30,
+                            (phase == "relearning" & condition == "policy" & correct_first_state_action == "left" & state == 7) ~ 30,
+                            (phase == "relearning" & condition == "policy" & correct_first_state_action == "left" & state == 8) ~ 15,
+                            (phase == "relearning" & condition == "policy" & correct_first_state_action == "left" & state == 9) ~ 45)) %>%
+  mutate(reward = ifelse(is.na(reward), 0, reward))
 
 # exclude trials with invalid choice
 trial_df <- trial_df %>% 
@@ -306,6 +344,13 @@ drink_df <- data_df %>%
   select(ID, drink)
 
 trial_df <- merge(trial_df, drink_df, by = "ID", all.x = T)
+
+trial_df <- trial_df %>%
+  select(ID, version, variation, environment, drink, component, condition, phase, condition_index, 
+         correct_first_state_action, correct_second_state_action, correct_third_state_action, 
+         trial, state, accumulated_states_visited, reward, choice, valid_choice, RT, 
+         correct_state_1, correct_state_2, correct_state_3, correct, correct_path, switch,
+         rating_no, rating_state, rating_value, rating_RT)
 
 ##############################  rating df ##############################  
         

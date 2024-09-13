@@ -15,7 +15,7 @@ packages <- c("ggplot2", "dplyr", "tidyr", "kableExtra", "gmodels", "lme4", "sjP
 lapply(packages, library, character.only = TRUE)
 
 # define paths
-demo_path <- "C:/Users/musialm/OneDrive - Charité - Universitätsmedizin Berlin/PhD/04_B01/WP3/WP3_DATA/PILOT_3/demo_data"
+demo_path <- "C:/Users/musialm/OneDrive - Charité - Universitätsmedizin Berlin/PhD/04_B01/WP3/WP3_DATA/final_study/demo_data"
 
 # read dfs
 load(file.path(demo_path, "demo_psych_data.RData"))
