@@ -7,46 +7,77 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 from scipy.spatial.distance import squareform
-from scipy.stats import pearsonr
+from scipy.stats import pearsonr, zscore
+import statsmodels.api as sm
+from statsmodels.stats.outliers_influence import variance_inflation_factor
+
 
 ## Plotting
-def plot_matrices(condition, timepoint, beta, matrix1, matrix2, matrix3, matrix4):
-    fig, axes = plt.subplots(1, 4, figsize=(16, 4))
+def plot_matrices(condition, timepoint, beta, matrix1, matrix2, matrix3, matrix4, matrix5, matrix6, matrix7, matrix8):
+    fig, axes = plt.subplots(2, 4, figsize=(16, 8))
 
-    # Plot matrix_pre
-    sns.heatmap(matrix1, cmap="Oranges", annot=False, cbar=True, ax=axes[0])
-    axes[0].set_title('M')
-    axes[0].set_xlabel("State-Action Pairs (To)")
-    axes[0].set_ylabel("State-Action Pairs (From)")
-    axes[0].set_yticklabels(axes[0].get_yticklabels(), rotation=360, ha='right')
+    # Plot matrix_1
+    sns.heatmap(matrix1, cmap="Oranges", vmin=-0.3, vmax=1, annot=False, cbar=True, ax=axes[0,0])
+    axes[0,0].set_title('M')
+    axes[0,0].set_xlabel("State-Action Pairs (To)")
+    axes[0,0].set_ylabel("State-Action Pairs (From)")
+    axes[0,0].set_yticklabels(axes[0,0].get_yticklabels(), rotation=360, ha='right')
 
-    # Plot matrix_post
-    sns.heatmap(matrix2, cmap="Oranges", annot=False, cbar=True, ax=axes[1])
-    axes[1].set_title('redM')
-    axes[1].set_xlabel("State-Action Pairs (To)")
-    axes[1].set_ylabel("State-Action Pairs (From)")
-    axes[1].set_yticklabels(axes[1].get_yticklabels(), rotation=360, ha='right')
+    # Plot matrix_2
+    sns.heatmap(matrix2, cmap="Oranges", vmin=-0.3, vmax=1, annot=False, cbar=True, ax=axes[0,1])
+    axes[0,1].set_title('reduced M')
+    axes[0,1].set_xlabel("State-Action Pairs (To)")
+    axes[0,1].set_ylabel("State-Action Pairs (From)")
+    axes[0,1].set_yticklabels(axes[0,1].get_yticklabels(), rotation=360, ha='right')
 
-    # Plot matrix_post
-    sns.heatmap(matrix3, cmap="Oranges", annot=False, cbar=True, ax=axes[2])
-    axes[2].set_title('T')
-    axes[2].set_xlabel("State-Action Pairs (To)")
-    axes[2].set_ylabel("State-Action Pairs (From)")
-    axes[2].set_yticklabels(axes[2].get_yticklabels(), rotation=360, ha='right')
+    # Plot matrix_3
+    sns.heatmap(matrix3, cmap="Oranges", vmin=-0.3, vmax=1, annot=False, cbar=True, ax=axes[0,2])
+    axes[0,2].set_title('T')
+    axes[0,2].set_xlabel("State-Action Pairs (To)")
+    axes[0,2].set_ylabel("State-Action Pairs (From)")
+    axes[0,2].set_yticklabels(axes[0,2].get_yticklabels(), rotation=360, ha='right')
 
-    # Plot matrix_post
-    sns.heatmap(matrix4, cmap="Oranges", annot=False, cbar=True, ax=axes[3])
-    axes[3].set_title('T-derived M')
-    axes[3].set_xlabel("State-Action Pairs (To)")
-    axes[3].set_ylabel("State-Action Pairs (From)")
-    axes[3].set_yticklabels(axes[3].get_yticklabels(), rotation=360, ha='right')
+    # Plot matrix_4
+    sns.heatmap(matrix4, cmap="Oranges", vmin=-0.3, vmax=1, annot=False, cbar=True, ax=axes[0,3])
+    axes[0,3].set_title('T-derived M')
+    axes[0,3].set_xlabel("State-Action Pairs (To)")
+    axes[0,3].set_ylabel("State-Action Pairs (From)")
+    axes[0,3].set_yticklabels(axes[0,3].get_yticklabels(), rotation=360, ha='right')
+
+    # Plot matrix_5
+    sns.heatmap(matrix5, cmap="Oranges", vmin=-0.3, vmax=1, annot=False, cbar=True, ax=axes[1,0])
+    axes[1,0].set_title('M neuro')
+    axes[1,0].set_xlabel("State-Action Pairs (To)")
+    axes[1,0].set_ylabel("State-Action Pairs (From)")
+    axes[1,0].set_yticklabels(axes[1,0].get_yticklabels(), rotation=360, ha='right')
+
+    # Plot matrix_6
+    sns.heatmap(matrix6, cmap="Oranges", vmin=-0.3, vmax=1, annot=False, cbar=True, ax=axes[1,1])
+    axes[1,1].set_title('reduced M neuro')
+    axes[1,1].set_xlabel("State-Action Pairs (To)")
+    axes[1,1].set_ylabel("State-Action Pairs (From)")
+    axes[1,1].set_yticklabels(axes[1,1].get_yticklabels(), rotation=360, ha='right')
+
+    # Plot matrix_7
+    sns.heatmap(matrix7, cmap="Oranges", vmin=-0.3, vmax=1, annot=False, cbar=True, ax=axes[1,2])
+    axes[1,2].set_title('T neuro')
+    axes[1,2].set_xlabel("State-Action Pairs (To)")
+    axes[1,2].set_ylabel("State-Action Pairs (From)")
+    axes[1,2].set_yticklabels(axes[1,2].get_yticklabels(), rotation=360, ha='right')
+
+    # Plot matrix_8
+    sns.heatmap(matrix8, cmap="Oranges", vmin=-0.3, vmax=1, annot=False, cbar=True, ax=axes[1,3])
+    axes[1,3].set_title('T-derived M neuro')
+    axes[1,3].set_xlabel("State-Action Pairs (To)")
+    axes[1,3].set_ylabel("State-Action Pairs (From)")
+    axes[1,3].set_yticklabels(axes[1,3].get_yticklabels(), rotation=360, ha='right')
 
     # Adjust the layout to prevent overlapping
-    plt.tight_layout(rect=[0, 0, 1, 0.95])  # Ensures the subplots don't overlap
+    plt.tight_layout(pad=2.5, rect=[0, 0, 1, 0.9])  # Ensures the subplots don't overlap
     fig.suptitle(f'{condition}, {timepoint}-re-learning, beta={beta}', fontsize=16)
 
-    # Adjust space for suptitle (move it upwards)
-    plt.subplots_adjust(top=0.85)  # Adjust top to create space for suptitle
+    # Adjust space for subtitle (move it upwards)
+    plt.subplots_adjust(top=0.90)  # Adjust top to create space for subtitle
 
     plt.show()
 
@@ -126,3 +157,63 @@ def upper_triangular_correlation(matrix1, matrix2):
     corr, _ = pearsonr(upper_tri_matrix1.to_numpy(), upper_tri_matrix2.to_numpy())
     
     return corr
+
+# Plot pairwise correlations between upper triangular parts as a heatmap
+def pairwise_upper_tri_correlation_heatmap(condition, beta, timepoint, matrix_names, *matrices):
+    num_matrices = len(matrices)
+    
+    # Initialize a correlation matrix to store the pairwise correlations
+    correlation_matrix = np.zeros((num_matrices, num_matrices))
+    
+    # Calculate pairwise correlations between matrices
+    for i in range(num_matrices):
+        for j in range(i, num_matrices):  # Only compute upper triangular part
+            correlation_matrix[i, j] = upper_triangular_correlation(matrices[i], matrices[j])
+            correlation_matrix[j, i] = correlation_matrix[i, j]  # Symmetry
+    
+    # Plot the heatmap
+    plt.figure(figsize=(8, 6))
+    ax = sns.heatmap(correlation_matrix, annot=True, cmap="YlGn", cbar=True)
+    
+    # Set tick positions and labels
+    ax.set_xticklabels(matrix_names, rotation=45, ha='right')
+    ax.set_yticklabels(matrix_names, rotation=0, ha='right')
+
+    plt.title(f'Pairwise Correlations btw. S-A representations \n and neural S-A similarity matrices \n {condition}, {timepoint}-re-learning, beta={beta}')
+    plt.subplots_adjust(left=0.2, bottom=0.2)
+    plt.show()
+
+    # Save the figure to a file
+    plt.savefig(f"results/plot_2ndorder_heatmap_{condition}_{timepoint}_beta{beta}.png", format='png', dpi=400)  # Save the figure with a specified name
+
+# calculate correlation between rows of a matrix
+def calculate_row_correlations(matrix):
+    # row-wise correlation
+    correlation_matrix = np.corrcoef(matrix)
+    # Replace NaN with 0
+    correlation_matrix = np.nan_to_num(correlation_matrix, nan=0.0)
+    # Z-score all values (flatten, z-score, reshape)
+    correlation_matrix = zscore(correlation_matrix.flatten()).reshape(correlation_matrix.shape)
+    # Remove the lower triangular part, keeping the diagonal
+    correlation_matrix = np.triu(correlation_matrix, k=0)
+    return correlation_matrix
+
+# calculate variance inflation factor per row
+def compute_vif(matrix):
+    """
+    Computes the Variance Inflation Factor (VIF) for each column in a matrix.
+
+    Parameters:
+    matrix (np.array): A 2D numpy array where each column represents a feature.
+
+    Returns:
+    list: A list of VIF values for each column in the matrix.
+    """
+    # Ensure the input matrix is a numpy array
+    matrix = np.asarray(matrix)
+    
+    # Compute VIF for each row in the matrix
+    vif_values = [variance_inflation_factor(matrix.T, i) for i in range(matrix.T.shape[1])]
+
+    # Exclude the first value which is the VIF for the intercept
+    return vif_values[1:]

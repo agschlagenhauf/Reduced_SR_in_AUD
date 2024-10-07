@@ -1,13 +1,13 @@
 ##### PREPARE DATA FRAMES FOR BEHAVIORAL ANALYSES ##
 ##### Milena Musial ################################
-##### 08 - 2024 ####################################
+##### 09 - 2024 ####################################
 
 rm(list = ls(all = TRUE))
 
 ##### load packages
 
-packages <- c("dplyr", "ggplot2", "rjson", "ndjson", "jsonlite", "tidyr", "lme4")
-#install.packages(packages)
+packages <- c("dplyr", "ggplot2", "rjson", "ndjson", "jsonlite", "tidyr", "lme4", "forcats")
+# install.packages(packages)
 lapply(packages, library, character.only = TRUE)
 
 ##### define paths
@@ -16,223 +16,11 @@ data_path <- "WP3_DATA/FINAL_STUDY"
 
 ##### read IDs that should be included (approved on Prolific, will be used to filter RedCap dfs)
 
-# alcohol version
-prolific_alc_lowrisk_1 <- read.csv(file.path(data_path, "inclusion_data/Prolific_SRepresent_8_alc_lowrisk.csv"))
-prolific_alc_lowrisk_1 <- prolific_alc_lowrisk_1 %>%
-  filter(Status == "APPROVED") %>%
-  select(Participant.id, Status) %>%
-  mutate(version = "alcohol",
-         group = "low-risk")
+load(file.path(data_path, "RDFs/IDs_complete.RData"))
 
-prolific_alc_lowrisk_2 <- read.csv(file.path(data_path, "inclusion_data/Prolific_SRepresent_12_alc_lowrisk.csv"))
-prolific_alc_lowrisk_2 <- prolific_alc_lowrisk_2 %>%
-  filter(Status == "APPROVED") %>%
-  select(Participant.id, Status) %>%
-  mutate(version = "alcohol",
-         group = "low-risk")
+##### read in psychometric data
 
-prolific_alc_lowrisk_3 <- read.csv(file.path(data_path, "inclusion_data/Prolific_BarNavigator_alc_lowrisk.csv"))
-prolific_alc_lowrisk_3 <- prolific_alc_lowrisk_3 %>%
-   filter(Status == "APPROVED") %>%
-   select(Participant.id, Status) %>%
-   mutate(version = "alcohol",
-         group = "low-risk")
-
-prolific_alc_harmful_1 <- read.csv(file.path(data_path, "inclusion_data/Prolific_SRepresent_9_alc_highrisk.csv"))
-prolific_alc_harmful_1 <- prolific_alc_harmful_1 %>%
-  filter(Status == "APPROVED") %>%
-  select(Participant.id, Status) %>%
-  mutate(version = "alcohol",
-         group = "harmful")
-
-prolific_alc_harmful_2 <- read.csv(file.path(data_path, "inclusion_data/Prolific_SRepresent_13_alc_highrisk.csv"))
-prolific_alc_harmful_2 <- prolific_alc_harmful_2 %>%
-  filter(Status == "APPROVED") %>%
-  select(Participant.id, Status) %>%
-  mutate(version = "alcohol",
-         group = "harmful")
-
-prolific_alc_lowrisk <- rbind(prolific_alc_lowrisk_1, prolific_alc_lowrisk_2, prolific_alc_lowrisk_3)
-prolific_alc_harmful <- rbind(prolific_alc_harmful_1, prolific_alc_harmful_2)
-
-# control version
-prolific_con_lowrisk_1 <- read.csv(file.path(data_path, "inclusion_data/Prolific_WeekendCashHunt1_control_lowrisk.csv"))
-prolific_con_lowrisk_1 <- prolific_con_lowrisk_1 %>%
-  filter(Status == "APPROVED") %>%
-  select(Participant.id, Status) %>%
-  mutate(version = "control",
-         group = "low-risk")
-
-prolific_con_lowrisk_2 <- read.csv(file.path(data_path, "inclusion_data/Prolific_WeekendCashHunt2_control_highrisk.csv"))
-prolific_con_lowrisk_2 <- prolific_con_lowrisk_2 %>%
-  filter(Status == "APPROVED") %>%
-  select(Participant.id, Status) %>%
-  mutate(version = "control",
-         group = "low-risk")
-
-prolific_con_harmful_1 <- read.csv(file.path(data_path, "inclusion_data/Prolific_WeekendCashHunt3_control_lowrisk.csv"))
-prolific_con_harmful_1 <- prolific_con_harmful_1 %>%
-  filter(Status == "APPROVED") %>%
-  select(Participant.id, Status) %>%
-  mutate(version = "control",
-         group = "harmful")
-
-prolific_con_harmful_2 <- read.csv(file.path(data_path, "inclusion_data/Prolific_WeekendCashHunt4_control_highrisk.csv"))
-prolific_con_harmful_2 <- prolific_con_harmful_2 %>%
-  filter(Status == "APPROVED") %>%
-  select(Participant.id, Status) %>%
-  mutate(version = "control",
-         group = "harmful")
-
-prolific_con_lowrisk <- rbind(prolific_con_lowrisk_1, prolific_con_lowrisk_2)
-prolific_con_harmful <- rbind(prolific_con_harmful_1, prolific_con_harmful_2)
-
-##### read RedCap data
-
-# alcohol version
-
-# read pre data
-redcap_alc_lowrisk <- read.csv(file.path(data_path, "inclusion_data/RedCap_alc_lowrisk.csv"))
-redcap_alc_lowrisk$prolific_pid[redcap_alc_lowrisk$rnd_id=="8915"] <- "66a79f059cc23eaa09b04cf9" # insert prolific ID for participant for whom it wasn't automatically piped
-redcap_alc_lowrisk <- redcap_alc_lowrisk %>%
-   filter(prolific_pid %in% prolific_alc_lowrisk$Participant.id,
-         complete.cases(rnd_id)) %>%
-   select(participant_id, prolific_pid, rnd_id, zufalls_id, b01_wp3_audit_sum) %>%
-   rename(redcap_ID = participant_id,
-         prolific_ID = prolific_pid,
-         participant_ID = rnd_id,
-         running_ID = zufalls_id,
-         audit_pre = b01_wp3_audit_sum) %>%
-   mutate(version = "alcohol",
-         group = "low-risk")
-
-redcap_alc_harmful <- read.csv(file.path(data_path, "inclusion_data/RedCap_alc_highrisk.csv"))
-redcap_alc_harmful <- redcap_alc_harmful %>%
-   filter(prolific_pid %in% prolific_alc_harmful$Participant.id,
-         complete.cases(rnd_id)) %>%
-   select(participant_id, prolific_pid, rnd_id, zufalls_id, b01_wp3_audit_sum) %>%
-   rename(redcap_ID = participant_id,
-         prolific_ID = prolific_pid,
-         participant_ID = rnd_id,
-         running_ID = zufalls_id,
-         audit_pre = b01_wp3_audit_sum) %>%
-   mutate(version = "alcohol",
-         group = "harmful")
-
-# merge AUDIT post data
-redcap_post_alc_lowrisk <- read.csv(file.path(data_path, "inclusion_data/RedCap_AUDITpost_alc_lowrisk.csv"))
-redcap_post_alc_lowrisk <- redcap_post_alc_lowrisk %>%
-   filter(rnd_id %in% redcap_alc_lowrisk$participant_ID,
-          participant_id %in% redcap_alc_lowrisk$redcap_ID,
-          complete.cases(rnd_id)) %>%
-   mutate(audit_post = b01_wp3_audit01 + b01_wp3_audit02 + b01_wp3_audit03 +
-                           b01_wp3_audit04 + b01_wp3_audit05 + b01_wp3_audit06 +
-                           b01_wp3_audit07 + b01_wp3_audit08 + b01_wp3_audit09 +
-                           b01_wp3_audit10,
-         participant_ID = rnd_id,
-         redcap_ID = participant_id) %>%
-   select(redcap_ID, participant_ID, audit_post)
-redcap_alc_lowrisk <- merge(redcap_alc_lowrisk, redcap_post_alc_lowrisk, by=c("participant_ID", "redcap_ID"))
-
-redcap_post_alc_harmful <- read.csv(file.path(data_path, "inclusion_data/RedCap_AUDITpost_alc_highrisk.csv"))
-redcap_post_alc_harmful <- redcap_post_alc_harmful %>%
-   filter(rnd_id %in% redcap_alc_harmful$participant_ID,
-          participant_id %in% redcap_alc_harmful$redcap_ID,
-          complete.cases(rnd_id)) %>%
-   mutate(audit_post = b01_wp3_audit01 + b01_wp3_audit02 + b01_wp3_audit03 +
-                           b01_wp3_audit04 + b01_wp3_audit05 + b01_wp3_audit06 +
-                           b01_wp3_audit07 + b01_wp3_audit08 + b01_wp3_audit09 +
-                           b01_wp3_audit10,
-         participant_ID = rnd_id,
-         redcap_ID = participant_id) %>%
-   select(redcap_ID, participant_ID, audit_post)
-redcap_alc_harmful <- merge(redcap_alc_harmful, redcap_post_alc_harmful, by=c("participant_ID", "redcap_ID"))
-
-redcap_alc <- rbind(redcap_alc_lowrisk, redcap_alc_harmful)
-
-# check that group label matches audit score
-if (max(redcap_alc$audit_pre[redcap_alc$group=="low-risk"])<8) {
-   print("Labels match!")
-} else {
-   print("ATTENTION Labels don't match!")
-}
-if (min(redcap_alc$audit_pre[redcap_alc$group=="harmful"])>7) {
-   print("Labels match!")
-} else {
-   print("ATTENTION Labels don't match!")
-}
-
-# control version
-
-# read pre data
-redcap_con_lowrisk <- read.csv(file.path(data_path, "inclusion_data/RedCap_control_lowrisk.csv"))
-redcap_con_lowrisk <- redcap_con_lowrisk %>%
-   filter(prolific_pid %in% prolific_con_lowrisk$Participant.id,
-         complete.cases(rnd_id)) %>%
-   select(participant_id, prolific_pid, rnd_id, zufalls_id, b01_wp3_audit_sum) %>%
-   rename(redcap_ID = participant_id,
-          prolific_ID = prolific_pid,
-          participant_ID = rnd_id,
-          running_ID = zufalls_id,
-          audit_pre = b01_wp3_audit_sum) %>%
-   mutate(version = "control",
-         group = "low-risk")
-
-redcap_con_harmful <- read.csv(file.path(data_path, "inclusion_data/RedCap_control_highrisk.csv"))
-redcap_con_harmful <- redcap_con_harmful %>%
-   filter(prolific_pid %in% prolific_con_harmful$Participant.id,
-         complete.cases(rnd_id)) %>%
-   select(participant_id, prolific_pid, rnd_id, zufalls_id, b01_wp3_audit_sum) %>%
-   rename(redcap_ID = participant_id,
-          prolific_ID = prolific_pid,
-          participant_ID = rnd_id,
-          running_ID = zufalls_id,
-          audit_pre = b01_wp3_audit_sum) %>%
-   mutate(version = "control",
-         group = "harmful")
-
-# merge AUDIT post data
-redcap_post_con_lowrisk <- read.csv(file.path(data_path, "inclusion_data/RedCap_AUDITpost_control_lowrisk.csv"))
-redcap_post_con_lowrisk <- redcap_post_con_lowrisk %>%
-   filter(rnd_id %in% redcap_con_lowrisk$participant_ID,
-          participant_id %in% redcap_con_lowrisk$redcap_ID,
-          complete.cases(rnd_id)) %>%
-   mutate(audit_post = b01_wp3_audit01 + b01_wp3_audit02 + b01_wp3_audit03 +
-                           b01_wp3_audit04 + b01_wp3_audit05 + b01_wp3_audit06 +
-                           b01_wp3_audit07 + b01_wp3_audit08 + b01_wp3_audit09 +
-                           b01_wp3_audit10,
-         participant_ID = rnd_id,
-         redcap_ID = participant_id) %>%
-   select(redcap_ID, participant_ID, audit_post)
-redcap_con_lowrisk <- merge(redcap_con_lowrisk, redcap_post_con_lowrisk, by=c("participant_ID", "redcap_ID"))
-
-redcap_post_con_harmful <- read.csv(file.path(data_path, "inclusion_data/RedCap_AUDITpost_control_highrisk.csv"))
-redcap_post_con_harmful <- redcap_post_con_harmful %>%
-   filter(rnd_id %in% redcap_con_harmful$participant_ID,
-          participant_id %in% redcap_con_harmful$redcap_ID,
-          complete.cases(rnd_id)) %>%
-   mutate(audit_post = b01_wp3_audit01 + b01_wp3_audit02 + b01_wp3_audit03 +
-                           b01_wp3_audit04 + b01_wp3_audit05 + b01_wp3_audit06 +
-                           b01_wp3_audit07 + b01_wp3_audit08 + b01_wp3_audit09 +
-                           b01_wp3_audit10,
-         participant_ID = rnd_id,
-         redcap_ID = participant_id) %>%
-   select(redcap_ID, participant_ID, audit_post)
-redcap_con_harmful <- merge(redcap_con_harmful, redcap_post_con_harmful, by=c("participant_ID", "redcap_ID"))
-
-redcap_con <- rbind(redcap_con_lowrisk, redcap_con_harmful)
-
-# check that group label matches audit score
-if (max(redcap_con$audit_pre[redcap_con$group=="low-risk"])<8) {
-   print("Labels match!")
-} else {
-   print("ATTENTION Labels don't match!")
-}
-if (min(redcap_con$audit_pre[redcap_con$group=="harmful"])>7) {
-   print("Labels match!")
-} else {
-   print("ATTENTION Labels don't match!")
-}
+load(file.path(data_path, "RDFs/demo_psych_data.RData"))
 
 ##### read in behavioral data from .json and convert to df
 
@@ -249,11 +37,14 @@ data_df_alcohol <- data_df_alcohol %>%
            rating_results.ratingResults),
          names_sep = "_",
          keep_empty = TRUE)
+data_df_alcohol <- data_df_alcohol %>% 
+  group_by(participant_ID, running_ID, component, aggregate_results.trial) %>%
+  mutate(state_index = row_number()) %>%
+  mutate(state_index = if_else(is.na(aggregate_results.trial), NA, state_index))
 
 # filter included participants based on redcap df
 data_df_alcohol <- data_df_alcohol %>%
-  filter(participant_ID %in% redcap_alc$participant_ID,
-         running_ID %in% redcap_alc$running_ID)
+  filter(participant_ID %in% demo_psych_df_alc$participant_ID & running_ID %in% demo_psych_df_alc$running_ID)
 
 # read data from participants with old rating version
 data_raw_alcohol_oldrating <- readLines(file.path(data_path, "behavioral_data/old_alcohol_version/alcohol_jatos_results_data_20240822172007.txt"))
@@ -266,21 +57,26 @@ data_df_alcohol_oldrating <- data_df_alcohol_oldrating %>%
            rating_results.ratingResults),
          names_sep = "_",
          keep_empty = TRUE)
+data_df_alcohol_oldrating <- data_df_alcohol_oldrating %>% 
+  group_by(participant_ID, running_ID, component, aggregate_results.trial) %>%
+  mutate(state_index = row_number()) %>%
+  mutate(state_index = if_else(is.na(aggregate_results.trial), NA, state_index))
 
 # filter participants with old rating version based on redcap df
 data_df_alcohol_oldrating <- data_df_alcohol_oldrating %>%
-  filter(participant_ID %in% redcap_alc$participant_ID,
-         running_ID %in% redcap_alc$running_ID)
+  filter(participant_ID %in% demo_psych_df_alc$participant_ID & running_ID %in% demo_psych_df_alc$running_ID)
 
 # get IDs with old rating version
 oldrating_IDs <- unique(data_df_alcohol_oldrating$participant_ID)
 
 # write info about rating into full alcohol df
 data_df_alcohol <- data_df_alcohol %>%
-  mutate(rating_version = ifelse(participant_ID %in% oldrating_IDs, "old", "new"))
+  mutate(rating_version = ifelse(participant_ID %in% oldrating_IDs, "old", "new"),
+         participant_ID = as.factor(participant_ID),
+         running_ID = as.factor(running_ID))
 
 # merge with prolific_id, group, version info
-data_df_alcohol <- inner_join(data_df_alcohol, redcap_alc, by=c("participant_ID", "running_ID"))
+data_df_alcohol <- inner_join(demo_psych_df_alc, data_df_alcohol, by=c("participant_ID", "running_ID"))
 
 # control version
 
@@ -296,16 +92,21 @@ data_df_control <- data_df_control %>%
          names_sep = "_",
          keep_empty = TRUE)
 data_df_control <- data_df_control %>%
+  group_by(participant_ID, running_ID, component, aggregate_results.trial) %>%
+  mutate(state_index = row_number()) %>%
+  mutate(state_index = if_else(is.na(aggregate_results.trial), NA, state_index))
+data_df_control <- data_df_control %>%
    mutate(drink = NA,
    rating_version = "new")
 
 # filter included participants based on redcap df
 data_df_control <- data_df_control %>%
-  filter(participant_ID %in% redcap_con$participant_ID,
-         running_ID %in% redcap_con$running_ID)
+  filter(participant_ID %in% demo_psych_df_con$participant_ID & running_ID %in% demo_psych_df_con$running_ID) %>%
+  mutate(participant_ID = as.factor(participant_ID),
+         running_ID = as.factor(running_ID))
 
 # merge with prolific_id, group, version info
-data_df_control <- inner_join(redcap_con, data_df_control, by=c("participant_ID", "running_ID"))
+data_df_control <- inner_join(demo_psych_df_con, data_df_control, by=c("participant_ID", "running_ID"))
 
 ##### Combine control and alcohol dfs
 data_df <- rbind(data_df_control, data_df_alcohol)
@@ -327,6 +128,7 @@ trial_df <- data_df %>%
          correct_first_state_action,
          aggregate_results.trial,
          aggregate_results.trialResults_state,
+         state_index,
          aggregate_results.trialResults_valid_choice,
          aggregate_results.trialResults_choice,
          aggregate_results.trialResults_RT,
@@ -346,7 +148,9 @@ trial_df <- data_df %>%
          rating_state = rating_results.ratingResults_state,
          rating_value = rating_results.ratingResults_value,
          rating_RT = rating_results.ratingResults_RT
-         ) %>%
+         )
+
+trial_df <- trial_df %>%
   filter(! component %in% c("intro1", 
                             "intro2", 
                             "intro3",
@@ -408,7 +212,7 @@ trial_df <- trial_df %>%
                                                                               "policy-rating"), "policy", 
                                                              "other"))))))
 
-# create component index variable
+# create condition index variable
 trial_df <- trial_df %>%
    mutate(condition_index = case_when(((variation %in% c("A1", "A2", "A3", "A4", "A5") & condition == "reward") |
                                         (variation %in% c("B1", "B2", "B3", "B4", "B5") & condition == "transition") |
@@ -443,27 +247,27 @@ trial_df <- trial_df %>%
                                     (version == "control" & variation %in% c("A2", "B2", "C2", "D2", "E2") & condition_index == 5) |
                                     (version == "control" & variation %in% c("A3", "B3", "C3", "D3", "E3") & condition_index == 4) |
                                     (version == "control" & variation %in% c("A4", "B4", "C4", "D4", "E4") & condition_index == 3) |
-                                    (version == "control" & variation %in% c("A5", "B5", "C5", "D5", "E5") & condition_index == 2)) ~ "white_modern",
+                                    (version == "control" & variation %in% c("A5", "B5", "C5", "D5", "E5") & condition_index == 2)) ~ "white modern",
                                  ((version == "control" & variation %in% c("A1", "B1", "C1", "D1", "E1") & condition_index == 2) |
                                     (version == "control" & variation %in% c("A2", "B2", "C2", "D2", "E2") & condition_index == 1) |
                                     (version == "control" & variation %in% c("A3", "B3", "C3", "D3", "E3") & condition_index == 5) |
                                     (version == "control" & variation %in% c("A4", "B4", "C4", "D4", "E4") & condition_index == 4) |
-                                    (version == "control" & variation %in% c("A5", "B5", "C5", "D5", "E5") & condition_index == 3)) ~ "blue_floral",
+                                    (version == "control" & variation %in% c("A5", "B5", "C5", "D5", "E5") & condition_index == 3)) ~ "blue floral",
                                  ((version == "control" & variation %in% c("A1", "B1", "C1", "D1", "E1") & condition_index == 3) |
                                     (version == "control" & variation %in% c("A2", "B2", "C2", "D2", "E2") & condition_index == 2) |
                                     (version == "control" & variation %in% c("A3", "B3", "C3", "D3", "E3") & condition_index == 1) |
                                     (version == "control" & variation %in% c("A4", "B4", "C4", "D4", "E4") & condition_index == 5) |
-                                    (version == "control" & variation %in% c("A5", "B5", "C5", "D5", "E5") & condition_index == 4)) ~ "messy_green",
+                                    (version == "control" & variation %in% c("A5", "B5", "C5", "D5", "E5") & condition_index == 4)) ~ "messy green",
                                  ((version == "control" & variation %in% c("A1", "B1", "C1", "D1", "E1") & condition_index == 4) |
                                     (version == "control" & variation %in% c("A2", "B2", "C2", "D2", "E2") & condition_index == 3) |
                                     (version == "control" & variation %in% c("A3", "B3", "C3", "D3", "E3") & condition_index == 2) |
                                     (version == "control" & variation %in% c("A4", "B4", "C4", "D4", "E4") & condition_index == 1) |
-                                    (version == "control" & variation %in% c("A5", "B5", "C5", "D5", "E5") & condition_index == 5)) ~ "orange_tile",
+                                    (version == "control" & variation %in% c("A5", "B5", "C5", "D5", "E5") & condition_index == 5)) ~ "orange tile",
                                  ((version == "control" & variation %in% c("A1", "B1", "C1", "D1", "E1") & condition_index == 5) |
                                     (version == "control" & variation %in% c("A2", "B2", "C2", "D2", "E2") & condition_index == 4) |
                                     (version == "control" & variation %in% c("A3", "B3", "C3", "D3", "E3") & condition_index == 3) |
                                     (version == "control" & variation %in% c("A4", "B4", "C4", "D4", "E4") & condition_index == 2) |
-                                    (version == "control" & variation %in% c("A5", "B5", "C5", "D5", "E5") & condition_index == 1)) ~ "red_brown",
+                                    (version == "control" & variation %in% c("A5", "B5", "C5", "D5", "E5") & condition_index == 1)) ~ "red brown",
                                  ((version == "alcohol" & variation %in% c("A1", "B1", "C1", "D1", "E1") & condition_index == 1) |
                                     (version == "alcohol" & variation %in% c("A2", "B2", "C2", "D2", "E2") & condition_index == 5) |
                                     (version == "alcohol" & variation %in% c("A3", "B3", "C3", "D3", "E3") & condition_index == 4) |
@@ -478,23 +282,30 @@ trial_df <- trial_df %>%
                                     (version == "alcohol" & variation %in% c("A2", "B2", "C2", "D2", "E2") & condition_index == 2) |
                                     (version == "alcohol" & variation %in% c("A3", "B3", "C3", "D3", "E3") & condition_index == 1) |
                                     (version == "alcohol" & variation %in% c("A4", "B4", "C4", "D4", "E4") & condition_index == 5) |
-                                    (version == "alcohol" & variation %in% c("A5", "B5", "C5", "D5", "E5") & condition_index == 4)) ~ "fancy_green",
+                                    (version == "alcohol" & variation %in% c("A5", "B5", "C5", "D5", "E5") & condition_index == 4)) ~ "fancy green",
                                  ((version == "alcohol" & variation %in% c("A1", "B1", "C1", "D1", "E1") & condition_index == 4) |
                                     (version == "alcohol" & variation %in% c("A2", "B2", "C2", "D2", "E2") & condition_index == 3) |
                                     (version == "alcohol" & variation %in% c("A3", "B3", "C3", "D3", "E3") & condition_index == 2) |
                                     (version == "alcohol" & variation %in% c("A4", "B4", "C4", "D4", "E4") & condition_index == 1) |
-                                    (version == "alcohol" & variation %in% c("A5", "B5", "C5", "D5", "E5") & condition_index == 5)) ~ "hip_purple",
+                                    (version == "alcohol" & variation %in% c("A5", "B5", "C5", "D5", "E5") & condition_index == 5)) ~ "hip purple",
                                  ((version == "alcohol" & variation %in% c("A1", "B1", "C1", "D1", "E1") & condition_index == 5) |
                                     (version == "alcohol" & variation %in% c("A2", "B2", "C2", "D2", "E2") & condition_index == 4) |
                                     (version == "alcohol" & variation %in% c("A3", "B3", "C3", "D3", "E3") & condition_index == 3) |
                                     (version == "alcohol" & variation %in% c("A4", "B4", "C4", "D4", "E4") & condition_index == 2) |
-                                    (version == "alcohol" & variation %in% c("A5", "B5", "C5", "D5", "E5") & condition_index == 1)) ~ "sports_bar"))
+                                    (version == "alcohol" & variation %in% c("A5", "B5", "C5", "D5", "E5") & condition_index == 1)) ~ "sports bar"))
 
 # ordering
 trial_df <- trial_df %>%
+  mutate(phase = fct_relevel(phase,
+                                 c("learning",
+                                   "relearning",
+                                   "test",
+                                   "rating"))) %>%
   arrange(ID, 
-          condition, 
-          phase)
+          condition_index,
+          phase,
+          trial,
+          state_index)
 
 # insert correct test-stage action
 for (n in unique(trial_df$ID)) {
@@ -541,7 +352,12 @@ trial_df <- trial_df %>%
   mutate(running_index = c(1:nrow(trial_df)))
 
 invalid_trial_df <- trial_df %>%
-  filter(valid_choice == FALSE)
+  filter(valid_choice == FALSE) %>%
+  arrange(ID, 
+          condition_index,
+          phase,
+          trial,
+          state_index)
 
 for (i in invalid_trial_df$running_index) {
   if (trial_df$state[trial_df$running_index == i] %in% c(2,3,"2Left","2Right","3Left","3Right") & (trial_df$trial[trial_df$running_index == i] %in% trial_df$trial[trial_df$running_index == i-1])) {
@@ -564,6 +380,30 @@ for (i in invalid_trial_df$running_index) {
   }
 }
 
+# rename & reorder 
+trial_df <- trial_df %>%
+  mutate(version = case_when(
+      version == "alcohol" ~ "Alcohol version",
+      version == "control" ~ "Monetary version"
+    ),
+    group = case_when(
+      group == "harmful" ~ "Harmful drinkers",
+      group == "low-risk" ~ "Low-risk drinkers"
+    ),
+    condition = case_when(
+      condition == "reward" ~ "Reward revaluation",
+      condition == "transition" ~ "Transition revaluation",
+      condition == "goal-state" ~ "Goal-state revaluation",
+      condition == "policy" ~ "Policy revaluation",
+      condition == "control" ~ "Control"
+    )) %>%
+    mutate(condition = fct_relevel(condition,
+                            c("Reward revaluation",
+                              "Goal-state revaluation",
+                              "Transition revaluation",
+                              "Policy revaluation",
+                              "Control")))
+
 # extract rows relevant for rating df (prepared below)
 rating_df <- trial_df %>%
   filter(phase == "rating")
@@ -571,8 +411,11 @@ rating_df <- trial_df %>%
 # exclude invalid trials and rating trials, compute accumulated trial per participant
 trial_df <- trial_df %>%
   filter(valid_choice == TRUE) %>%
-  select(! running_index, rating_no, rating_state, rating_RT, rating_value) %>%
-  arrange(ID, condition_index) %>%
+  arrange(ID, 
+          condition_index,
+          phase,
+          trial,
+          state_index) %>%
   group_by(ID) %>%
   mutate(accumulated_states_visited = row_number())
 
@@ -591,14 +434,19 @@ drink_df <- data_df %>%
   slice_tail(n = 1) %>%
   select(ID, drink)
 
-trial_df <- merge(trial_df, drink_df, by = "ID", all.x = T)
+trial_df <- left_join(trial_df, drink_df, by = "ID")
 
 # order columns
 trial_df <- trial_df %>%
    select(ID, group, audit_pre, audit_post, version, variation, drink, component, phase, condition, condition_index, environment,
    correct_first_state_action, correct_second_state_action, correct_third_state_action,
-   trial, accumulated_states_visited, state, choice, valid_choice, RT, correct_state_1, correct_state_2, correct_state_3, 
-   correct, correct_path, switch)
+   trial, state, state_index, accumulated_states_visited, choice, valid_choice, RT, correct_state_1, correct_state_2, correct_state_3, 
+   correct, correct_path, switch) %>%
+  arrange(ID, 
+          condition_index,
+          phase,
+          trial,
+          state_index)
 
 ##############################  rating df ##############################  
         
@@ -727,27 +575,27 @@ component_df <- data_df %>%
                                     (version == "control" & variation %in% c("A2", "B2", "C2", "D2", "E2") & condition_index == 5) |
                                     (version == "control" & variation %in% c("A3", "B3", "C3", "D3", "E3") & condition_index == 4) |
                                     (version == "control" & variation %in% c("A4", "B4", "C4", "D4", "E4") & condition_index == 3) |
-                                    (version == "control" & variation %in% c("A5", "B5", "C5", "D5", "E5") & condition_index == 2)) ~ "white_modern",
+                                    (version == "control" & variation %in% c("A5", "B5", "C5", "D5", "E5") & condition_index == 2)) ~ "white modern",
                                  ((version == "control" & variation %in% c("A1", "B1", "C1", "D1", "E1") & condition_index == 2) |
                                     (version == "control" & variation %in% c("A2", "B2", "C2", "D2", "E2") & condition_index == 1) |
                                     (version == "control" & variation %in% c("A3", "B3", "C3", "D3", "E3") & condition_index == 5) |
                                     (version == "control" & variation %in% c("A4", "B4", "C4", "D4", "E4") & condition_index == 4) |
-                                    (version == "control" & variation %in% c("A5", "B5", "C5", "D5", "E5") & condition_index == 3)) ~ "blue_floral",
+                                    (version == "control" & variation %in% c("A5", "B5", "C5", "D5", "E5") & condition_index == 3)) ~ "blue floral",
                                  ((version == "control" & variation %in% c("A1", "B1", "C1", "D1", "E1") & condition_index == 3) |
                                     (version == "control" & variation %in% c("A2", "B2", "C2", "D2", "E2") & condition_index == 2) |
                                     (version == "control" & variation %in% c("A3", "B3", "C3", "D3", "E3") & condition_index == 1) |
                                     (version == "control" & variation %in% c("A4", "B4", "C4", "D4", "E4") & condition_index == 5) |
-                                    (version == "control" & variation %in% c("A5", "B5", "C5", "D5", "E5") & condition_index == 4)) ~ "messy_green",
+                                    (version == "control" & variation %in% c("A5", "B5", "C5", "D5", "E5") & condition_index == 4)) ~ "messy green",
                                  ((version == "control" & variation %in% c("A1", "B1", "C1", "D1", "E1") & condition_index == 4) |
                                     (version == "control" & variation %in% c("A2", "B2", "C2", "D2", "E2") & condition_index == 3) |
                                     (version == "control" & variation %in% c("A3", "B3", "C3", "D3", "E3") & condition_index == 2) |
                                     (version == "control" & variation %in% c("A4", "B4", "C4", "D4", "E4") & condition_index == 1) |
-                                    (version == "control" & variation %in% c("A5", "B5", "C5", "D5", "E5") & condition_index == 5)) ~ "orange_tile",
+                                    (version == "control" & variation %in% c("A5", "B5", "C5", "D5", "E5") & condition_index == 5)) ~ "orange tile",
                                  ((version == "control" & variation %in% c("A1", "B1", "C1", "D1", "E1") & condition_index == 5) |
                                     (version == "control" & variation %in% c("A2", "B2", "C2", "D2", "E2") & condition_index == 4) |
                                     (version == "control" & variation %in% c("A3", "B3", "C3", "D3", "E3") & condition_index == 3) |
                                     (version == "control" & variation %in% c("A4", "B4", "C4", "D4", "E4") & condition_index == 2) |
-                                    (version == "control" & variation %in% c("A5", "B5", "C5", "D5", "E5") & condition_index == 1)) ~ "red_brown",
+                                    (version == "control" & variation %in% c("A5", "B5", "C5", "D5", "E5") & condition_index == 1)) ~ "red brown",
                                  ((version == "alcohol" & variation %in% c("A1", "B1", "C1", "D1", "E1") & condition_index == 1) |
                                     (version == "alcohol" & variation %in% c("A2", "B2", "C2", "D2", "E2") & condition_index == 5) |
                                     (version == "alcohol" & variation %in% c("A3", "B3", "C3", "D3", "E3") & condition_index == 4) |
@@ -762,19 +610,19 @@ component_df <- data_df %>%
                                     (version == "alcohol" & variation %in% c("A2", "B2", "C2", "D2", "E2") & condition_index == 2) |
                                     (version == "alcohol" & variation %in% c("A3", "B3", "C3", "D3", "E3") & condition_index == 1) |
                                     (version == "alcohol" & variation %in% c("A4", "B4", "C4", "D4", "E4") & condition_index == 5) |
-                                    (version == "alcohol" & variation %in% c("A5", "B5", "C5", "D5", "E5") & condition_index == 4)) ~ "fancy_green",
+                                    (version == "alcohol" & variation %in% c("A5", "B5", "C5", "D5", "E5") & condition_index == 4)) ~ "fancy green",
                                  ((version == "alcohol" & variation %in% c("A1", "B1", "C1", "D1", "E1") & condition_index == 4) |
                                     (version == "alcohol" & variation %in% c("A2", "B2", "C2", "D2", "E2") & condition_index == 3) |
                                     (version == "alcohol" & variation %in% c("A3", "B3", "C3", "D3", "E3") & condition_index == 2) |
                                     (version == "alcohol" & variation %in% c("A4", "B4", "C4", "D4", "E4") & condition_index == 1) |
-                                    (version == "alcohol" & variation %in% c("A5", "B5", "C5", "D5", "E5") & condition_index == 5)) ~ "hip_purple",
+                                    (version == "alcohol" & variation %in% c("A5", "B5", "C5", "D5", "E5") & condition_index == 5)) ~ "hip purple",
                                  ((version == "alcohol" & variation %in% c("A1", "B1", "C1", "D1", "E1") & condition_index == 5) |
                                     (version == "alcohol" & variation %in% c("A2", "B2", "C2", "D2", "E2") & condition_index == 4) |
                                     (version == "alcohol" & variation %in% c("A3", "B3", "C3", "D3", "E3") & condition_index == 3) |
                                     (version == "alcohol" & variation %in% c("A4", "B4", "C4", "D4", "E4") & condition_index == 2) |
-                                    (version == "alcohol" & variation %in% c("A5", "B5", "C5", "D5", "E5") & condition_index == 1)) ~ "sports_bar"))
+                                    (version == "alcohol" & variation %in% c("A5", "B5", "C5", "D5", "E5") & condition_index == 1)) ~ "sports bar"))
 
 component_df <- merge(component_df, drink_df, by = "ID", all.x = T)
 
 ##############################  save   ##############################  
-save(trial_df, rating_df, component_df, file = file.path(data_path, "final_data_complete.RData"))
+save(trial_df, rating_df, component_df, file = file.path(data_path, "RDFs/final_data_complete.RData"))
