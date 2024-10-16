@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+
+<!-- Start of HTML Document -->
+<html>
+    <head>
+        <!-- Load Style -->
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <link href="https://fonts.googleapis.com/css?family=Open Sans" rel="stylesheet">
+        <link rel="stylesheet" href="css/main.css">
+
+        <!-- Load Jatos -->
+        <script src="js/main.js"></script>
+        <script src="jatos.js"></script>
+    </head>
+
+    <!-- Start of Page Content (Visible on Screen) -->
+    <body>
+
+        <div id="message" class="full_screen_message" style="text-align: center;">
+            Great, you successfully completed the game!
+            <br>
+            <br>
+            In fact, we do not give away beverage store vouchers, but instead pay out the bonuses directly via Prolific. If you are one of the best participants, you will receive your bonus of £50 or £15 directly via Prolific once we finished our study. 
+            <br>
+            <br>
+            Before you return to Prolific, you will be redirected to the final questionnaires. To proceed, please press the right arrow key.
+            <br>
+            <br>
+            Thanks!
+        </div>
+
+        <script>
+            loadComponent(function() {
+
+                let componentData = {
+                    'participant_ID':participantID, 
+                    'running_ID':runningID,
+                    'back_code':backCode,
+                    'variation':variationID, 
+                    'component':componentFlow[componentIndex]
+                };
+
+                const message = document.getElementById("message");
+                document.onkeydown = function(event) { // navigation through intro
+                    if (event.key == Keyboard.RightArrow) {
+                        
+                        disableInput();
+                        fadeOut(message, function() {
+                            endComponentFlow(componentData);
+                        });
+                    }
+                };
+                
+                
+            });
+        </script>
+
+    </body>
+</html>
+

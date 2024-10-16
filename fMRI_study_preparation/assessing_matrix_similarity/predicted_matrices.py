@@ -179,7 +179,12 @@ for beta in betas:
     ## Correlation between all matrices
     pairwise_upper_tri_correlation_heatmap(condition, beta, timepoint, ['M', 'reduced M', 'T', 'T-derived M', 'M neuro', 'reduced M neuro', 'T neuro', 'T-derived M neuro'], M, M_red, T_sa_sa, M_derived, M_neuro, M_red_neuro, T_sa_sa_neuro, M_derived_neuro)
 
+    ## variance inflation factor for all matrices
+    vif = compute_vif(M, M_red, T_sa_sa, M_derived)
+    vif_neuro = compute_vif(M_neuro, M_red_neuro, T_sa_sa_neuro, M_derived_neuro)
+    print(vif_neuro)
+    
     ## create plot
-    plot_matrices(condition, timepoint, beta, M, M_eigenvectors, T_sa_sa, M_derived, M_neuro, M_eigenvectors_neuro, T_sa_sa_neuro, M_derived_neuro)
+    plot_matrices(condition, timepoint, beta, M, M_red, T_sa_sa, M_derived, M_neuro, M_red_neuro, T_sa_sa_neuro, M_derived_neuro)
 
     

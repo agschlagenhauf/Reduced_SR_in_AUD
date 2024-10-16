@@ -199,21 +199,33 @@ def calculate_row_correlations(matrix):
     return correlation_matrix
 
 # calculate variance inflation factor per row
-def compute_vif(matrix):
+def compute_vif(*matrices):
     """
-    Computes the Variance Inflation Factor (VIF) for each column in a matrix.
+    Computes the Variance Inflation Factor (VIF) for the columns of a matrix
+    formed by combining the upper triangular parts of multiple input matrices.
 
     Parameters:
-    matrix (np.array): A 2D numpy array where each column represents a feature.
+    *matrices: A variable number of 2D numpy arrays of the same shape.
 
     Returns:
-    list: A list of VIF values for each column in the matrix.
+    list: A list of VIF values for each column in the combined matrix.
     """
-    # Ensure the input matrix is a numpy array
-    matrix = np.asarray(matrix)
+    # Ensure all input matrices are numpy arrays and have the same shape
+    matrices = [np.asarray(matrix) for matrix in matrices]
+    matrix_shape = matrices[0].shape
     
-    # Compute VIF for each row in the matrix
-    vif_values = [variance_inflation_factor(matrix.T, i) for i in range(matrix.T.shape[1])]
+    for matrix in matrices:
+        if matrix.shape != matrix_shape:
+            raise ValueError("All matrices must have the same shape.")
+    
+    # Extract the upper triangular parts of all matrices (excluding the diagonal)
+    upper_tri_indices = np.triu_indices_from(matrices[0], k=1)
+    upper_tri_values = [matrix[upper_tri_indices] for matrix in matrices]
+    
+    # Combine the upper triangular values into a new matrix where each column is a variable
+    combined_matrix = np.vstack(upper_tri_values).T
 
-    # Exclude the first value which is the VIF for the intercept
-    return vif_values[1:]
+    # Compute VIF for each column in the combined matrix
+    vif_values = [variance_inflation_factor(combined_matrix, i) for i in range(combined_matrix.shape[1])]
+
+    return vif_values

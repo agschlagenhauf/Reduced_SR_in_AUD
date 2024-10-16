@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+
+<!-- Start of HTML Document -->
+<html>
+    <head>
+        <!-- Load Style -->
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <link href="https://fonts.googleapis.com/css?family=Open Sans" rel="stylesheet">
+        <link rel="stylesheet" href="css/main.css">
+
+        <!-- Load Jatos -->
+        <script src="js/main.js"></script>
+        <script src="jatos.js"></script>
+    </head>
+
+    <!-- Start of Page Content (Visible on Screen) -->
+    <body>
+
+        <div id="message" class="full_screen_message" style="text-align: center;">
+            Great, thanks to your search skills you were able to enjoy many Friday evenings in the restaurant with friends.
+            <br>
+            <br>
+            Since you have found a great offer, you have recently moved. 
+            <br>
+            <br>
+            In the new house, you are again regularly on the lookout for cash in your new secret hiding places on Friday evenings.
+            <br>
+            <br>
+            The same principle applies in the new house: collect as much cash as possible. Memorise where you currently find the most money.
+            <br>
+            <br>
+            Good luck!
+        </div>
+
+        <script>
+            loadComponent(function() {
+
+                let componentData = {
+                    'participant_ID':participantID, 
+                    'running_ID':runningID,
+                    'back_code': backCode,
+                    'variation':variationID, 
+                    'component':componentFlow[componentIndex]
+                };
+
+                const message = document.getElementById("message");
+
+                document.onkeydown = function(event) { // navigation through intro
+                    if (event.key == Keyboard.RightArrow) {
+                        disableInput(); // disable any further input
+                        fadeOut(message, function() {
+                            showNextComponent(componentData);
+                        });
+                    }
+                };
+
+            });
+        </script>
+
+    </body>
+</html>
+

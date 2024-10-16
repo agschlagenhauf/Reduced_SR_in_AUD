@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+
+<!-- Start of HTML Document -->
+<html>
+    <head>
+        <!-- Load Style -->
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <link href="https://fonts.googleapis.com/css?family=Open Sans" rel="stylesheet">
+        <link rel="stylesheet" href="css/main.css">
+
+        <!-- Load Jatos -->
+        <script src="js/main.js"></script>
+        <script src="jatos.js"></script>
+    </head>
+
+    <!-- Start of Page Content (Visible on Screen) -->
+    <body>
+
+        <div id="message" class="full_screen_message" style="text-align: center;">
+            Over the past few weeks, you have spent many relaxed Saturdays in your favourite bar.
+            <br>
+            <br>
+            You recently read in the newspaper about another pub that has now become your new favourite place. 
+            <br>
+            <br>
+            You now regularly come to the new pub on Saturdays after a stressful week at work.
+            <br>
+            <br>
+            The same principle applies in the new pub: get as many glasses of alcohol as possible. Memorise where you currently get the most alcohol.
+            <br>
+            <br>
+            Good luck!
+        </div>
+
+        <script>
+            loadComponent(function() {
+
+                let componentData = {
+                    'participant_ID':participantID, 
+                    'running_ID':runningID,
+                    'back_code': backCode,
+                    'variation':variationID, 
+                    'component':componentFlow[componentIndex]
+                };
+
+                const message = document.getElementById("message");
+                
+                document.onkeydown = function(event) { // navigation through intro
+                    if (event.key == Keyboard.RightArrow) {
+                        disableInput(); // disable any further input
+                        fadeOut(message, function() {
+                            showNextComponent(componentData);
+                        });
+                    }
+                };
+                
+            });
+        </script>
+
+    </body>
+</html>

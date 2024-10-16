@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+
+<!-- Start of HTML Document -->
+<html>
+    <head>
+        <!-- Load Style -->
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <link href="https://fonts.googleapis.com/css?family=Open Sans" rel="stylesheet">
+        <link rel="stylesheet" href="css/main.css">
+
+        <!-- Load Jatos -->
+        <script src="js/main.js"></script>
+        <script src="jatos.js"></script>
+    </head>
+
+    <!-- Start of Page Content (Visible on Screen) -->
+    <body>
+
+        <div id="message" class="full_screen_message" style="text-align: center;">
+        </div>
+
+        <script>
+            jatos.onLoad(function() { // load JATOS for the very first time
+
+                prepareComponentFlow();
+                
+                let componentData = {
+                    'participant_ID':participantID, 
+                    'running_ID':runningID,
+                    'back_code': backCode,
+                    'variation':variationID, 
+                    'component':componentFlow[componentIndex]
+                };
+
+                let paragraphIndex = 0;
+
+                const message = document.getElementById("message");
+                message.innerHTML = paragraphs[paragraphIndex];
+                
+                document.onkeydown = function(event) { // navigation through intro
+                    if (event.key == Keyboard.LeftArrow) {
+                        paragraphIndex = Math.max(0, paragraphIndex - 1);
+                        message.innerHTML = paragraphs[paragraphIndex];
+                    }
+                    else if (event.key == Keyboard.RightArrow) {
+                        paragraphIndex += 1;
+
+                        if (paragraphIndex < paragraphs.length) {    
+                            message.innerHTML = paragraphs[paragraphIndex];
+                        }
+                        else { // once we reach last paragraph, right arrow leads to start of first condition
+                            disableInput(); // disable any further input
+                            fadeOut(message, function() {
+                                showNextComponent(componentData);
+                            });
+                        }
+                    }
+                };
+            });
+
+            const paragraphs = [
+                `Welcome to this game! 
+                <br>
+                <br>
+                The game will take about 1 hour. Please make yourself comfortable and read the instructions carefully.
+                <br>
+                <br>
+                'Right arrow key' = continue
+                <br>
+                'Left arrow key' = back`,
+
+
+                `Imagine you regularly go out for dinner with good friends on Friday evenings. 
+                <br>
+                <br>
+                Unfortunately, your favorite restaurant does not accept card payments, which means you need cash.`,
+
+
+                `In the stress of the working week, you often forget to withdraw cash for Friday. 
+                <br>
+                <br>
+                Unfortunately, the nearest ATM is half an hour away from your home.
+                <br>
+                <br>
+                So on Fridays you're regularly faced with the question: where can I quickly find some cash so I can go out for a relaxed meal?`,
+
+
+                `Fortunately, you have made it a routine to deposit cash in some secret spots throughout the house during the week - for emergencies, so to speak.
+                <br>
+                <br>
+                However, in the hustle and bustle of everyday life, you often forget how much cash you have stored where.
+                <br>
+                <br>
+                On Fridays, you therefore regularly search your house shortly before setting off for the restaurant.`,
+
+                
+                `Your goal every Friday is to find as much cash as possible.
+                <br>
+                <br>
+                If you collect the most cash among the participants, we will pay you an additional bonus worth £50. If you are in 2nd to 4th place, we will pay you a bonus of £15 each. The more cash you find throughout the game, the more likely you are to be one of the lucky winners!`,
+
+                `Your house has a total of 10 rooms. As soon as you enter a room, your action options light up YELLOW after a short time.
+                <br>
+                <br>
+                In some rooms you can choose between TWO options: Two doors that lead to different next rooms.
+                <br>
+                <br>
+                In other rooms, you can only choose ONE option: A specific location (e.g. a shelf) where you search for cash. After you have searched the location, you can see whether and how much money you have found. You then automatically move on to the next room.`,
+
+
+                `On the first Fridays, we will tell you which option to choose in all rooms. In rooms that actually contain two options, this means that one of the options is grayed out and cannot be selected. The option that you can choose will light up YELLOW.
+                <br>
+                <br>
+                On these first Fridays, please memorise where you find the most cash. How much money you find in a room does not depend on how you got there.`,
+
+                `On the following Fridays, we will give you a free choice: In rooms with two action options, both options are available and marked YELLOW.
+                <br>
+                <br>
+                On these Fridays, you have the opportunity to collect as much cash as possible for your restaurant visit. Choose the options that lead you to the highest amount of money.`,
+
+                `You can see the floor plan of your house with 10 rooms on the next page. You start at the bottom and then follow a path that leads you to room 10 (top).`
+            ];
+        </script>
+
+    </body>
+</html>
+

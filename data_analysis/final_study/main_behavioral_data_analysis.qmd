@@ -30,7 +30,7 @@ sapply(packages, require, character.only = TRUE)
 
 
 # define paths
-data_path <- "/Users/milenamusial/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/PhD/04_B01/WP3/WP3_DATA/FINAL_STUDY/RDFs"
+  data_path <- "WP3_DATA/FINAL_STUDY/RDFs"
 
 # read dfs
 load(file.path(data_path, "final_data_complete.RData"))

@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+
+<!-- Start of HTML Document -->
+<html>
+    <head>
+        <!-- Load Style -->
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <link href="https://fonts.googleapis.com/css?family=Open Sans" rel="stylesheet">
+        <link rel="stylesheet" href="css/main.css">
+
+        <!-- Load Jatos -->
+        <script src="js/main.js"></script>
+        <script src="jatos.js"></script>
+    </head>
+
+    <!-- Start of Page Content (Visible on Screen) -->
+    <body>
+
+        <div id="message" class="full_screen_message" style="text-align: center;">
+        </div>
+
+        <script>
+            loadComponent(function() {
+
+                let componentData = {
+                    'participant_ID':participantID, 
+                    'running_ID':runningID,
+                    'back_code': backCode,
+                    'variation':variationID, 
+                    'component':componentFlow[componentIndex]
+                };
+
+                let paragraphIndex = 0;
+
+                const message = document.getElementById("message");
+                message.innerHTML = paragraphs[paragraphIndex];
+                
+                document.onkeydown = function(event) { // navigation through intro
+                    if (event.key == Keyboard.LeftArrow) {
+                        paragraphIndex = Math.max(0, paragraphIndex - 1);
+                        message.innerHTML = paragraphs[paragraphIndex];
+                    }
+                    else if (event.key == Keyboard.RightArrow) {
+                        paragraphIndex += 1;
+
+                        if (paragraphIndex < paragraphs.length) {    
+                            message.innerHTML = paragraphs[paragraphIndex];
+                        }
+                        else { // once we reach last paragraph, right arrow leads to start of first condition
+                            disableInput(); // disable any further input
+                            fadeOut(message, function() {
+                                showNextComponent(componentData);
+                            });
+                        }
+                    }
+                };
+            });
+
+            const paragraphs = [
+                `Great! In this practice, you have experienced 10 Fridays. On the first Fridays, we specified which option you had to choose. On the following Fridays, you were free to choose.`,
+
+                `In the real game, you will start your search in rooms other than the hallway on some Fridays to save yourself some time.
+                <br>
+                <br>
+                In addition, things sometimes change in your home. In order to collect as much cash as possible, you need to NOTICE THESE CHANGES and ACT ACCORDINGLY.`,
+
+
+                `You will live in a total of 5 houses in succession - sometimes a colleague leaves you their house, sometimes you move, ...
+                <br>
+                <br>
+                Each house has 10 rooms and the floor plan that we have shown you. However, what is in which room (e.g. kitchen in room 4) and how much cash you have deposited in which room varies from house to house. As soon as you live in a new house, you will have to find out anew where you can find the most cash.`,
+
+                `During the moves, you can take a short break before you start searching for cash in the next house. As soon as you are ready to continue again, press the right arrow button.`,
+
+
+                `Here is a short summary:
+                <br>
+                <br>
+                Collect as much cash as possible. To do so, memorise where you currently find the most money. Notice any changes and act accordingly.
+                <br>
+                <br>
+                In each room, decide on an action as quickly as possible:
+                <br>
+                - 'F' = left action
+                <br>
+                - 'J' = right action
+                <br>
+                - 'Space bar' if only one action is possible`,
+                
+                `Please mark the statements on the following pages as true or false to ensure that you have understood the game instructions. 
+                <br>
+                <br>
+                'Left arrow key' = true
+                <br>
+                'Right arrow key' = false
+                <br>
+                'Enter' = confirm
+                <br>
+                <br>
+                If you answer one or more questions incorrectly, you will be taken back to the beginning of the instructions and will be asked to complete the quiz again.
+                `
+            ];
+        </script>
+
+    </body>
+</html>

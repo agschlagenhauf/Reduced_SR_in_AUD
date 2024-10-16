@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+
+<!-- Start of HTML Document -->
+<html>
+    <head>
+        <!-- Load Style -->
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <link href="https://fonts.googleapis.com/css?family=Open Sans" rel="stylesheet">
+        <link rel="stylesheet" href="css/main.css">
+
+        <!-- Load Jatos -->
+        <script src="js/main.js"></script>
+        <script src="jatos.js"></script>
+    </head>
+
+    <!-- Start of Page Content (Visible on Screen) -->
+    <body>
+
+        <div id="message" class="full_screen_message" style="text-align: center;">
+        </div>
+
+        <script>
+            loadComponent(function() {
+                
+                let componentData = {
+                    'participant_ID':participantID, 
+                    'running_ID':runningID,
+                    'back_code': backCode,
+                    'variation':variationID, 
+                    'component':componentFlow[componentIndex]
+                };
+
+                let paragraphIndex = 0;
+
+                const message = document.getElementById("message");
+                message.innerHTML = paragraphs[paragraphIndex];
+                
+                document.onkeydown = function(event) { // navigation through intro
+                    if (event.key == Keyboard.LeftArrow) {
+                        paragraphIndex = Math.max(0, paragraphIndex - 1);
+                        message.innerHTML = paragraphs[paragraphIndex];
+                    }
+                    else if (event.key == Keyboard.RightArrow) {
+                        paragraphIndex += 1;
+
+                        if (paragraphIndex < paragraphs.length) {    
+                            message.innerHTML = paragraphs[paragraphIndex];
+                        }
+                        else { // once we reach last paragraph, right arrow leads to start of first condition
+                            disableInput(); // disable any further input
+                            fadeOut(message, function() {
+                                showNextComponent(componentData);
+                            });
+                        }
+                    }
+
+                };
+
+            });
+
+            const paragraphs = [
+            
+                `Now let's play through several Saturdays for practice. This is not your actual favourite pub yet. Press...
+                <br>
+                <br>
+                - 'F' = left action
+                <br>
+                - 'J' = right action
+                <br>
+                - 'Space bar' if only one action is possible`,
+
+                `Please always decide on an action as quickly as possible. If you are too slow, you will not receive any drinks on the respective Saturday and will have to wait until the following week.
+                <br>
+                <br>
+                Let's go!`
+            ];
+
+        </script>
+
+    </body>
+</html>
+

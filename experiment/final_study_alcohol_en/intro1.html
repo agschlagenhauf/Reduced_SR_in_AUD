@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+
+<!-- Start of HTML Document -->
+<html>
+    <head>
+        <!-- Load Style -->
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <link href="https://fonts.googleapis.com/css?family=Open Sans" rel="stylesheet">
+        <link rel="stylesheet" href="css/main.css">
+
+        <!-- Load Jatos -->
+        <script src="js/main.js"></script>
+        <script src="jatos.js"></script>
+    </head>
+
+    <!-- Start of Page Content (Visible on Screen) -->
+    <body>
+
+        <div id="message" class="full_screen_message" style="text-align: center;">
+        </div>
+
+        <script>
+            jatos.onLoad(function() { // load JATOS for the very first time
+
+                prepareComponentFlow();
+                
+                let componentData = {
+                    'participant_ID':participantID, 
+                    'running_ID':runningID,
+                    'back_code': backCode,
+                    'variation':variationID, 
+                    'component':componentFlow[componentIndex]
+                };
+
+                let paragraphIndex = 0;
+
+                const message = document.getElementById("message");
+                message.innerHTML = paragraphs[paragraphIndex];
+                
+                document.onkeydown = function(event) { // navigation through intro
+                    if (event.key == Keyboard.LeftArrow) {
+                        paragraphIndex = Math.max(0, paragraphIndex - 1);
+                        message.innerHTML = paragraphs[paragraphIndex];
+                    }
+                    else if (event.key == Keyboard.RightArrow) {
+                        paragraphIndex += 1;
+
+                        if (paragraphIndex < paragraphs.length) {    
+                            message.innerHTML = paragraphs[paragraphIndex];
+                        }
+                        else { // once we reach last paragraph, right arrow leads to start of first condition
+                            disableInput(); // disable any further input
+                            fadeOut(message, function() {
+                                showNextComponent(componentData);
+                            });
+                        }
+                    }
+                };
+            });
+
+            const paragraphs = [
+                `Welcome to this game! 
+                <br>
+                <br>
+                The game will take about 1 hour. Please make yourself comfortable and read the instructions carefully.
+                <br>
+                <br>
+                'Right arrow key' = continue
+                <br>
+                'Left arrow key' = back`,
+
+
+                `Imagine you regularly go to your favourite pub on Saturdays after a stressful week at work.
+                <br>
+                <br>
+                The pub consists of various rooms and offers something for every taste.`,
+
+
+                `However, the pub is popular not just with you. Some rooms are regularly reserved for private parties so that you cannot get alcoholic drinks there. In addition, the drink you order is regularly only available in small quantities or is already sold out in some rooms.
+                <br>
+                <br>
+                You therefore do not know in which rooms you will receive how many glasses of alcohol when you order at the bar counter.`,
+
+                
+                `Your goal every Saturday is to get as many glasses of alcohol as possible. 
+                <br>
+                <br>
+                If you collect the most glasses among the participants, we will reward you with a beverage store voucher worth £50. If you are in 2nd to 4th place, we will reward you with a beverage store voucher worth £15 each. The more glasses you receive throughout the game, the more likely you are to be one of the lucky winners!`,
+
+                `Your favourite pub has a total of 10 rooms. As soon as you enter a room, your action options light up YELLOW after a short time.
+                <br>
+                <br>
+                In some rooms you can choose between TWO options: Two doors that lead to different next rooms.
+                <br>
+                <br>
+                In other rooms, you can only choose ONE action option: A bar counter where you try to order several glasses of alcohol. You then see if and how many glasses you receive. Afterwards, you automatically move on to the next room.`,
+
+
+                `On the first Saturdays, we will tell you which option to choose in all rooms. In rooms that actually contain two options, this means that one of the options is grayed out and cannot be selected. The option that you can choose will light up YELLOW. 
+                <br>
+                <br>
+                On these first Saturdays, please memorise where you receive the most glasses of alcohol. How many glasses you receive in a room does not depend on how you got there.`,
+
+                `On the following Saturdays, we will give you a free choice: In rooms with two action options, both options are available and marked YELLOW.
+                <br>
+                <br>
+                On these Saturdays, you have the opportunity to collect as many glasses of alcohol as possible. Choose the options that lead you to the highest amount of alcohol.`,
+
+                `You can see the floor plan of your favourite pub with 10 rooms on the next page. You start at the bottom and then follow a path that leads you to room 10 (top).`
+            ];
+        </script>
+
+    </body>
+</html>
+
