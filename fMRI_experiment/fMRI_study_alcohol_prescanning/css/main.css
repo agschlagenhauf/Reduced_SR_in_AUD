@@ -1,0 +1,318 @@
+/*
+ * main.css
+ */
+
+/*
+ * Colors
+ */
+:root {
+  --background-color: #222222;
+  --text-color: #FFFFFF;
+  --fadeout-time: 0.0s;
+}
+
+/*
+ * Body Styling
+ */
+body {
+  background-color: var(--background-color);
+  margin-top: 0pt;
+  margin-bottom: 0pt;
+  margin-left: 0pt;
+  margin-right: 0pt;
+}
+
+/*
+ * Text Styling
+ */
+.full_screen_message {
+  font-family: "Open Sans", Helvetica, sans-serif;
+  font-size: 18pt;
+  color: var(--text-color);
+  text-align: center;
+  line-height: 1.5;
+  width: 75%;
+  height: auto;
+  margin-top: 8%;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.quiz_question {
+  font-family: "Open Sans", Helvetica, sans-serif;
+  font-size: 18pt;
+  color: var(--text-color);
+  text-align: center;
+  line-height: 1.5;
+  width: 75%;
+  height: auto;
+  margin-top: 8%;
+  margin-left: auto;
+  margin-right: auto;
+  margin-bottom: 15%;
+}
+
+.quiz_option_outer_container {
+  width: 75%;
+  height: auto;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.quiz_option_inner_container {
+  width: 50%;
+  height: auto;
+  float: left;
+  padding: 0;
+  margin: 0;
+}
+
+.quiz_option {
+  font-family: "Open Sans", Helvetica, sans-serif;
+  font-size: 16pt;
+  color: var(--text-color);
+  background-color: none;
+  text-align: center;
+  line-height: 1.5;
+  width: auto;
+  height: auto;
+  padding: 20pt;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.quiz_option_selected {
+  color: var(--text-color);
+  background-color: #6495ED;
+}
+
+
+
+.drink_selection_question {
+  font-family: "Open Sans", Helvetica, sans-serif;
+  font-size: 18pt;
+  color: var(--text-color);
+  text-align: center;
+  line-height: 1.5;
+  width: 75%;
+  height: auto;
+  margin-top: 8%;
+  margin-left: auto;
+  margin-right: auto;
+  margin-bottom: 15%;
+}
+
+.drink_option_outer_container {
+  width: 90%;
+  height: auto;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.drink_option_inner_container {
+  width: 33%;
+  height: auto;
+  float: left;
+  padding: 0;
+  margin: 0;
+}
+
+.drink_option {
+  font-family: "Open Sans", Helvetica, sans-serif;
+  font-size: 16pt;
+  color: var(--text-color);
+  background-color: none;
+  text-align: center;
+  line-height: 1.5;
+  width: auto;
+  height: auto;
+  padding: 20pt;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.drink_option_selected {
+  color: var(--text-color);
+  background-color: #6495ED;
+}
+
+
+
+.variation_question {
+  font-family: "Open Sans", Helvetica, sans-serif;
+  font-size: 18pt;
+  color: var(--text-color);
+  text-align: center;
+  line-height: 1.5;
+  width: 75%;
+  height: auto;
+  margin-top: 8%;
+  margin-left: auto;
+  margin-right: auto;
+  margin-bottom: 15%;
+}
+
+.variation_input_outer_container {
+    position: absolute;
+    bottom: 10%; /* Adjust this value to control how far from the bottom the input appears */
+    left: 50%;
+    transform: translateX(-50%); /* Centers the input horizontally */
+    width: 100%; /* Optional: Set width to full to ensure alignment */
+    text-align: center; /* Centers the content (input) inside the container */
+}
+
+.variation_input_inner_container {
+    display: inline-block; /* Keeps the input at the centered position */
+}
+
+.variation_input {
+    padding: 10px;
+    font-size: 16px;
+    width: 50%; /* Adjust width as necessary */
+    background-color: #d3d3d3; /* Grey background */
+    border: 1px solid #000; /* Black border */
+    border-radius: 4px; /* Optional: Rounded corners */
+    color: #000; /* Text color */
+    outline: none; /* Remove default outline when focused */
+}
+
+.variation_input:focus {
+    border-color: #000; /* Ensures black border remains on focus */
+}
+
+
+
+.rating_question {
+  font-family: "Open Sans", Helvetica, sans-serif;
+  font-size: 18pt;
+  color: var(--text-color);
+  text-align: center;
+  line-height: 1.5;
+  width: 75%;
+  height: auto;
+  margin-top: 2.5%;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+
+/*
+ * Image Styling
+ */
+.image_container {
+  position: absolute;
+  height: 90%;
+  width: 100%;
+  top: 5%;
+  left: 0%;
+}
+
+.rating_image_container {
+  height: 60vh;
+  margin-top: 32px;
+}
+
+.full_screen_image {
+  position: absolute;
+  height: 100%;
+  width: auto;
+  top: 0px;
+  left: 0px;
+  right: 0px;
+  margin-left: auto;
+  margin-right: auto;
+  object-fit: contain;
+  z-index: 0;
+}
+
+.reward_image {
+  position: absolute;
+  height: 100%;
+  width: auto;
+  top: 0px;
+  left: 0px;
+  right: 0px;
+  margin-left: auto;
+  margin-right: auto;
+  object-fit: contain;
+  z-index: 1;
+}
+
+.rating_image {
+  display: block;
+  height: 100%;
+  max-width: 100%;
+  width: auto;
+  margin-left: auto;
+  margin-right: auto;
+  object-fit: contain;
+}
+
+@keyframes fade_out {
+  0% {
+    opacity: 1.0;
+  }
+
+  100% {
+    opacity: 0.0;
+  }
+}
+
+.fade_out {
+  animation-name: fade_out;
+  animation-duration: var(--fadeout-time);
+  animation-direction: normal;
+  animation-fill-mode: forwards;
+}
+
+/*
+ * Sliding scales
+ */
+.slidecontainer {
+  width: 40%;
+  margin-top: 32px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* The slider itself */
+.slider {
+  -webkit-appearance: none;  /* Override default CSS styles */
+  appearance: none;
+  width: 100%; /* Full-width */
+  height: 30px; /* Specified height */
+  background: #d3d3d3; /* Grey background */
+  outline: none; /* Remove outline */
+  border-radius: 50px; /* round corners */
+}
+
+.slider::-webkit-slider-thumb {
+  appearance: none; /* removes browser-specific styling */
+  width: 25px; /* handle width */
+  height: 25px; /* handle height */
+  border-radius: 50%; /* make it circular */
+  background: #6495ED; /* blue color */
+  cursor: pointer; /* cursor on hover */
+}
+
+.ticks {
+  display: flex;
+  justify-content: space-between;
+  padding: 5px 10px;
+}
+
+.tick {
+  font-family: "Open Sans", Helvetica, sans-serif;
+  font-size: 16pt;
+  color: var(--text-color);
+  position: relative;
+  display: flex;
+  justify-content: center;
+  background-color: none;
+  height: 5px;
+  margin-bottom: 10px;
+  background-color: none;
+  line-height: 1.5;
+  width: auto;
+  height: auto;
+}
