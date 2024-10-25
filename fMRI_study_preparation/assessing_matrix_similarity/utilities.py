@@ -13,68 +13,30 @@ from statsmodels.stats.outliers_influence import variance_inflation_factor
 
 
 ## Plotting
-def plot_matrices(condition, timepoint, beta, matrix1, matrix2, matrix3, matrix4, matrix5, matrix6, matrix7, matrix8):
+def plot_matrices(region, condition, timepoint, beta, matrix_names, *matrices):
     fig, axes = plt.subplots(2, 4, figsize=(16, 8))
 
-    # Plot matrix_1
-    sns.heatmap(matrix1, cmap="Oranges", vmin=-0.3, vmax=1, annot=False, cbar=True, ax=axes[0,0])
-    axes[0,0].set_title('M')
-    axes[0,0].set_xlabel("State-Action Pairs (To)")
-    axes[0,0].set_ylabel("State-Action Pairs (From)")
-    axes[0,0].set_yticklabels(axes[0,0].get_yticklabels(), rotation=360, ha='right')
+    for i, matrix in enumerate(matrices):
 
-    # Plot matrix_2
-    sns.heatmap(matrix2, cmap="Oranges", vmin=-0.3, vmax=1, annot=False, cbar=True, ax=axes[0,1])
-    axes[0,1].set_title('reduced M')
-    axes[0,1].set_xlabel("State-Action Pairs (To)")
-    axes[0,1].set_ylabel("State-Action Pairs (From)")
-    axes[0,1].set_yticklabels(axes[0,1].get_yticklabels(), rotation=360, ha='right')
+        if i < 4:
+            # Plot raw matrices
+            sns.heatmap(matrix, cmap="Oranges", vmin=-0.3, vmax=1, annot=False, cbar=True, ax=axes[0,i])
+            axes[0,i].set_title(matrix_names[i])
+            axes[0,i].set_xlabel("State-Action Pairs (To)")
+            axes[0,i].set_ylabel("State-Action Pairs (From)")
+            axes[0,i].set_yticklabels(axes[0,i].get_yticklabels(), rotation=360, ha='right')
 
-    # Plot matrix_3
-    sns.heatmap(matrix3, cmap="Oranges", vmin=-0.3, vmax=1, annot=False, cbar=True, ax=axes[0,2])
-    axes[0,2].set_title('T')
-    axes[0,2].set_xlabel("State-Action Pairs (To)")
-    axes[0,2].set_ylabel("State-Action Pairs (From)")
-    axes[0,2].set_yticklabels(axes[0,2].get_yticklabels(), rotation=360, ha='right')
-
-    # Plot matrix_4
-    sns.heatmap(matrix4, cmap="Oranges", vmin=-0.3, vmax=1, annot=False, cbar=True, ax=axes[0,3])
-    axes[0,3].set_title('T-derived M')
-    axes[0,3].set_xlabel("State-Action Pairs (To)")
-    axes[0,3].set_ylabel("State-Action Pairs (From)")
-    axes[0,3].set_yticklabels(axes[0,3].get_yticklabels(), rotation=360, ha='right')
-
-    # Plot matrix_5
-    sns.heatmap(matrix5, cmap="Oranges", vmin=-0.3, vmax=1, annot=False, cbar=True, ax=axes[1,0])
-    axes[1,0].set_title('M neuro')
-    axes[1,0].set_xlabel("State-Action Pairs (To)")
-    axes[1,0].set_ylabel("State-Action Pairs (From)")
-    axes[1,0].set_yticklabels(axes[1,0].get_yticklabels(), rotation=360, ha='right')
-
-    # Plot matrix_6
-    sns.heatmap(matrix6, cmap="Oranges", vmin=-0.3, vmax=1, annot=False, cbar=True, ax=axes[1,1])
-    axes[1,1].set_title('reduced M neuro')
-    axes[1,1].set_xlabel("State-Action Pairs (To)")
-    axes[1,1].set_ylabel("State-Action Pairs (From)")
-    axes[1,1].set_yticklabels(axes[1,1].get_yticklabels(), rotation=360, ha='right')
-
-    # Plot matrix_7
-    sns.heatmap(matrix7, cmap="Oranges", vmin=-0.3, vmax=1, annot=False, cbar=True, ax=axes[1,2])
-    axes[1,2].set_title('T neuro')
-    axes[1,2].set_xlabel("State-Action Pairs (To)")
-    axes[1,2].set_ylabel("State-Action Pairs (From)")
-    axes[1,2].set_yticklabels(axes[1,2].get_yticklabels(), rotation=360, ha='right')
-
-    # Plot matrix_8
-    sns.heatmap(matrix8, cmap="Oranges", vmin=-0.3, vmax=1, annot=False, cbar=True, ax=axes[1,3])
-    axes[1,3].set_title('T-derived M neuro')
-    axes[1,3].set_xlabel("State-Action Pairs (To)")
-    axes[1,3].set_ylabel("State-Action Pairs (From)")
-    axes[1,3].set_yticklabels(axes[1,3].get_yticklabels(), rotation=360, ha='right')
+        else:
+            # Plot similarity matrices
+            sns.heatmap(matrix, cmap="Oranges", vmin=-0.3, vmax=1, annot=False, cbar=True, ax=axes[1,i-4])
+            axes[1,i-4].set_title(matrix_names[i])
+            axes[1,i-4].set_xlabel("State-Action Pairs (To)")
+            axes[1,i-4].set_ylabel("State-Action Pairs (From)")
+            axes[1,i-4].set_yticklabels(axes[1,i-4].get_yticklabels(), rotation=360, ha='right')
 
     # Adjust the layout to prevent overlapping
     plt.tight_layout(pad=2.5, rect=[0, 0, 1, 0.9])  # Ensures the subplots don't overlap
-    fig.suptitle(f'{condition}, {timepoint}-re-learning, beta={beta}', fontsize=16)
+    fig.suptitle(f'{region}, {condition}, {timepoint}-re-learning, beta={beta}', fontsize=16)
 
     # Adjust space for subtitle (move it upwards)
     plt.subplots_adjust(top=0.90)  # Adjust top to create space for subtitle
@@ -82,7 +44,7 @@ def plot_matrices(condition, timepoint, beta, matrix1, matrix2, matrix3, matrix4
     plt.show()
 
     # Save the figure to a file
-    plt.savefig(f"results/plot_{condition}_{timepoint}_beta{beta}.png", format='png', dpi=400)  # Save the figure with a specified name
+    plt.savefig(f"results/plot_{region}_{condition}_{timepoint}_beta{beta}.png", format='png', dpi=400)  # Save the figure with a specified name
 
 
 def softmax(beta, values):
@@ -159,7 +121,7 @@ def upper_triangular_correlation(matrix1, matrix2):
     return corr
 
 # Plot pairwise correlations between upper triangular parts as a heatmap
-def pairwise_upper_tri_correlation_heatmap(condition, beta, timepoint, matrix_names, *matrices):
+def pairwise_upper_tri_correlation_heatmap(region, condition, timepoint, beta, matrix_names, *matrices):
     num_matrices = len(matrices)
     
     # Initialize a correlation matrix to store the pairwise correlations
@@ -179,12 +141,12 @@ def pairwise_upper_tri_correlation_heatmap(condition, beta, timepoint, matrix_na
     ax.set_xticklabels(matrix_names, rotation=45, ha='right')
     ax.set_yticklabels(matrix_names, rotation=0, ha='right')
 
-    plt.title(f'Pairwise Correlations btw. S-A representations \n and neural S-A similarity matrices \n {condition}, {timepoint}-re-learning, beta={beta}')
+    plt.title(f'Pairwise correlations btw. neural similarity matrices \n {region}, {condition}, {timepoint}-re-learning, beta={beta}')
     plt.subplots_adjust(left=0.2, bottom=0.2)
     plt.show()
 
     # Save the figure to a file
-    plt.savefig(f"results/plot_2ndorder_heatmap_{condition}_{timepoint}_beta{beta}.png", format='png', dpi=400)  # Save the figure with a specified name
+    plt.savefig(f"results/plot_2ndorder_heatmap_{region}_{condition}_{timepoint}_beta{beta}.png", format='png', dpi=400)  # Save the figure with a specified name
 
 # calculate correlation between rows of a matrix
 def calculate_row_correlations(matrix):
