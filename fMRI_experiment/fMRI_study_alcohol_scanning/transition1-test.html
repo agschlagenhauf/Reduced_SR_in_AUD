@@ -33,7 +33,7 @@
         <script>
             loadComponent(function() {
 
-                const stateRoomMap = jatos.studySessionData["goal-state"]["state_room_map"]; // read shuffled image order defined in learning phase
+                const stateRoomMap = jatos.studySessionData["transition1"]["state_room_map"]; // read shuffled image order defined in learning phase
 
                 // (name, imageName, preChoiceTime, maxChoiceTime, afterChoiceTime, nextStateLeft, nextStateRight)
 
@@ -54,19 +54,20 @@
                     'variation':variationID, 
                     'component':componentFlow[componentIndex],
                     'state_room_map':stateRoomMap,
+                    'trigger_onset': null,
                     'aggregate_results':[]
                 };
 
                 const message = document.getElementById("message");
 
-                doAfter(15, function() {
+                doAfter(2, function() {
                     fadeOut(message, function() {
                         runTrials(trialIndex, initialStateNames, states, componentData['aggregate_results'], function() {
                             showNextComponent(componentData);
                         });
                     });
                 });
-                
+
             });
         </script>
 

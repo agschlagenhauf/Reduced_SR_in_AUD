@@ -17,7 +17,17 @@ const afterChoiceTimeNoReward = 2.0; // time after valid choice with no reward
 const afterChoiceTimeReward = 2.5; // time after valid choice with reward presentation
 const fadeoutTime = 0.5; // fadeout duration after each trial (and intro/outro component)
 const ITI = 0.5; // inter trial interval
-const viewingTime = 2; // time to show one state during tutorial viewing block
+const viewingTime = 2; // time to show one state during viewing block
+// Exponential distribution with mean 3 and range 2-5 seconds, generated with R script
+const viewingITI = shuffleNumbers(3.67, 2.86, 2.11, 2.74, 3.34, 2.31, 3.52, 2.74, 4.15, 2.69, 2, 3.5, 4.36, 2.08, 4.14, 2.58,
+    2.63, 2.7, 4.56, 2.71, 2.51, 3.44, 2.41, 4.83, 2.72, 2.48, 4.74, 4.9, 3.38, 4.21, 3.06, 3.18, 2.87, 2.32, 2.69, 3.64, 3.27,
+    3.42, 2.87, 3.81, 3.52, 3.74, 2.99, 3.45, 4.91, 2.62, 2.7, 2.72, 4.74, 2.14, 3.7, 2.18, 2.06, 4.07, 3.9, 3.15, 3.32, 2.28,
+    3.15, 2.27, 3.73, 4.48, 4.18, 2.02, 2.11, 2.57, 4.94, 2.1, 2.26, 2.47, 2.65, 2.38, 4.35, 2.43, 2.74, 4.81, 3.49, 3.19, 2.83,
+    3.53, 3.95, 3.96, 2.27, 2.04, 4.05, 2.45, 2.58, 3.93, 3.32, 3.1, 2.36, 3.13, 3.53, 2.45, 4.53, 2.51, 2.52, 4.9, 2.77, 2.21,
+    4.41, 3.18, 3.54, 2.37, 3.2, 3.66, 4.04, 2.16, 3.56, 2.31, 3.77, 3.59, 4.04, 2.75, 2.72, 2.58, 4.68, 2.19, 2.24, 2.39, 4.79,
+    2.53, 4.66, 4.05, 2.5, 3.35, 2.16, 2.33, 2.38, 4.02, 3.27, 4.74, 2.89, 2.32, 3.34, 4.32, 3.05, 4.17, 2.95, 4.81, 3.73, 2.46,
+    2.98, 3.12, 3.4, 2.6, 3.9, 3.92, 2.46, 3.68, 2.22, 3.02, 2.62, 2.55, 2.25);
+
 
 
 /*
@@ -29,8 +39,7 @@ let runningID = null; // running ID generated in RedCap
 let backCode = null; // code leading back to individual RedCap questionnaires when appended to RedCap backLink
 let variationID = null; // which condition order and matching of condition and environment (see 'variations' at bottom of main.js)
 let environmentMap = {
-    "tutorial": "tapas",
-    "tutorial-viewing": "tapas"
+    "tutorial": "tapas"
 }; // mapping btw component & environment; environment of tutorial is always the same
 let componentFlow = []; // list of component titles (reward learning etc.)
 let componentIndex = 0; // current component index
@@ -66,49 +75,24 @@ function prepareTask() { // prepare list of what we should show
         "drink": drink,
     };
 
+    const correctFirstStateActionLearning = shuffle(["left", "right"]); // TODO randomize which state 1 action is correct after learning
+
+    jatos.studySessionData["transition1"] = { // save session data to pass to other components
+        "correct_first_state_action_learning": correctFirstStateActionLearning[0]
+    };
+    jatos.studySessionData["transition2"] = {
+        "correct_first_state_action_learning": correctFirstStateActionLearning[1]
+    };
+
     componentOnset = Date.now();
 }
 
 function prepareComponentFlow() { // prepare list of what we should show
 
-    const keys_1 = ["A1", "B1", "C1", "D1", "E1"];
-    const keys_0 = ["A2", "B2", "C2", "D2", "E2"];
-    const keys_3 = ["A3", "B3", "C3", "D3", "E3"];
-    const keys_2 = ["A4", "B4", "C4", "D4", "E4"];
-
-    if (keys_1.includes(variationID)) {
-        const correctFirstStateActionLearning = shuffle(["left", "right"]); // TODO randomize which state 1 action is correct after learning
-        jatos.studySessionData["control"] = null;
-        jatos.studySessionData["reward"] = {"correct_first_state_action_learning": correctFirstStateActionLearning[1]};
-        jatos.studySessionData["goal-state"] = null;
-    } else if (keys_2.includes(variationID)) {
-        const correctFirstStateActionLearning = shuffle(["left", "right"]); // TODO randomize which state 1 action is correct after learning
-        jatos.studySessionData["control"] = {"correct_first_state_action_learning": correctFirstStateActionLearning[0]};
-        jatos.studySessionData["reward"] = {"correct_first_state_action_learning": correctFirstStateActionLearning[1]};
-        jatos.studySessionData["goal-state"] = null;
-    } else if (keys_3.includes(variationID)) {
-        const correctFirstStateActionLearning = shuffle(["left", "right", "left"]); // TODO randomize which state 1 action is correct after learning
-        jatos.studySessionData["control"] = {"correct_first_state_action_learning": correctFirstStateActionLearning[0]};
-        jatos.studySessionData["reward"] = {"correct_first_state_action_learning": correctFirstStateActionLearning[1]};
-        jatos.studySessionData["goal-state"] = {"correct_first_state_action_learning": correctFirstStateActionLearning[2]};
-    } else {
-        jatos.studySessionData["control"] = null;
-        jatos.studySessionData["reward"] = null;
-        jatos.studySessionData["goal-state"] = null;
-    }
-
     componentFlow.push( // add StaticComponents to componentFlow array
         StaticComponents.EnterVariation,
-        StaticComponents.Intro1, 
-        StaticComponents.FloorPlan,
         StaticComponents.DrinkSelection,
-        StaticComponents.Intro2,  
-        StaticComponents.Tutorial, 
-        StaticComponents.Intro3, 
-        StaticComponents.Quiz, 
-        StaticComponents.QuizWrong,
-        StaticComponents.Intro4,
-        StaticComponents.TutorialViewing
+        StaticComponents.Intro
     ); 
 
     const variation = Variations.find(variation => variation.hasOwnProperty(jatos.studySessionData['variation_id']))
@@ -116,9 +100,13 @@ function prepareComponentFlow() { // prepare list of what we should show
     variationID = Object.keys(variation)[0]; // get e.g. A1, A2 etc. key
     const entries = variation[variationID]; // get content of variation element e.g. A1
 
-    if (entries.length > 0) { // if there are conditions to be performed before scanning
+    // How many conditions have been performed before scanning
+    const keys_1 = ["A1", "B1", "C1", "D1", "E1"];
+    const keys_0 = ["A2", "B2", "C2", "D2", "E2"];
+    const keys_3 = ["A3", "B3", "C3", "D3", "E3"];
+    const keys_2 = ["A4", "B4", "C4", "D4", "E4"];
 
-        componentFlow.push(StaticComponents.Intro5Outside); // push outro
+    if (keys_0.includes(variationID)) { // if no conditions have been performed outside scanner
 
         entries.forEach(function (entry, entryIndex) {
             const condition = Object.keys(entry)[0]; // get condition (key)
@@ -135,12 +123,71 @@ function prepareComponentFlow() { // prepare list of what we should show
             }
         });
 
-        componentFlow.push(StaticComponents.Outro); // push outro
+        componentFlow.push(StaticComponents.OutroScanner); // push outro
 
-    } else {
+    } else if (keys_1.includes(variationID)) { // if one condition has been performed outside scanner
 
-        componentFlow.push(StaticComponents.Intro5Inside); // push outro
+        componentFlow.push(`interlude-1`); // push outro
 
+        entries.forEach(function (entry, entryIndex) {
+            const condition = Object.keys(entry)[0]; // get condition (key)
+            const environment = entry[condition]; // get environment (value)
+
+            Phases.forEach(function (phase) {
+                const component = `${condition}-${phase}`; 
+                environmentMap[component] = environment; // save environment to use per condition (easier to access later than going into Variations)
+                componentFlow.push(component);
+            });
+
+            if (entryIndex < (entries.length - 1)) { // after every condition except last
+                componentFlow.push(`interlude-${entryIndex + 2}`); // add interlude
+            }
+        });
+
+        componentFlow.push(StaticComponents.OutroScanner); // push outro
+
+    } else if (keys_2.includes(variationID)) { // if two conditions have been performed outside scanner
+
+
+        componentFlow.push(`interlude-2`); // push outro
+
+        entries.forEach(function (entry, entryIndex) {
+            const condition = Object.keys(entry)[0]; // get condition (key)
+            const environment = entry[condition]; // get environment (value)
+
+            Phases.forEach(function (phase) {
+                const component = `${condition}-${phase}`; 
+                environmentMap[component] = environment; // save environment to use per condition (easier to access later than going into Variations)
+                componentFlow.push(component);
+            });
+
+            if (entryIndex < (entries.length - 1)) { // after every condition except last
+                componentFlow.push(`interlude-${entryIndex + 3}`); // add interlude
+            }
+        });
+
+        componentFlow.push(StaticComponents.OutroScanner); // push outro
+
+    } else if (keys_3.includes(variationID)) { // if three conditions have been performed outside scanner
+
+        componentFlow.push(`interlude-3`); // push outro
+
+        entries.forEach(function (entry, entryIndex) {
+            const condition = Object.keys(entry)[0]; // get condition (key)
+            const environment = entry[condition]; // get environment (value)
+
+            Phases.forEach(function (phase) {
+                const component = `${condition}-${phase}`; 
+                environmentMap[component] = environment; // save environment to use per condition (easier to access later than going into Variations)
+                componentFlow.push(component);
+            });
+
+            if (entryIndex < (entries.length - 1)) { // after every condition except last
+                componentFlow.push(`interlude-${entryIndex + 4}`); // add interlude
+            }
+        });
+
+        componentFlow.push(StaticComponents.OutroFinal); // push outro
     }
 
     componentOnset = Date.now();
@@ -175,6 +222,7 @@ function showNextComponent(componentData) { // move through elements of componen
     jatos.studySessionData["component_index"] = componentIndex;
 
     const componentTitle = componentFlow[componentIndex]; // get component title
+
     jatos.startComponentByTitle(componentTitle, componentData); // tell JATOS to start new component & log results from current component
 }
 
@@ -257,11 +305,11 @@ class TwoChoiceState {
     }
 }
 
-// define how many trials start in which state  (not shuffled yet)
+// define how many learning trials start in which state
 function defineLearningPhaseStartStates() { 
 
     let startStatesFirstSection = [
-        Array(1).fill("1LeftTo2Left"),
+        Array(1).fill("1LeftTo2Left")
         Array(1).fill("1LeftTo2Right"),
         Array(1).fill("1RightTo3Left"),
         Array(1).fill("1RightTo3Right"),
@@ -281,6 +329,87 @@ function defineLearningPhaseStartStates() {
     return allStartStates;
 };
 
+// define how many viewing trials start in which state
+function defineViewingPhaseStartStates() {
+  const elements = [
+    "1LeftViewing", "1RightViewing", "2LeftViewing", "2RightViewing", 
+    "3LeftViewing", "3RightViewing", "4Viewing", "5Viewing", 
+    "6Viewing", "7Viewing", "8Viewing", "9Viewing", "10Viewing"
+  ];
+
+  // Step 1: Repeat each element 12 times
+  let repeatedElements = [];
+  elements.forEach(element => {
+    for (let i = 0; i < 12; i++) {
+      repeatedElements.push(element);
+    }
+  });
+
+  // Step 2: Initialize transition map to track used transitions
+  let transitions = {};
+  elements.forEach(from => {
+    transitions[from] = {};
+    elements.forEach(to => {
+      if (from !== to) {
+        transitions[from][to] = 0; // 0 means unused transition
+      }
+    });
+  });
+
+  // Step 3: Recursive function to build the list
+  function buildList(currentList, remainingElements) {
+    if (remainingElements.length === 0) {
+      return currentList; // List is complete
+    }
+
+    let lastElement = currentList[currentList.length - 1];
+
+    // Get valid next choices (those with unused transitions and unidentical to last element)
+    let choices = remainingElements.filter(next => 
+      next !== lastElement && transitions[lastElement][next] === 0
+    );
+
+    // Shuffle choices to randomize the selection order
+    choices = choices.sort(() => Math.random() - 0.5);
+
+    // Try each choice in randomized order
+    for (let nextElement of choices) {
+      // Mark transition as used
+      transitions[lastElement][nextElement] = 1;
+
+      // Remove nextElement from remaining and add it to current list
+      let index = remainingElements.indexOf(nextElement);
+      let newRemainingElements = remainingElements.slice();
+      newRemainingElements.splice(index, 1);
+
+      // Recursive call with the new list and remaining elements
+      let result = buildList([...currentList, nextElement], newRemainingElements);
+      if (result) {
+        return result; // Solution found
+      }
+
+      // Backtrack: unmark the transition if solution not found
+      transitions[lastElement][nextElement] = 0;
+    }
+
+    return null; // No valid solution found from this path
+  }
+
+  // Start with a random initial element
+  let startElement = repeatedElements[Math.floor(Math.random() * repeatedElements.length)];
+  let initialIndex = repeatedElements.indexOf(startElement);
+  let initialRemainingElements = repeatedElements.slice();
+  initialRemainingElements.splice(initialIndex, 1);
+
+  // Build the list starting with the chosen initial element
+  let randomizedList = buildList([startElement], initialRemainingElements);
+
+  return randomizedList;
+}
+
+
+
+
 /*
  * Run experiment
  */
@@ -296,21 +425,22 @@ function configure(stateName, states, trialResults, trialResultHandler) {
     const state = states.find(function (state) { // find state name in list of states (according to name not position)
         return state.name == stateName;
     });
-    console.log(state.name)
-    console.log(stateName)
 
     const image = document.getElementById("image");
     image.removeAttribute("src");
     image.style.opacity = 1;
     setImageFromEnvironment("image", `${state.imageName}`, stateName);
 
+    stateOnset = Date.now();
+
     drink = jatos.studySessionData["drink"]; // which drink should be used as reward
-    console.log(drink)
 
     // wait for a choice to be made
     doAfter(state.preChoiceTime, function() { // after delay defined per state, do...
 
         let didMakeChoice = false; // no choice made yet
+        let cueOnset = Date.now(); // will be overwritten if response is made
+        let responseOnset = null; // will be overwritten if response is made
 
         // two choice states
         if (state instanceof TwoChoiceState) {
@@ -320,15 +450,18 @@ function configure(stateName, states, trialResults, trialResultHandler) {
 
                 setImageFromEnvironment("image", `${state.imageName}_highlighted_left`, stateName); // show same image with highlighted options
 
-                enableTwoChoiceInputLeft(function(input, RT) {
+                enableTwoChoiceInputLeft(function(input, cueOnset, responseOnset, RT) {
                     didMakeChoice = true; // valid choice made
                     setImageFromEnvironment("image", `${state.imageName}_left`, stateName); // set selected image
+
+                    feedbackOnset = Date.now();
 
                     doAfter(state.afterChoiceTime, function() {
                         configure(state.nextStateLeft, states, trialResults, trialResultHandler); // move to next state's image
                     });
                     
-                    trialResults.push({'state':stateName, 'valid_choice':didMakeChoice, 'choice':input, 'RT':RT}); // log results
+                    trialResults.push({'state':stateName, 'valid_choice':didMakeChoice, 'choice':input, 'RT':RT, 'state_onset': stateOnset, 'cue_onset': cueOnset,
+                        'response_onset': responseOnset, 'feedback_onset': feedbackOnset}); // log results
                 });
             }
             
@@ -337,15 +470,18 @@ function configure(stateName, states, trialResults, trialResultHandler) {
 
                 setImageFromEnvironment("image", `${state.imageName}_highlighted_right`, stateName); // show same image with highlighted options
 
-                enableTwoChoiceInputRight(function(input, RT) {
+                enableTwoChoiceInputRight(function(input, cueOnset, responseOnset, RT) {
                     didMakeChoice = true; // valid choice made
                     setImageFromEnvironment("image", `${state.imageName}_right`, stateName); // set selected image
+
+                    feedbackOnset = Date.now();
 
                     doAfter(state.afterChoiceTime, function() {
                         configure(state.nextStateRight, states, trialResults, trialResultHandler); // move to next state's image
                     });
                     
-                    trialResults.push({'state':stateName, 'valid_choice':didMakeChoice, 'choice':input, 'RT':RT}); // log results
+                    trialResults.push({'state':stateName, 'valid_choice':didMakeChoice, 'choice':input, 'RT':RT, 'state_onset': stateOnset, 'cue_onset': cueOnset,
+                        'response_onset': responseOnset, 'feedback_onset': feedbackOnset}); // log results
                 });
             }
             
@@ -354,7 +490,7 @@ function configure(stateName, states, trialResults, trialResultHandler) {
 
                 setImageFromEnvironment("image", `${state.imageName}_highlighted`, stateName); // show same image with highlighted options
 
-                enableTwoChoiceInput(function(input, RT) {
+                enableTwoChoiceInput(function(input, cueOnset, responseOnset, RT) {
                     didMakeChoice = true; // valid choice made
 
                     if (input == TwoChoiceInput.Left) {
@@ -364,14 +500,16 @@ function configure(stateName, states, trialResults, trialResultHandler) {
                         setImageFromEnvironment("image", `${state.imageName}_right`, stateName);
                     }
 
+                    feedbackOnset = Date.now();
+
                     doAfter(state.afterChoiceTime, function() {
                         fadeOut(image, function() {
                             trialResultHandler(trialResults, true);
                         });
                     });
 
-                    trialResults.push({'state':stateName, 'valid_choice':didMakeChoice, 'choice':input, 'RT':RT}); // log results
-                
+                    trialResults.push({'state':stateName, 'valid_choice':didMakeChoice, 'choice':input, 'RT':RT, 'state_onset': stateOnset, 'cue_onset': cueOnset,
+                        'response_onset': responseOnset, 'feedback_onset': feedbackOnset}); // log results
                 });
 
             }
@@ -381,11 +519,13 @@ function configure(stateName, states, trialResults, trialResultHandler) {
 
                 setImageFromEnvironment("image", `${state.imageName}_highlighted`, stateName); // show same image with highlighted options
 
-                enableTwoChoiceInput(function(input, RT) {
+                enableTwoChoiceInput(function(input, cueOnset, responseOnset, RT) {
                     didMakeChoice = true; // valid choice made
 
                     if (input == TwoChoiceInput.Left) {
                         setImageFromEnvironment("image", `${state.imageName}_left`, stateName); // set selected image
+
+                        feedbackOnset = Date.now();
 
                         doAfter(state.afterChoiceTime, function() {
                             configure(state.nextStateLeft, states, trialResults, trialResultHandler);
@@ -394,14 +534,15 @@ function configure(stateName, states, trialResults, trialResultHandler) {
                     else if (input == TwoChoiceInput.Right) {
                         setImageFromEnvironment("image", `${state.imageName}_right`, stateName);
 
+                        feedbackOnset = Date.now();
+
                         doAfter(state.afterChoiceTime, function() {
                             configure(state.nextStateRight, states, trialResults, trialResultHandler);
                         });
                     }
 
-                    
-
-                    trialResults.push({'state':stateName, 'valid_choice':didMakeChoice, 'choice':input, 'RT':RT}); // log results
+                    trialResults.push({'state':stateName, 'valid_choice':didMakeChoice, 'choice':input, 'RT':RT, 'state_onset': stateOnset, 'cue_onset': cueOnset,
+                        'response_onset': responseOnset, 'feedback_onset': feedbackOnset}); // log results
 
                 });
             }   
@@ -412,9 +553,11 @@ function configure(stateName, states, trialResults, trialResultHandler) {
 
             setImageFromEnvironment("image", `${state.imageName}_highlighted`, stateName); // show same image with highlighted options
 
-            enableOneChoiceInput(function(RT) {
+            enableOneChoiceInput(function(cueOnset, responseOnset, RT) {
                 didMakeChoice = true; // valid choice made
                 setImageFromEnvironment("image", `${state.imageName}_selected`, stateName); // set selected image
+
+                feedbackOnset = Date.now();
 
                 // rewarded trial
                 if (state.reward) {
@@ -450,7 +593,8 @@ function configure(stateName, states, trialResults, trialResultHandler) {
 
                 }
 
-                trialResults.push({'state':stateName, 'valid_choice':didMakeChoice, 'RT':RT}); // log results
+                trialResults.push({'state':stateName, 'valid_choice':didMakeChoice, 'RT':RT, 'state_onset': stateOnset, 'cue_onset': cueOnset,
+                        'response_onset': responseOnset, 'feedback_onset': feedbackOnset}); // log results
 
             });
         }
@@ -487,6 +631,8 @@ function configure(stateName, states, trialResults, trialResultHandler) {
                         text-shadow: none;
                     `
                 });
+                
+                feedbackOnset = Date.now();
 
                 doAfter(overlayTime, function() {
                     jatos.removeOverlay();
@@ -497,7 +643,8 @@ function configure(stateName, states, trialResults, trialResultHandler) {
 
                 });
 
-                trialResults.push({'state':stateName, 'valid_choice':didMakeChoice}); // log results
+                trialResults.push({'state':stateName, 'valid_choice':didMakeChoice, 'state_onset': stateOnset, 'cue_onset': cueOnset,
+                        'response_onset': responseOnset, 'feedback_onset': feedbackOnset}); // log results
 
             }
 
@@ -538,6 +685,7 @@ function runTrials(trialIndex, initialStateNames, states, aggregateResults, aggr
 }
 
 
+
 // function to run single viewing
 // input
 // initialStateNames = list of states from which to start per trial
@@ -566,10 +714,11 @@ function configureViewing(stateName, questionTrial, states, viewingResults, view
         setImageFromEnvironment("image", `${state.imageName}_highlighted_right`, stateName);
     }
 
+    stateOnset = Date.now();
+
     // initialize timing and selection variables
     let questionOnset = null;
     let responseOnset = null;
-    let RT = null;
     let selection = null;
     let didMakeChoice = false;
 
@@ -582,7 +731,7 @@ function configureViewing(stateName, questionTrial, states, viewingResults, view
             const questionText = [
                     `Wie viele Gläser Alkohol können Sie maximal auf dem Weg erhalten, der der zuletzt angezeigten Handlung folgt?
                     <br>
-                    (Tasten '0' bis '4')`
+                    (Tasten 'links außen' bis 'rechts außen')`
                 ];
             const optionLeftLeftText = [`0`];
             const optionLeftMiddleText = [`1`];
@@ -610,7 +759,7 @@ function configureViewing(stateName, questionTrial, states, viewingResults, view
 
                 disableInput(); // disable any further input
 
-                if (event.key == Keyboard.Zero) {
+                if (event.key == Keyboard.One) {
                     responseOnset = Date.now();
                     RT = responseOnset - questionOnset;
                     didMakeChoice = true;
@@ -620,7 +769,7 @@ function configureViewing(stateName, questionTrial, states, viewingResults, view
                     optionRightMiddle.classList.remove("quiz_option_selected");
                     optionRightRight.classList.remove("quiz_option_selected");
                 }
-                else if (event.key == Keyboard.One) {
+                else if (event.key == Keyboard.Two) {
                     responseOnset = Date.now();
                     RT = responseOnset - questionOnset;
                     didMakeChoice = true;
@@ -630,7 +779,7 @@ function configureViewing(stateName, questionTrial, states, viewingResults, view
                     optionRightMiddle.classList.remove("quiz_option_selected");
                     optionRightRight.classList.remove("quiz_option_selected");
                 }
-                else if (event.key == Keyboard.Two) {
+                else if (event.key == Keyboard.Three) {
                     responseOnset = Date.now();
                     RT = responseOnset - questionOnset;
                     didMakeChoice = true;
@@ -640,7 +789,7 @@ function configureViewing(stateName, questionTrial, states, viewingResults, view
                     optionRightMiddle.classList.add("quiz_option_selected");
                     optionRightRight.classList.remove("quiz_option_selected");
                     
-                } else if (event.key == Keyboard.Three) {
+                } else if (event.key == Keyboard.Four) {
                     responseOnset = Date.now();
                     RT = responseOnset - questionOnset;
                     didMakeChoice = true;
@@ -662,15 +811,16 @@ function configureViewing(stateName, questionTrial, states, viewingResults, view
                 questionScreen.style.display = "none"; // make invisible
 
                 console.log(selection);
-                viewingResults.push({'state':stateName, 'question_trial': questionTrial, 'valid_choice':didMakeChoice, 'selection': selection, 'RT': RT}); // log results
+                viewingResults.push({'state':stateName, 'question_trial': questionTrial, 'valid_choice':didMakeChoice, 'selection': selection, 'RT': RT, 
+                    'state_onset': stateOnset, 'question_onset': questionOnset, 'response_onset': responseOnset}); // log results
                 viewingResultsHandler(viewingResults, true);
-
             })
 
         } else {
 
             console.log(selection);
-            viewingResults.push({'state':stateName, 'question_trial': questionTrial, 'valid_choice':didMakeChoice, 'selection': selection, 'RT': RT}); // log results
+            viewingResults.push({'state':stateName, 'question_trial': questionTrial, 'valid_choice':didMakeChoice, 'selection': selection, 'RT': RT, 
+                'state_onset': stateOnset, 'question_onset': questionOnset, 'response_onset': responseOnset}); // log results
             viewingResultsHandler(viewingResults, true);
 
         };
@@ -697,7 +847,7 @@ function runViewing(viewingStateIndex, initialStateNames, questionTrials, states
 
         viewingStateIndex += 1;
 
-        doAfter(ITI, function() {
+        doAfter(viewingITI[viewingStateIndex-1], function() {
             if (viewingStateIndex-1 < initialStateNames.length) { // if more trials to run, call runTrial again
                 runViewing(viewingStateIndex, initialStateNames, questionTrials, states, aggregateViewingResults, aggregateViewingResultsHandler);
             }
@@ -712,7 +862,6 @@ function runViewing(viewingStateIndex, initialStateNames, questionTrials, states
 }
 
 
-
 /*
  * User Input
  */
@@ -723,12 +872,13 @@ const Keyboard = { // allows to use Keyboard.F etc.
     LeftArrow: "ArrowLeft",
     RightArrow: "ArrowRight",
     DownArrow: "ArrowDown",
-    Space: " ",
+    Space: "",
     Enter: "Enter",
-    Zero: "0",
+    Trigger: "5",
     One: "1",
     Two: "2",
-    Three: "3"
+    Three: "3",
+    Four: "4"
 };
 
 const TwoChoiceInput = { // left and right choice, independent of which keys are used
@@ -746,11 +896,11 @@ function enableOneChoiceInput(callback) { // allowed keys for 1-choice states
             const RT = responseOnset - cueOnset;
             disableInput(); // disable any further input
             jatos.removeOverlay(); // remove wrong key overlay if present
-            callback(RT); // call what I put in as callback function
+            callback(cueOnset, responseOnset, RT); // call what I put in as callback function
         }
         else {
             jatos.showOverlay({
-                text: "Nur Leerzeichen gültig!",
+                text: "Nur gelb (links innen) gültig!",
                 showImg: false,
                 style: `
                     font-family: "Open Sans", Helvetica, sans-serif;
@@ -777,23 +927,23 @@ function enableTwoChoiceInput(callback) { // allowed keys for 2-choice states
     const cueOnset = Date.now(); // log time at cue onset
 
     document.onkeydown = function(event) {
-        if (event.key == Keyboard.F) { // change input key here
+        if (event.key == Keyboard.Three) { // change input key here
             const responseOnset = Date.now();
             const RT = responseOnset - cueOnset;
             disableInput(); // disable any further input
             jatos.removeOverlay(); // remove wrong key overlay if present
-            callback(TwoChoiceInput.Left, RT); // execute function defined as callback function with input TwoChoioceInput.Left
+            callback(TwoChoiceInput.Left, cueOnset, responseOnset, RT); // execute function defined as callback function with input TwoChoioceInput.Left
         }
-        else if (event.key == Keyboard.J) { // change input key here
+        else if (event.key == Keyboard.Four) { // change input key here
             const responseOnset = Date.now();
             const RT = responseOnset - cueOnset;
             disableInput(); // disable any further input
             jatos.removeOverlay(); // remove wrong key overlay if present
-            callback(TwoChoiceInput.Right, RT); // execute function defined as callback function with input TwoChoioceInput.Right
+            callback(TwoChoiceInput.Right, cueOnset, responseOnset, RT); // execute function defined as callback function with input TwoChoioceInput.Right
         }
         else {
             jatos.showOverlay({
-                text: "Nur F oder J gültig!",
+                text: "Nur grün (rechts innen) oder rot (rechts außen) gültig!",
                 showImg: false,
                 style: `
                     font-family: "Open Sans", Helvetica, sans-serif;
@@ -824,16 +974,16 @@ function enableTwoChoiceInputLeft(callback) { // allowed keys for 2-choice state
     const cueOnset = Date.now(); // log time at cue onset
 
     document.onkeydown = function(event) {
-        if (event.key == Keyboard.F) { // change input key here
+        if (event.key == Keyboard.Three) { // change input key here
             const responseOnset = Date.now();
             const RT = responseOnset - cueOnset;
             disableInput(); // disable any further input
             jatos.removeOverlay(); // remove wrong key overlay if present
-            callback(TwoChoiceInput.Left, RT); // execute function defined as callback function with input TwoChoioceInput.Left
+            callback(TwoChoiceInput.Left, cueOnset, responseOnset, RT); // execute function defined as callback function with input TwoChoioceInput.Left
         }
         else {
             jatos.showOverlay({
-                text: "Nur F gültig!",
+                text: "Nur grün (rechts innen) gültig!",
                 showImg: false,
                 style: `
                     font-family: "Open Sans", Helvetica, sans-serif;
@@ -860,16 +1010,16 @@ function enableTwoChoiceInputRight(callback) { // allowed keys for 2-choice stat
     const cueOnset = Date.now(); // log time at cue onset
 
     document.onkeydown = function(event) {
-        if (event.key == Keyboard.J) { // change input key here
+        if (event.key == Keyboard.Four) { // change input key here
             const responseOnset = Date.now();
             const RT = responseOnset - cueOnset;
             disableInput(); // disable any further input
             jatos.removeOverlay(); // remove wrong key overlay if present
-            callback(TwoChoiceInput.Right, RT); // execute function defined as callback function with input TwoChoioceInput.Right
+            callback(TwoChoiceInput.Right, cueOnset, responseOnset, RT); // execute function defined as callback function with input TwoChoioceInput.Right
         }
         else {
             jatos.showOverlay({
-                text: "Nur J gültig!",
+                text: "Nur rot (rechts außen) gültig!",
                 showImg: false,
                 style: `
                     font-family: "Open Sans", Helvetica, sans-serif;
@@ -896,6 +1046,36 @@ function disableInput() {
     document.onkeydown = null;
 }
 
+/*
+ * Scanner trigger logging
+ */
+
+function waitForInitialTrigger(triggerIndex, callback) { // allowed keys for 1-choice states
+
+    document.onkeydown = function(event) {
+        if (event.key == Keyboard.Trigger) { // change input key here
+            triggerIndex = triggerIndex + 1;
+            if (triggerIndex < 5) {
+                waitForInitialTrigger(triggerIndex, callback)
+            } else {
+                const triggerOnset = Date.now(); 
+                disableInput(); // disable any further input
+                callback(triggerOnset); // call what I put in as callback function
+            }
+        }
+    };
+}
+
+function waitForTrigger(callback) { // allowed keys for 1-choice states
+
+    document.onkeydown = function(event) {
+        if (event.key == Keyboard.Trigger) { // change input key here
+            const triggerOnset = Date.now(); 
+            disableInput(); // disable any further input
+            callback(triggerOnset); // call what I put in as callback function
+        }
+    };
+}
 
 /*
  * Utilities
@@ -1033,6 +1213,21 @@ function shuffle(array) { // returns randomly shuffled elements
     return arrayCopy;
 }
 
+function shuffleNumbers(...numbers) { // returns randomly shuffled elements
+    let arrayCopy = [...numbers];
+    let currentIndex = arrayCopy.length;
+
+    while (currentIndex > 0) {
+        let randomIndex = Math.floor(Math.random() * currentIndex);
+        currentIndex -= 1;
+
+        // Swap elements
+        [arrayCopy[currentIndex], arrayCopy[randomIndex]] = [arrayCopy[randomIndex], arrayCopy[currentIndex]];
+    }
+
+    return arrayCopy;
+}
+
 function compareArrays(a, b) {
     if (a.length != b.length) {
         return false;
@@ -1053,19 +1248,10 @@ function compareArrays(a, b) {
  */
 const StaticComponents = {
     EnterVariation: "enter-variation",
-    Intro1: "intro1",
-    FloorPlan: "floor-plan",
+    Intro: "intro",
     DrinkSelection: "drink-selection",
-    Intro2: "intro2",
-    Tutorial: "tutorial",
-    Intro3: "intro3",
-    Quiz: "quiz",
-    QuizWrong: "quiz_wrong",
-    Intro4: "intro4",
-    TutorialViewing: "tutorial-viewing",
-    Intro5Outside: "intro5_startoutsidescanner",
-    Intro5Inside: "intro5_startinscanner",
-    Outro: "outro"
+    OutroScanner: "outro-scanner",
+    OutroFinal: "outro-final"
 };
 
 
@@ -1090,7 +1276,9 @@ const Environments = [ // all envs incl tutorial env
 const Phases = [
     "learning",
     "relearning",
-    "test"
+    "test",
+    "viewing1",
+    "viewing2"
 ];
 
 
@@ -1101,114 +1289,124 @@ const Variations = [
     
     {
         "A1": [
-            {"reward": "alternative"},
+            {"transition1": "brauhaus"},
+            {"transition2": "fancy_green"}
         ]
     },
     {
         "A2": [
+            {"transition1": "alternative"},
+            {"transition2": "brauhaus"}
         ]
     },
     {
         "A3": [
-            {"goal-state": "alternative"},
-            {"control": "brauhaus"},
-            {"reward": "fancy_green"}
-        ]
+            {"transition1": "hip_purple"},
+            {"transition2": "sports_bar"}
+            ]
     },
     {
         "A4": [
-            {"control": "alternative"},
-            {"reward": "brauhaus"}
+            {"transition1": "fancy_green"},
+            {"transition2": "hip_purple"}
         ]
     },
     {
         "B1": [
-            {"reward": "brauhaus"}
+            {"transition1": "fancy_green"},
+            {"transition2": "hip_purple"}
         ]
     },
     {
         "B2": [
+            {"transition1": "brauhaus"},
+            {"transition2": "hip_purple"}
         ]
     },
     {
         "B3": [
-            {"goal-state": "brauhaus"},
-            {"control": "hip_purple"},
-            {"reward": "sports_bar"}
+            {"transition1": "alternative"},
+            {"transition2": "fancy_green"}
         ]
     },
     {
         "B4": [
-            {"control": "brauhaus"},
-            {"reward": "hip_purple"}
+            {"transition1": "sports_bar"},
+            {"transition2": "alternative"},
         ]
     },
     {
         "C1": [
-            {"reward": "fancy_green"}
+            {"transition1": "hip_purple"},
+            {"transition2": "sports_bar"}
         ]
     },
     {
         "C2": [
+            {"transition1": "fancy_green"},
+            {"transition2": "sports_bar"}
         ]
     },
     {
         "C3": [
-            {"goal-state": "fancy_green"},
-            {"control": "sports_bar"},
-            {"reward": "alternative"}
+            {"transition1": "brauhaus"},
+            {"transition2": "hip_purple"}
         ]
     },
     {
         "C4": [
-            {"control": "fancy_green"},
-            {"reward": "sports_bar"}
+            {"transition1": "alternative"},
+            {"transition2": "brauhaus"}
         ]
     },
     {
         "D1": [
-            {"reward": "hip_purple"}
+            {"transition1": "sports_bar"},
+            {"transition2": "alternative"}
         ]
     },
     {
         "D2": [
-        ]
+            {"transition1": "hip_purple"},
+            {"transition2": "sports_bar"}
+    ]
     },
     {
         "D3": [
-            {"goal-state": "hip_purple"},
-            {"control": "sports_bar"},
-            {"reward": "alternative"}
+            {"transition1": "fancy_green"},
+            {"transition2": "brauhaus"}
         ]
     },
     {
         "D4": [
-            {"control": "hip_purple"},
-            {"reward": "sports_bar"}
+            {"transition1": "alternative"},
+            {"transition2": "fancy_green"}
         ]
     },
     {
         "E1": [
-            {"reward": "sports_bar"}
+            {"transition1": "alternative"},
+            {"transition2": "brauhaus"}
         ]
     },
     {
         "E2": [
+            {"transition1": "sports_bar"},
+            {"transition2": "alternative"}
         ]
     },
     {
         "E3": [
-            {"goal-state": "sports_bar"},
-            {"control": "alternative"},
-            {"reward": "fancy_green"}
+            {"transition1": "hip_purple"},
+            {"transition2": "brauhaus"}
         ]
     },
     {
         "E4": [
-            {"control": "sports_bar"},
-            {"reward": "alternative"}
+            {"transition1": "fancy_green"},
+            {"transition2": "brauhaus"}
         ]
-    }
+}
 ];
 
 

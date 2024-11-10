@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+
+<!-- Start of HTML Document -->
+<html>
+    <head>
+        <!-- Load Style -->
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <link href="https://fonts.googleapis.com/css?family=Open Sans" rel="stylesheet">
+        <link rel="stylesheet" href="css/main.css">
+
+        <!-- Load Jatos -->
+        <script src="js/main.js"></script>
+        <script src="jatos.js"></script>
+    </head>
+
+    <!-- Start of Page Content (Visible on Screen) -->
+    <body>
+
+        <div id="message" class="full_screen_message" style="text-align: center;">
+            Willkommen zurück. Wir beginnen mit dem letzten Teil des Spiels. Hier eine Übersicht der Spielregeln:
+            <br>
+            <br>
+            Erhalten Sie so viele Gläser Alkohol wie möglich. Prägen Sie sich dazu ein, wo Sie aktuell am meisten Alkohol erhalten.
+            <br>
+            <br>
+            Entscheiden Sie sich in jedem Raum so schnell wie möglich für eine GELB markierte Handlungsoption:
+            <br>
+            <br>
+            - 'F' = linke Handlung
+            <br>
+            - 'J' = rechte Handlung
+            <br>
+            - 'Leerzeichen' wenn nur eine Handlung möglich
+            <br>
+            <br>
+            Viel Erfolg!
+        </div>
+
+        <script>
+            loadComponent(function() {
+
+                let componentData = {
+                    'participant_ID':participantID, 
+                    'running_ID':runningID,
+                    'back_code': backCode,
+                    'variation':variationID, 
+                    'component':componentFlow[componentIndex]
+                };
+
+                document.onkeydown = function(event) { // navigation through intro
+                    if (event.key == Keyboard.RightArrow) {
+                        disableInput(); // disable any further input
+                        fadeOut(message, function() {
+                            showNextComponent(componentData);
+                        });
+                    }
+                };
+            });
+
+            
+        </script>
+
+    </body>
+</html>

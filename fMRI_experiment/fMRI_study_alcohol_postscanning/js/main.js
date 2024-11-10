@@ -17,7 +17,7 @@ const afterChoiceTimeNoReward = 2.0; // time after valid choice with no reward
 const afterChoiceTimeReward = 2.5; // time after valid choice with reward presentation
 const fadeoutTime = 0.5; // fadeout duration after each trial (and intro/outro component)
 const ITI = 0.5; // inter trial interval
-const viewingTime = 2; // time to show one state during tutorial viewing block
+
 
 
 /*
@@ -29,8 +29,7 @@ let runningID = null; // running ID generated in RedCap
 let backCode = null; // code leading back to individual RedCap questionnaires when appended to RedCap backLink
 let variationID = null; // which condition order and matching of condition and environment (see 'variations' at bottom of main.js)
 let environmentMap = {
-    "tutorial": "tapas",
-    "tutorial-viewing": "tapas"
+    "tutorial": "tapas"
 }; // mapping btw component & environment; environment of tutorial is always the same
 let componentFlow = []; // list of component titles (reward learning etc.)
 let componentIndex = 0; // current component index
@@ -71,44 +70,37 @@ function prepareTask() { // prepare list of what we should show
 
 function prepareComponentFlow() { // prepare list of what we should show
 
-    const keys_1 = ["A1", "B1", "C1", "D1", "E1"];
-    const keys_0 = ["A2", "B2", "C2", "D2", "E2"];
-    const keys_3 = ["A3", "B3", "C3", "D3", "E3"];
-    const keys_2 = ["A4", "B4", "C4", "D4", "E4"];
+    // How many conditions will be performed after scanning?
+    const keys_2 = ["A1", "B1", "C1", "D1", "E1"];
+    const keys_3 = ["A2", "B2", "C2", "D2", "E2"];
+    const keys_0 = ["A3", "B3", "C3", "D3", "E3"];
+    const keys_1 = ["A4", "B4", "C4", "D4", "E4"];
 
     if (keys_1.includes(variationID)) {
         const correctFirstStateActionLearning = shuffle(["left", "right"]); // TODO randomize which state 1 action is correct after learning
-        jatos.studySessionData["control"] = null;
-        jatos.studySessionData["reward"] = {"correct_first_state_action_learning": correctFirstStateActionLearning[1]};
-        jatos.studySessionData["goal-state"] = null;
+        jatos.studySessionData["control"] = {};
+        jatos.studySessionData["reward"] = {};
+        jatos.studySessionData["goal-state"] = {"correct_first_state_action_learning": correctFirstStateActionLearning[1]};
     } else if (keys_2.includes(variationID)) {
         const correctFirstStateActionLearning = shuffle(["left", "right"]); // TODO randomize which state 1 action is correct after learning
         jatos.studySessionData["control"] = {"correct_first_state_action_learning": correctFirstStateActionLearning[0]};
-        jatos.studySessionData["reward"] = {"correct_first_state_action_learning": correctFirstStateActionLearning[1]};
-        jatos.studySessionData["goal-state"] = null;
+        jatos.studySessionData["reward"] = {};
+        jatos.studySessionData["goal-state"] = {"correct_first_state_action_learning": correctFirstStateActionLearning[1]};
     } else if (keys_3.includes(variationID)) {
         const correctFirstStateActionLearning = shuffle(["left", "right", "left"]); // TODO randomize which state 1 action is correct after learning
         jatos.studySessionData["control"] = {"correct_first_state_action_learning": correctFirstStateActionLearning[0]};
         jatos.studySessionData["reward"] = {"correct_first_state_action_learning": correctFirstStateActionLearning[1]};
         jatos.studySessionData["goal-state"] = {"correct_first_state_action_learning": correctFirstStateActionLearning[2]};
     } else {
-        jatos.studySessionData["control"] = null;
-        jatos.studySessionData["reward"] = null;
-        jatos.studySessionData["goal-state"] = null;
+        jatos.studySessionData["control"] = {};
+        jatos.studySessionData["reward"] = {};
+        jatos.studySessionData["goal-state"] = {};
     }
 
     componentFlow.push( // add StaticComponents to componentFlow array
         StaticComponents.EnterVariation,
-        StaticComponents.Intro1, 
-        StaticComponents.FloorPlan,
         StaticComponents.DrinkSelection,
-        StaticComponents.Intro2,  
-        StaticComponents.Tutorial, 
-        StaticComponents.Intro3, 
-        StaticComponents.Quiz, 
-        StaticComponents.QuizWrong,
-        StaticComponents.Intro4,
-        StaticComponents.TutorialViewing
+        StaticComponents.Intro
     ); 
 
     const variation = Variations.find(variation => variation.hasOwnProperty(jatos.studySessionData['variation_id']))
@@ -116,9 +108,27 @@ function prepareComponentFlow() { // prepare list of what we should show
     variationID = Object.keys(variation)[0]; // get e.g. A1, A2 etc. key
     const entries = variation[variationID]; // get content of variation element e.g. A1
 
-    if (entries.length > 0) { // if there are conditions to be performed before scanning
+    if (keys_1.includes(variationID)) { // if one condition has been performed outside scanner
 
-        componentFlow.push(StaticComponents.Intro5Outside); // push outro
+        componentFlow.push(`interlude-4`); // push outro
+
+        entries.forEach(function (entry, entryIndex) {
+            const condition = Object.keys(entry)[0]; // get condition (key)
+            const environment = entry[condition]; // get environment (value)
+
+            Phases.forEach(function (phase) {
+                const component = `${condition}-${phase}`; 
+                environmentMap[component] = environment; // save environment to use per condition (easier to access later than going into Variations)
+                componentFlow.push(component);
+            });
+
+        });
+
+        componentFlow.push(StaticComponents.Outro); // push outro
+
+    } else if (keys_2.includes(variationID)) { // if two conditions have been performed outside scanner
+
+        componentFlow.push(`interlude-3`); // push outro
 
         entries.forEach(function (entry, entryIndex) {
             const condition = Object.keys(entry)[0]; // get condition (key)
@@ -131,17 +141,32 @@ function prepareComponentFlow() { // prepare list of what we should show
             });
 
             if (entryIndex < (entries.length - 1)) { // after every condition except last
-                componentFlow.push(`interlude-${entryIndex + 1}`); // add interlude
+                componentFlow.push(`interlude-${entryIndex + 3}`); // add interlude
             }
         });
 
-        componentFlow.push(StaticComponents.Outro); // push outro
+    } else if (keys_3.includes(variationID)) { // if three conditions have been performed outside scanner
 
-    } else {
+        componentFlow.push(`interlude-2`); // push outro
 
-        componentFlow.push(StaticComponents.Intro5Inside); // push outro
+        entries.forEach(function (entry, entryIndex) {
+            const condition = Object.keys(entry)[0]; // get condition (key)
+            const environment = entry[condition]; // get environment (value)
+
+            Phases.forEach(function (phase) {
+                const component = `${condition}-${phase}`; 
+                environmentMap[component] = environment; // save environment to use per condition (easier to access later than going into Variations)
+                componentFlow.push(component);
+            });
+
+            if (entryIndex < (entries.length - 1)) { // after every condition except last
+                componentFlow.push(`interlude-${entryIndex + 2}`); // add interlude
+            }
+        });
 
     }
+
+    componentFlow.push(StaticComponents.Outro); // push outro
 
     componentOnset = Date.now();
 }
@@ -258,7 +283,7 @@ class TwoChoiceState {
 }
 
 // define how many trials start in which state  (not shuffled yet)
-function defineLearningPhaseStartStates() { 
+function defineLearningPhaseStartStates(correctFirstStateActionLearning) { 
 
     let startStatesFirstSection = [
         Array(1).fill("1LeftTo2Left"),
@@ -538,180 +563,6 @@ function runTrials(trialIndex, initialStateNames, states, aggregateResults, aggr
 }
 
 
-// function to run single viewing
-// input
-// initialStateNames = list of states from which to start per trial
-// states = list of states defined in component
-// aggregateResults = empty array to append results onto
-// aggreagateResultHandler = what to do after this trial is finished
-function configureViewing(stateName, questionTrial, states, viewingResults, viewingResultsHandler) {
-
-    const state = states.find(function (state) { // find state name in list of states (according to name not position)
-        return state.name == stateName;
-    });
-
-    const image = document.getElementById("image");
-    image.removeAttribute("src");
-    image.style.opacity = 1;
-
-    const images_highlighted = ["4Viewing", "5Viewing", "6Viewing", "7Viewing", "8Viewing", "9Viewing", "10Viewing"];
-    const images_highlighted_left = ["1LeftViewing", "2LeftViewing", "3LeftViewing"];
-    const images_highlighted_right = ["1RightViewing", "2RightViewing", "3RightViewing"];
-
-    if (images_highlighted.includes(stateName)) {
-        setImageFromEnvironment("image", `${state.imageName}_highlighted`, stateName);
-    } else if (images_highlighted_left.includes(stateName)) {
-        setImageFromEnvironment("image", `${state.imageName}_highlighted_left`, stateName);
-    } else if (images_highlighted_right.includes(stateName)) {
-        setImageFromEnvironment("image", `${state.imageName}_highlighted_right`, stateName);
-    }
-
-    // initialize timing and selection variables
-    let questionOnset = null;
-    let responseOnset = null;
-    let RT = null;
-    let selection = null;
-    let didMakeChoice = false;
-
-    doAfter(viewingTime, function() {
-
-        image.style.display = "none" ;
-
-        if (questionTrial === 1) {
-            // define text for question ITIs
-            const questionText = [
-                    `Wie viele Gläser Alkohol können Sie maximal auf dem Weg erhalten, der der zuletzt angezeigten Handlung folgt?
-                    <br>
-                    (Tasten '0' bis '4')`
-                ];
-            const optionLeftLeftText = [`0`];
-            const optionLeftMiddleText = [`1`];
-            const optionRightMiddleText = [`2`];
-            const optionRightRightText = [`3`];
-
-            // display elements
-            const questionScreen = document.getElementById("drink_selection_screen");
-            questionScreen.style.display = ""; // make visible
-
-            const question = document.getElementById("question");
-            question.innerHTML = questionText[0];
-            const optionLeftLeft = document.getElementById("option_leftleft");
-            optionLeftLeft.innerHTML = optionLeftLeftText[0]
-            const optionLeftMiddle = document.getElementById("option_leftmiddle");
-            optionLeftMiddle.innerHTML = optionLeftMiddleText[0]
-            const optionRightMiddle = document.getElementById("option_rightmiddle");
-            optionRightMiddle.innerHTML = optionRightMiddleText[0]
-            const optionRightRight = document.getElementById("option_rightright");
-            optionRightRight.innerHTML = optionRightRightText[0]
-
-            questionOnset = Date.now();
-            
-            document.onkeydown = function(event) { // navigation through intro
-
-                disableInput(); // disable any further input
-
-                if (event.key == Keyboard.Zero) {
-                    responseOnset = Date.now();
-                    RT = responseOnset - questionOnset;
-                    didMakeChoice = true;
-                    selection = "0";
-                    optionLeftLeft.classList.add("quiz_option_selected");
-                    optionLeftMiddle.classList.remove("quiz_option_selected");
-                    optionRightMiddle.classList.remove("quiz_option_selected");
-                    optionRightRight.classList.remove("quiz_option_selected");
-                }
-                else if (event.key == Keyboard.One) {
-                    responseOnset = Date.now();
-                    RT = responseOnset - questionOnset;
-                    didMakeChoice = true;
-                    selection = "1";
-                    optionLeftLeft.classList.remove("quiz_option_selected");
-                    optionLeftMiddle.classList.add("quiz_option_selected");
-                    optionRightMiddle.classList.remove("quiz_option_selected");
-                    optionRightRight.classList.remove("quiz_option_selected");
-                }
-                else if (event.key == Keyboard.Two) {
-                    responseOnset = Date.now();
-                    RT = responseOnset - questionOnset;
-                    didMakeChoice = true;
-                    selection = "2";
-                    optionLeftLeft.classList.remove("quiz_option_selected");
-                    optionLeftMiddle.classList.remove("quiz_option_selected");
-                    optionRightMiddle.classList.add("quiz_option_selected");
-                    optionRightRight.classList.remove("quiz_option_selected");
-                    
-                } else if (event.key == Keyboard.Three) {
-                    responseOnset = Date.now();
-                    RT = responseOnset - questionOnset;
-                    didMakeChoice = true;
-                    selection = "3";
-                    optionLeftLeft.classList.remove("quiz_option_selected");
-                    optionLeftMiddle.classList.remove("quiz_option_selected");
-                    optionRightMiddle.classList.remove("quiz_option_selected");
-                    optionRightRight.classList.add("quiz_option_selected");
-                }
-
-            };
-
-            doAfter(maxTwoChoiceTime, function() {
-
-                optionLeftLeft.classList.remove("quiz_option_selected");
-                optionLeftMiddle.classList.remove("quiz_option_selected");
-                optionRightMiddle.classList.remove("quiz_option_selected");
-                optionRightRight.classList.remove("quiz_option_selected");
-                questionScreen.style.display = "none"; // make invisible
-
-                console.log(selection);
-                viewingResults.push({'state':stateName, 'question_trial': questionTrial, 'valid_choice':didMakeChoice, 'selection': selection, 'RT': RT}); // log results
-                viewingResultsHandler(viewingResults, true);
-
-            })
-
-        } else {
-
-            console.log(selection);
-            viewingResults.push({'state':stateName, 'question_trial': questionTrial, 'valid_choice':didMakeChoice, 'selection': selection, 'RT': RT}); // log results
-            viewingResultsHandler(viewingResults, true);
-
-        };
-
-    });
-
-};
-
-
-// function to run all Viewings per component
-// input
-// initialStateNames = list of states from which to start per trial
-// states = list of states defined in component
-// aggregateResults = empty array to append results onto
-// aggreagateResultHandler = what to do after all trials finished (usually showNextComponent)
-function runViewing(viewingStateIndex, initialStateNames, questionTrials, states, aggregateViewingResults, aggregateViewingResultsHandler) {
-
-    // show question on this trial or not
-    questionTrial = questionTrials[viewingStateIndex-1];
-
-    configureViewing(initialStateNames[viewingStateIndex-1], questionTrial, states, [], function(viewingResults) {
-
-        aggregateViewingResults.push({'viewing':viewingStateIndex, viewingResults}); // push trial results no matter if successful or not
-
-        viewingStateIndex += 1;
-
-        doAfter(ITI, function() {
-            if (viewingStateIndex-1 < initialStateNames.length) { // if more trials to run, call runTrial again
-                runViewing(viewingStateIndex, initialStateNames, questionTrials, states, aggregateViewingResults, aggregateViewingResultsHandler);
-            }
-            else {
-                aggregateViewingResultsHandler();
-            };
-
-        });
-
-    });
-
-}
-
-
 
 /*
  * User Input
@@ -724,11 +575,7 @@ const Keyboard = { // allows to use Keyboard.F etc.
     RightArrow: "ArrowRight",
     DownArrow: "ArrowDown",
     Space: " ",
-    Enter: "Enter",
-    Zero: "0",
-    One: "1",
-    Two: "2",
-    Three: "3"
+    Enter: "Enter"
 };
 
 const TwoChoiceInput = { // left and right choice, independent of which keys are used
@@ -925,11 +772,9 @@ function setImageFromEnvironment(id, imageName, stateName) { // set image to sho
     const imageContainer = document.getElementById('image_container');
     const rewardImage = document.getElementById("reward"); 
 
-    image.style.display = ""; // show image again if it was removed before
-
     console.log(stateName);
 
-    if (stateName == "2" || stateName == "2Left" || stateName == "2LeftViewing" || stateName == "2Right" || stateName == "2RightViewing") {
+    if (stateName == "2" || stateName == "2Left" || stateName == "2Right") {
         // Middle left
         console.log("Middle left");
         imageContainer.style.width = "70%";
@@ -939,7 +784,7 @@ function setImageFromEnvironment(id, imageName, stateName) { // set image to sho
         rewardImage.style.marginLeft = "0px";
         rewardImage.style.marginRight = "auto";
     } 
-    else if (stateName == "3" || stateName == "3Left" || stateName == "3LeftViewing" || stateName == "3Right" || stateName == "3RightViewing") {
+    else if (stateName == "3" || stateName == "3Left" || stateName == "3Right") {
         // Middle right
         console.log("Middle right");
         imageContainer.style.width = "70%";
@@ -949,7 +794,7 @@ function setImageFromEnvironment(id, imageName, stateName) { // set image to sho
         rewardImage.style.marginLeft = "auto";
         rewardImage.style.marginRight = "0px";
     } 
-    else if (stateName == "4" || stateName == "4Viewing" || stateName == "7" || stateName == "7Viewing") {
+    else if (stateName == "4" || stateName == "7") {
         // Outer left
         console.log("Outer left");
         imageContainer.style.width = "90%";
@@ -959,7 +804,7 @@ function setImageFromEnvironment(id, imageName, stateName) { // set image to sho
         rewardImage.style.marginLeft = "0px";
         rewardImage.style.marginRight = "auto";
     } 
-    else if (stateName == "6" || stateName == "6Viewing" || stateName == "9" || stateName == "9Viewing") {
+    else if (stateName == "6" || stateName == "9") {
         // Outer right
         console.log("Outer right");
         imageContainer.style.width = "90%";
@@ -1053,18 +898,8 @@ function compareArrays(a, b) {
  */
 const StaticComponents = {
     EnterVariation: "enter-variation",
-    Intro1: "intro1",
-    FloorPlan: "floor-plan",
     DrinkSelection: "drink-selection",
-    Intro2: "intro2",
-    Tutorial: "tutorial",
-    Intro3: "intro3",
-    Quiz: "quiz",
-    QuizWrong: "quiz_wrong",
-    Intro4: "intro4",
-    TutorialViewing: "tutorial-viewing",
-    Intro5Outside: "intro5_startoutsidescanner",
-    Intro5Inside: "intro5_startinscanner",
+    Intro: "intro",
     Outro: "outro"
 };
 
@@ -1101,112 +936,112 @@ const Variations = [
     
     {
         "A1": [
-            {"reward": "alternative"},
+            {"goal-state": "hip_purple"},
+            {"control": "sports_bar"}
         ]
     },
     {
         "A2": [
+            {"goal-state": "fancy_green"},
+            {"control": "hip_purple"},
+            {"reward": "sports_bar"}
         ]
     },
     {
         "A3": [
-            {"goal-state": "alternative"},
-            {"control": "brauhaus"},
-            {"reward": "fancy_green"}
         ]
     },
     {
         "A4": [
-            {"control": "alternative"},
-            {"reward": "brauhaus"}
+            {"goal-state": "sports_bar"}
         ]
     },
     {
         "B1": [
-            {"reward": "brauhaus"}
+            {"goal-state": "sports_bar"},
+            {"control": "alternative"}
         ]
     },
     {
         "B2": [
-        ]
-    },
-    {
-        "B3": [
-            {"goal-state": "brauhaus"},
-            {"control": "hip_purple"},
-            {"reward": "sports_bar"}
-        ]
-    },
-    {
-        "B4": [
-            {"control": "brauhaus"},
-            {"reward": "hip_purple"}
-        ]
-    },
-    {
-        "C1": [
-            {"reward": "fancy_green"}
-        ]
-    },
-    {
-        "C2": [
-        ]
-    },
-    {
-        "C3": [
-            {"goal-state": "fancy_green"},
-            {"control": "sports_bar"},
-            {"reward": "alternative"}
-        ]
-    },
-    {
-        "C4": [
-            {"control": "fancy_green"},
-            {"reward": "sports_bar"}
-        ]
-    },
-    {
-        "D1": [
-            {"reward": "hip_purple"}
-        ]
-    },
-    {
-        "D2": [
-        ]
-    },
-    {
-        "D3": [
-            {"goal-state": "hip_purple"},
-            {"control": "sports_bar"},
-            {"reward": "alternative"}
-        ]
-    },
-    {
-        "D4": [
-            {"control": "hip_purple"},
-            {"reward": "sports_bar"}
-        ]
-    },
-    {
-        "E1": [
-            {"reward": "sports_bar"}
-        ]
-    },
-    {
-        "E2": [
-        ]
-    },
-    {
-        "E3": [
             {"goal-state": "sports_bar"},
             {"control": "alternative"},
             {"reward": "fancy_green"}
         ]
     },
     {
+        "B3": [
+        ]
+    },
+    {
+        "B4": [
+            {"goal-state": "fancy_green"}
+        ]
+    },
+    {
+        "C1": [
+            {"goal-state": "alternative"},
+            {"control": "brauhaus"}
+        ]
+    },
+    {
+        "C2": [
+            {"goal-state": "alternative"},
+            {"control": "brauhaus"},
+            {"reward": "hip_purple"}
+        ]
+    },
+    {
+        "C3": [
+        ]
+    },
+    {
+        "C4": [
+            {"goal-state": "hip_purple"}
+        ]
+    },
+    {
+        "D1": [
+            {"goal-state": "brauhaus"},
+            {"control": "fancy_green"}
+        ]
+    },
+    {
+        "D2": [
+            {"goal-state": "alternative"},
+            {"control": "fancy_green"},
+            {"reward": "brauhaus"}
+        ]
+    },
+    {
+        "D3": [
+        ]
+    },
+    {
+        "D4": [
+            {"goal-state": "brauhaus"}
+        ]
+    },
+    {
+        "E1": [
+            {"goal-state": "fancy_green"},
+            {"control": "hip_purple"}
+        ]
+    },
+    {
+        "E2": [
+            {"goal-state": "fancy_green"},
+            {"control": "hip_purple"},
+            {"reward": "brauhaus"}
+        ]
+    },
+    {
+        "E3": [
+        ]
+    },
+    {
         "E4": [
-            {"control": "sports_bar"},
-            {"reward": "alternative"}
+            {"goal-state": "hip_purple"}
         ]
     }
 ];

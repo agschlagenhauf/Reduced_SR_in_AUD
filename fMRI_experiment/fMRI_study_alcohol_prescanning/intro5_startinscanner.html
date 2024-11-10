@@ -17,10 +17,7 @@
     <body>
 
         <div id="message" class="full_screen_message" style="text-align: center;">
-            Sehr gut, Sie haben den ersten Teil des Spiels beendet!
-            <br>
-            <br>
-            Nun geht es weiter im MRT-Scanner.
+            Sie haben alle Fragen richtig beantwortet! Nun kann es mit dem richtigen Spiel im MRT-Scanner losgehen.
             <br>
             <br>
             Geben Sie dem/der Versuchsleiter*in Bescheid.
@@ -32,26 +29,23 @@
                 let componentData = {
                     'participant_ID':participantID, 
                     'running_ID':runningID,
-                    'back_code':backCode,
+                    'back_code': backCode,
                     'variation':variationID, 
                     'component':componentFlow[componentIndex]
                 };
 
-                const message = document.getElementById("message");
                 document.onkeydown = function(event) { // navigation through intro
                     if (event.key == Keyboard.RightArrow) {
-                        
-                        disableInput();
+                        disableInput(); // disable any further input
                         fadeOut(message, function() {
                             endComponentFlow(componentData);
                         });
                     }
                 };
-                
-                
             });
+
+            
         </script>
 
     </body>
 </html>
-

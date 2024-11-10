@@ -20,7 +20,6 @@
             <img id="image" class="full_screen_image"> <!-- place holder for room images with its own css class -->
             <img id="reward" class="reward_image"> <!-- place holder for money images with its own css class -->
         </div>
-        
         <script>
             loadComponent(function() { // load study session data and wait for JATOS (see main)
 
@@ -40,14 +39,12 @@
                     '9': shuffledStage4[2],
                     '10': 'room10'
                 };
-                console.log(stateRoomMap)
-                console.log(jatos.studySessionData)
 
                 // save shuffled image order into study session data
-                jatos.studySessionData["reward"]["state_room_map"] = stateRoomMap;
+                jatos.studySessionData["transition1"]["state_room_map"] = stateRoomMap;
 
                 // read wich first state action is correct, defined in prepareComponentFlow called in intro1 if first component
-                const correctFirstStateActionLearning = jatos.studySessionData["reward"]["correct_first_state_action_learning"];
+                const correctFirstStateActionLearning = jatos.studySessionData["transition1"]["correct_first_state_action_learning"];
 
                 // OneChoiceState(name, imageName, preChoiceTime, maxChoiceTime, afterChoiceTimeNoReward, afterChoiceTimeReward, reward, nextState)
                 // TwoChoiceState(name, imageName, preChoiceTime, maxChoiceTime, afterChoiceTime, nextStateLeft, nextStateRight)
@@ -72,8 +69,8 @@
                             new OneChoiceState("4", stateRoomMap['4'], preChoiceTime, maxOneChoiceTime, afterChoiceTimeNoReward, afterChoiceTimeReward, null, "7"),
                             new OneChoiceState("5", stateRoomMap['5'], preChoiceTime, maxOneChoiceTime, afterChoiceTimeNoReward, afterChoiceTimeReward, null, "8"),
                             new OneChoiceState("6", stateRoomMap['6'], preChoiceTime, maxOneChoiceTime, afterChoiceTimeNoReward, afterChoiceTimeReward, null, "9"),
-                            new OneChoiceState("7", stateRoomMap['7'], preChoiceTime, maxOneChoiceTime, afterChoiceTimeNoReward, afterChoiceTimeReward, 1, "10"),
-                            new OneChoiceState("8", stateRoomMap['8'], preChoiceTime, maxOneChoiceTime, afterChoiceTimeNoReward, afterChoiceTimeReward, null, "10"),
+                            new OneChoiceState("7", stateRoomMap['7'], preChoiceTime, maxOneChoiceTime, afterChoiceTimeNoReward, afterChoiceTimeReward, null, "10"),
+                            new OneChoiceState("8", stateRoomMap['8'], preChoiceTime, maxOneChoiceTime, afterChoiceTimeNoReward, afterChoiceTimeReward, 1, "10"),
                             new OneChoiceState("9", stateRoomMap['9'], preChoiceTime, maxOneChoiceTime, afterChoiceTimeNoReward, afterChoiceTimeReward, 2, "10"),
                             new OneChoiceState("10", stateRoomMap['10'], preChoiceTime, maxOneChoiceTime, afterChoiceTimeNoReward, afterChoiceTimeReward, null, null)
                         ];
@@ -98,8 +95,8 @@
                             new OneChoiceState("5", stateRoomMap['5'], preChoiceTime, maxOneChoiceTime, afterChoiceTimeNoReward, afterChoiceTimeReward, null, "8"),
                             new OneChoiceState("6", stateRoomMap['6'], preChoiceTime, maxOneChoiceTime, afterChoiceTimeNoReward, afterChoiceTimeReward, null, "9"),
                             new OneChoiceState("7", stateRoomMap['7'], preChoiceTime, maxOneChoiceTime, afterChoiceTimeNoReward, afterChoiceTimeReward, 2, "10"),
-                            new OneChoiceState("8", stateRoomMap['8'], preChoiceTime, maxOneChoiceTime, afterChoiceTimeNoReward, afterChoiceTimeReward, null, "10"),
-                            new OneChoiceState("9", stateRoomMap['9'], preChoiceTime, maxOneChoiceTime, afterChoiceTimeNoReward, afterChoiceTimeReward, 1, "10"),
+                            new OneChoiceState("8", stateRoomMap['8'], preChoiceTime, maxOneChoiceTime, afterChoiceTimeNoReward, afterChoiceTimeReward, 1, "10"),
+                            new OneChoiceState("9", stateRoomMap['9'], preChoiceTime, maxOneChoiceTime, afterChoiceTimeNoReward, afterChoiceTimeReward, null, "10"),
                             new OneChoiceState("10", stateRoomMap['10'], preChoiceTime, maxOneChoiceTime, afterChoiceTimeNoReward, afterChoiceTimeReward, null, null)
                         ];
                     }
@@ -117,14 +114,17 @@
                     'component':componentFlow[componentIndex], 
                     'correct_first_state_action':correctFirstStateActionLearning,
                     'state_room_map':stateRoomMap,
+                    'trigger_onset': null,
                     'aggregate_results':[]
                 };
 
                 // runTrials(trialIndex, initialStateNames, states, aggregateResults, aggregateResultHandler)
-
+                triggerIndex = 0;
+                
                 runTrials(trialIndex, initialStateNames, states, componentData['aggregate_results'], function() {
                     showNextComponent(componentData);
                 });
+                
             });
         </script>
 
