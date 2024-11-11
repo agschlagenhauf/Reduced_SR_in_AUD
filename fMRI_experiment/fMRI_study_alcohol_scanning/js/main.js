@@ -26,7 +26,7 @@ const viewingITI = shuffleNumbers(3.67, 2.86, 2.11, 2.74, 3.34, 2.31, 3.52, 2.74
     3.53, 3.95, 3.96, 2.27, 2.04, 4.05, 2.45, 2.58, 3.93, 3.32, 3.1, 2.36, 3.13, 3.53, 2.45, 4.53, 2.51, 2.52, 4.9, 2.77, 2.21,
     4.41, 3.18, 3.54, 2.37, 3.2, 3.66, 4.04, 2.16, 3.56, 2.31, 3.77, 3.59, 4.04, 2.75, 2.72, 2.58, 4.68, 2.19, 2.24, 2.39, 4.79,
     2.53, 4.66, 4.05, 2.5, 3.35, 2.16, 2.33, 2.38, 4.02, 3.27, 4.74, 2.89, 2.32, 3.34, 4.32, 3.05, 4.17, 2.95, 4.81, 3.73, 2.46,
-    2.98, 3.12, 3.4, 2.6, 3.9, 3.92, 2.46, 3.68, 2.22, 3.02, 2.62, 2.55, 2.25);
+    2.98, 3.12, 3.4, 2.6, 3.9, 3.92, 2.46, 3.68, 2.22, 3.02, 2.62, 2.55, 2.25).concat(3);
 
 
 
@@ -72,7 +72,7 @@ function prepareTask() { // prepare list of what we should show
         "environment_map": environmentMap,
         "component_flow": componentFlow,
         "component_index": componentIndex,
-        "drink": drink,
+        "drink": drink
     };
 
     const correctFirstStateActionLearning = shuffle(["left", "right"]); // TODO randomize which state 1 action is correct after learning
@@ -309,7 +309,7 @@ class TwoChoiceState {
 function defineLearningPhaseStartStates() { 
 
     let startStatesFirstSection = [
-        Array(1).fill("1LeftTo2Left")
+        Array(1).fill("1LeftTo2Left"),
         Array(1).fill("1LeftTo2Right"),
         Array(1).fill("1RightTo3Left"),
         Array(1).fill("1RightTo3Right"),
@@ -719,19 +719,20 @@ function configureViewing(stateName, questionTrial, states, viewingResults, view
     // initialize timing and selection variables
     let questionOnset = null;
     let responseOnset = null;
+    let RT = null;
     let selection = null;
     let didMakeChoice = false;
 
     doAfter(viewingTime, function() {
 
-        image.style.display = "none" ;
+        image.style.display = "none";
 
         if (questionTrial === 1) {
             // define text for question ITIs
             const questionText = [
-                    `Wie viele Gläser Alkohol können Sie maximal auf dem Weg erhalten, der der zuletzt angezeigten Handlung folgt?
+                    `Wie viele Gläser Alkohol können Sie maximal auf dem Weg erhalten, der der letzten Handlung folgt?
                     <br>
-                    (Tasten 'links außen' bis 'rechts außen')`
+                    ('links außen' - 'rechts außen')`
                 ];
             const optionLeftLeftText = [`0`];
             const optionLeftMiddleText = [`1`];
@@ -847,7 +848,9 @@ function runViewing(viewingStateIndex, initialStateNames, questionTrials, states
 
         viewingStateIndex += 1;
 
-        doAfter(viewingITI[viewingStateIndex-1], function() {
+        console.log(viewingStateIndex)
+        console.log(viewingITI[viewingStateIndex-2])
+        doAfter(viewingITI[viewingStateIndex-2], function() {
             if (viewingStateIndex-1 < initialStateNames.length) { // if more trials to run, call runTrial again
                 runViewing(viewingStateIndex, initialStateNames, questionTrials, states, aggregateViewingResults, aggregateViewingResultsHandler);
             }
@@ -891,7 +894,8 @@ function enableOneChoiceInput(callback) { // allowed keys for 1-choice states
     const cueOnset = Date.now(); // log time at cue onset
 
     document.onkeydown = function(event) {
-        if (event.key == Keyboard.Space) { // change input key here
+        console.log(event.key);
+        if (event.key == Keyboard.Two) { // change input key here
             const responseOnset = Date.now();
             const RT = responseOnset - cueOnset;
             disableInput(); // disable any further input
@@ -928,6 +932,7 @@ function enableTwoChoiceInput(callback) { // allowed keys for 2-choice states
 
     document.onkeydown = function(event) {
         if (event.key == Keyboard.Three) { // change input key here
+            console.log(event.key);
             const responseOnset = Date.now();
             const RT = responseOnset - cueOnset;
             disableInput(); // disable any further input
@@ -935,6 +940,7 @@ function enableTwoChoiceInput(callback) { // allowed keys for 2-choice states
             callback(TwoChoiceInput.Left, cueOnset, responseOnset, RT); // execute function defined as callback function with input TwoChoioceInput.Left
         }
         else if (event.key == Keyboard.Four) { // change input key here
+            console.log(event.key);
             const responseOnset = Date.now();
             const RT = responseOnset - cueOnset;
             disableInput(); // disable any further input
@@ -974,6 +980,7 @@ function enableTwoChoiceInputLeft(callback) { // allowed keys for 2-choice state
     const cueOnset = Date.now(); // log time at cue onset
 
     document.onkeydown = function(event) {
+        console.log(event.key);
         if (event.key == Keyboard.Three) { // change input key here
             const responseOnset = Date.now();
             const RT = responseOnset - cueOnset;
@@ -1010,6 +1017,7 @@ function enableTwoChoiceInputRight(callback) { // allowed keys for 2-choice stat
     const cueOnset = Date.now(); // log time at cue onset
 
     document.onkeydown = function(event) {
+        console.log(event.key);
         if (event.key == Keyboard.Four) { // change input key here
             const responseOnset = Date.now();
             const RT = responseOnset - cueOnset;

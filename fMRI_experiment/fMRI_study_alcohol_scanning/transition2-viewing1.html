@@ -16,21 +16,13 @@
     <!-- Start of Page Content (Visible on Screen) -->
     <body>
         <div id="message" class="full_screen_message" style="text-align: center;">
-            Sie werden nun nacheinander wiederholt alle Handlungen (Türen und Tresen) sehen, die Sie im Bar-Lokal auswählen können. Stellen Sie sich vor, Sie würden die GELB markierte Handlung ausführen, drücken Sie jedoch KEINE Taste.
+            Sie werden nun nacheinander wiederholt alle Handlungen (Türen und Tresen) sehen, die Sie im Bar-Lokal auswählen können. Drücken Sie jedoch KEINE Taste. Stellen Sie sich stattdessen vor, Sie würden die jeweils GELB markierte Handlung ausführen und den darauffolgenden Weg gehen. 
             <br>
             <br>
-            Aufmerksam sein sollten Sie trotzdem: Nach einigen Türen oder Tresen wird Ihnen die Frage gestellt, wie viele Gläser Alkohol (0-4) Sie maximal auf dem Weg erhalten können, der der letzten Handlung folgt, die Sie gesehen haben.
-            <br>
-            - 'links außen' = 0 Gläser
-            <br>
-            - 'links innen' = 1 Glas
-            <br>
-            - 'rechts innen' = 2 Gläser
-            <br>
-            - 'rechts außen' = 3 Gläser
+            Nach einigen Türen oder Tresen wird Ihnen die Frage gestellt, wie viele Gläser Alkohol (0-4) Sie maximal auf dem Weg erhalten können, der der letzten Handlung folgt, die Sie gesehen haben. Je SCHNELLER Sie eine RICHTIGE Antwort geben, desto höher der Wert des Getränkemarktgutscheins, den wir Ihnen nach dem Spiel ausstellen. Viel Erfolg!
             <br>
             <br>
-            Je SCHNELLER Sie eine RICHTIGE Antwort geben, desto höher der Wert des Getränkemarkt-Gutscheins, den wir Ihnen nach dem Spiel ausstellen. Viel Erfolg!
+            'links außen' = 0 Gläser / 'links innen' = 1 Glas / 'rechts innen' = 2 Gläser / rechts außen' = 3 Gläser
         </div>
         <div id="image_container" class="image_container"> 
             <img id="image" class="full_screen_image"> <!-- place holder for room images with its own css class -->
@@ -87,7 +79,8 @@
                 // define 25% trials in which to show drink question
                 const questionTrials = shuffle(Array(initialStateNames.length*0.25).fill(1).concat(Array(initialStateNames.length*0.75).fill(0)));
                 
-                let viewingStateIndex = 155;
+                let triggerIndex = 0;
+                let viewingStateIndex = 1;
 
                 let componentData = {
                     'participant_ID': participantID, 
@@ -100,16 +93,22 @@
                     'viewing_results': []
                 };
 
-                doAfter(2, function() {
-                    fadeOut(message, function() {
-                        waitForInitialTrigger(function(triggerOnset) {
-                            componentData['trigger_onset'] = triggerOnset;
-                            runViewing(viewingStateIndex, initialStateNames, questionTrials, states, componentData['viewing_results'], function() {
-                                showNextComponent(componentData);
+                const message = document.getElementById("message");
+
+                document.onkeydown = function(event) { // navigation through intro
+                    if (event.key == Keyboard.RightArrow) {
+                        disableInput(); // disable any further input
+                        fadeOut(message, function() {
+                            message.style.display = "none";
+                            waitForInitialTrigger(triggerIndex, function(triggerOnset) {
+                                componentData['trigger_onset'] = triggerOnset;
+                                runViewing(viewingStateIndex, initialStateNames, questionTrials, states, componentData['viewing_results'], function() {
+                                    showNextComponent(componentData);
+                                });
                             });
                         });
-                    });
-                });
+                    };
+                };
 
             }); 
 

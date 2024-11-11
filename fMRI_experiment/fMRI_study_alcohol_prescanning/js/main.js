@@ -63,7 +63,7 @@ function prepareTask() { // prepare list of what we should show
         "environment_map": environmentMap,
         "component_flow": componentFlow,
         "component_index": componentIndex,
-        "drink": drink,
+        "drink": drink
     };
 
     componentOnset = Date.now();
@@ -580,9 +580,9 @@ function configureViewing(stateName, questionTrial, states, viewingResults, view
         if (questionTrial === 1) {
             // define text for question ITIs
             const questionText = [
-                    `Wie viele Gläser Alkohol können Sie maximal auf dem Weg erhalten, der der zuletzt angezeigten Handlung folgt?
+                    `Wie viele Gläser Alkohol können Sie maximal auf dem Weg erhalten, der der letzten Handlung folgt?
                     <br>
-                    (Tasten '0' bis '4')`
+                    ('0' - '4')`
                 ];
             const optionLeftLeftText = [`0`];
             const optionLeftMiddleText = [`1`];
