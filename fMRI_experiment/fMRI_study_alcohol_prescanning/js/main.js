@@ -608,9 +608,8 @@ function configureViewing(stateName, questionTrial, states, viewingResults, view
             
             document.onkeydown = function(event) { // navigation through intro
 
-                disableInput(); // disable any further input
-
                 if (event.key == Keyboard.Zero) {
+                    disableInput(); // disable any further input
                     responseOnset = Date.now();
                     RT = responseOnset - questionOnset;
                     didMakeChoice = true;
@@ -621,6 +620,7 @@ function configureViewing(stateName, questionTrial, states, viewingResults, view
                     optionRightRight.classList.remove("quiz_option_selected");
                 }
                 else if (event.key == Keyboard.One) {
+                    disableInput(); // disable any further input
                     responseOnset = Date.now();
                     RT = responseOnset - questionOnset;
                     didMakeChoice = true;
@@ -631,6 +631,7 @@ function configureViewing(stateName, questionTrial, states, viewingResults, view
                     optionRightRight.classList.remove("quiz_option_selected");
                 }
                 else if (event.key == Keyboard.Two) {
+                    disableInput(); // disable any further input
                     responseOnset = Date.now();
                     RT = responseOnset - questionOnset;
                     didMakeChoice = true;
@@ -641,6 +642,7 @@ function configureViewing(stateName, questionTrial, states, viewingResults, view
                     optionRightRight.classList.remove("quiz_option_selected");
                     
                 } else if (event.key == Keyboard.Three) {
+                    disableInput(); // disable any further input
                     responseOnset = Date.now();
                     RT = responseOnset - questionOnset;
                     didMakeChoice = true;

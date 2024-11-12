@@ -117,9 +117,6 @@
                     'trigger_onset': null,
                     'aggregate_results':[]
                 };
-
-                // runTrials(trialIndex, initialStateNames, states, aggregateResults, aggregateResultHandler)
-                triggerIndex = 0;
                 
                 runTrials(trialIndex, initialStateNames, states, componentData['aggregate_results'], function() {
                     showNextComponent(componentData);
