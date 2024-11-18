@@ -144,19 +144,20 @@ plot <- ggplot(aggr_power_df_full, aes(x=condition, y=mean_correct)) +
   theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
 plot
 
-###### Create sub DFs ######
+###### Fit models to simulated data ######
+
+# create sub-dfs
 
 power_df_lowrisk_control <- power_df_full[(power_df_full$version == "control" & power_df_full$group == "low-risk"), ]
 power_df_alcohol <- power_df_full[power_df_full$version == "alcohol", ]
 
-###### Model 1 ######
+# Model 1 
 
 # define contrasts
 
 contrasts(power_df_lowrisk_control$condition) <- contr.treatment(5, base = 5)
 contrasts(power_df_lowrisk_control$version) <- contr.treatment(2, base = 2)
 contrasts(power_df_lowrisk_control$group) <- contr.treatment(2, base = 1)
-
 
 # fit model
 
@@ -191,7 +192,7 @@ sim_model1_condition2vs5
 sim_model1_condition4vs5 <- powerSim(model1, nsim=simnum, test = fixed("condition4", "z"), fitOpts=list(control=glmerctrlist))
 sim_model1_condition4vs5
 
-###### Model 2 ######
+# Model 2
 
 # define contrasts
 
@@ -199,12 +200,10 @@ contrasts(power_df_lowrisk_control$condition) <- contr.treatment(5, base = 3)
 contrasts(power_df_lowrisk_control$version) <- contr.treatment(2, base = 2)
 contrasts(power_df_lowrisk_control$group) <- contr.treatment(2, base = 1)
 
-
 # fit model
 
 model2 <- glmer(correct_path ~ condition + (1 | id), family = binomial, data=power_df_lowrisk_control, glmerControl(optCtrl=list(maxfun=1e5), optimizer = "bobyqa"))
 tab_model(model2, transform = NULL, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
-
 
 # plot data
 
@@ -234,7 +233,7 @@ sim_model2_condition2vs3
 sim_model2_condition4vs3 <- powerSim(model2, nsim=simnum, test = fixed("condition4", "z"), fitOpts=list(control=glmerctrlist))
 sim_model2_condition4vs3
 
-###### Model 3 ######
+# Model 3
 
 # define contrasts
 
@@ -294,7 +293,7 @@ if (effects == 'all_effects') {
   condition_policy <- mm3_condition[,4] # condition policy compared to transition
   condition_reward <- mm3_condition[,5] # condition policy compared to transition
   
-  # fit model without main effecs and 2-way interactions of version
+  # fit model without main effects and 2-way interactions of version
   
   model3 <- glmer(correct_path ~ 
                     condition_control + condition_goalstate + condition_policy + condition_reward +
@@ -337,7 +336,7 @@ if (effects == 'all_effects') {
   
 }
 
-###### Model 4 ######
+# Model 4
 
 # define contrasts 
 
@@ -376,7 +375,7 @@ plot_model4
 sim_model4_group_condition2vs4 <- powerSim(model4, nsim=simnum, test = fixed("condition2:group2"), fitOpts=list(control=glmerctrlist))
 sim_model4_group_condition2vs4
 
-###### Model 5 ######
+# Model 5
 
 # define contrasts
 
@@ -473,6 +472,8 @@ if (effects == 'all_effects') {
   sim_model5_group_condition2vs4_version
   
 }
+
+# save results
 
 save(model1, model2, model3, model4, model5, 
      sim_model1_condition2vs5, sim_model1_condition4vs5,
