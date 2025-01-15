@@ -1,0 +1,2506 @@
+---
+title: "Reduced Successor Representation in AUD"
+subtitle: "Conformatory and exploratory behavioral data analyses"
+doi: "https://doi.org/10.17605/OSF.IO/9TUZE"
+author: "Milena Musial"
+date: 09/25/2024
+format: html
+editor: visual
+toc: TRUE
+code-fold: TRUE
+number-sections: TRUE
+embed-resources: true
+execute: 
+  warning: FALSE
+editor_options: 
+  chunk_output_type: console
+---
+
+
+# Set up
+
+
+```{r}
+rm(list = ls(all = TRUE))
+
+# Load packages
+packages <- c("ggplot2", "dplyr", "tidyr", "kableExtra", "gmodels", "lme4", "sjPlot", "viridis", "forcats")
+#install.packages(packages)
+sapply(packages, require, character.only = TRUE)
+
+# set color scheme
+
+# define paths
+data_path <- "/Users/milenamusial/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/PhD/04_B01/WP3/WP3_DATA/FINAL_STUDY/RDFs"
+
+# read dfs
+load(file.path(data_path, "final_data_complete.RData"))
+load(file.path(data_path, "demo_psych_data.RData"))
+
+# format demo_psych df factors
+# rename & reorder 
+demo_psych <- demo_psych %>%
+  mutate(version = case_when(
+    version == "alcohol" ~ "Alcohol version",
+    version == "control" ~ "Monetary version"
+  ),
+  group = case_when(
+    group == "harmful" ~ "Harmful drinkers",
+    group == "low-risk" ~ "Low-risk drinkers"
+  ))%>%
+  mutate(version = fct_relevel(version,
+                               c("Monetary version",
+                                 "Alcohol version")),
+         group = fct_relevel(group,
+                             c("Low-risk drinkers",
+                               "Harmful drinkers")))
+
+```
+
+
+# Exclusion
+
+## Complete sample
+
+
+```{r}
+summary <- trial_df %>%
+  select(ID, group, version)
+
+summary <- unique(summary) 
+
+summary <- summary %>%
+  group_by(group, version) %>%
+  summarise(n = n())
+
+summary %>%
+  kable("html") %>%
+  kable_styling(font_size = 18,
+                latex_options = "scale_down")
+```
+
+
+## Inconsistent AUDIT scores
+
+
+```{r}
+audit_inconsistent_df <- demo_psych %>%
+  select(prolific_ID, group, version, audit_sum_pre, audit_sum_post) %>%
+  mutate(audit_consistent = ifelse(((audit_sum_pre > 7 & audit_sum_post > 7) | (audit_sum_pre < 8 & audit_sum_post < 8)), 1, 0)) %>%
+  filter(audit_consistent == 0) %>%
+  arrange(group, version)
+```
+
+
+### Percent excluded
+
+
+```{r}
+percent_IDs_excluded <- length(unique(audit_inconsistent_df$prolific_ID))/length(demo_psych$prolific_ID)
+percent_IDs_excluded*100
+```
+
+
+### Excluded subjects per group and version
+
+
+```{r}
+audit_inconsistent_df_summary <- audit_inconsistent_df %>%
+  group_by(group, version) %>%
+  summarise(n = n())
+
+audit_inconsistent_df_summary %>%
+  kable("html") %>%
+  kable_styling(font_size = 18,
+                latex_options = "scale_down")
+```
+
+
+### Apply exclusion
+
+
+```{r}
+trial_df <- trial_df %>%
+  filter(! ID %in% audit_inconsistent_df$prolific_ID,
+         preserve = TRUE)
+
+component_df <- component_df %>%
+  filter(! ID %in% audit_inconsistent_df$prolific_ID,
+         preserve = TRUE)
+
+rating_df <- rating_df %>%
+  filter(! ID %in% audit_inconsistent_df$prolific_ID,
+         preserve = TRUE)
+
+demo_psych <- demo_psych %>%
+  filter(! prolific_ID %in% audit_inconsistent_df$prolific_ID,
+         preserve = TRUE)
+```
+
+
+## Correct path taken in less than 3 out of the last 5 learning phase trials in any of the 5 conditions
+
+
+```{r}
+# get last paths
+learning_paths_last4_df <- trial_df %>%
+  filter(phase == "learning",
+         state == 1) %>%
+  group_by(ID, component) %>%
+  slice_tail(n=5)
+
+# who does not pass criterion
+learning_paths_last4_correct_component_df <- learning_paths_last4_df %>%
+  group_by(ID, group, version, component, condition_index, condition, environment) %>%
+  summarise(sum_correct = sum(correct_path))
+
+learning_paths_last4_correct_component_df_excl <- learning_paths_last4_correct_component_df %>% 
+  filter(sum_correct < 3) %>%
+  mutate(ID_condition_combo = paste(ID, "-", condition, sep=""))
+
+# excluded components
+learning_paths_last4_correct_component_df_excl <- learning_paths_last4_correct_component_df_excl %>%
+  select(! sum_correct) %>%
+  distinct()
+
+excluded_components <- learning_paths_last4_correct_component_df_excl$ID_condition_combo
+
+percent_component_excluded <- length(excluded_components)/nrow(learning_paths_last4_correct_component_df)
+
+# excluded subjects
+excluded_IDs <- unique(learning_paths_last4_correct_component_df_excl$ID)
+
+percent_IDs_excluded <- length(excluded_IDs)/length(unique(trial_df$ID))
+```
+
+
+### Percent excluded
+
+-   \% excluded IDs
+
+
+```{r}
+percent_IDs_excluded*100
+```
+
+
+### Excluded participants per group and version
+
+
+```{r}
+learning_paths_last4_correct_subject_df_excl_summary <- learning_paths_last4_correct_component_df_excl %>%
+  ungroup() %>%
+  select(ID, group, version) %>%
+  distinct() %>%
+  group_by(group, version) %>%
+  summarise(n = n())
+
+learning_paths_last4_correct_subject_df_excl_summary %>%
+  kable("html") %>%
+  kable_styling(font_size = 18,
+                latex_options = "scale_down")
+```
+
+
+### Excluded components per group and version
+
+
+```{r}
+learning_correct_group_version_df_excl <- learning_paths_last4_correct_component_df_excl %>%
+  group_by(group, version) %>%
+  summarise(n = n()
+            )
+  
+learning_correct_group_version_df_excl %>%
+  kable("html") %>%
+  kable_styling(font_size = 18,
+                latex_options = "scale_down")
+```
+
+
+### Excluded components per condition
+
+
+```{r}
+learning_correct_condition_df_excl <- learning_paths_last4_correct_component_df_excl %>%
+  group_by(condition) %>%
+  summarise(n = n()
+            )
+  
+learning_correct_condition_df_excl %>%
+  kable("html") %>%
+  kable_styling(font_size = 18,
+                latex_options = "scale_down")
+```
+
+
+### Excluded components per component index
+
+
+```{r}
+learning_correct_component_index_df_excl <- learning_paths_last4_correct_component_df_excl %>%
+  group_by(condition_index) %>%
+  summarise(n = n()
+            )
+  
+learning_correct_component_index_df_excl %>%
+  kable("html") %>%
+  kable_styling(font_size = 18,
+                latex_options = "scale_down")
+```
+
+
+### Excluded components per environment
+
+
+```{r}
+learning_correct_component_environment_df_excl <- learning_paths_last4_correct_component_df_excl %>%
+  group_by(environment) %>%
+  summarise(n = n()
+            )
+  
+learning_correct_component_environment_df_excl %>%
+  kable("html") %>%
+  kable_styling(font_size = 18,
+                latex_options = "scale_down")
+```
+
+
+### Apply exclusion
+
+
+```{r}
+trial_df <- trial_df %>%
+  filter(! ID %in% excluded_IDs,
+         preserve = TRUE) %>%
+  arrange(ID, 
+          condition_index,
+          phase,
+          trial,
+          state_index)
+
+component_df <- component_df %>%
+  filter(! ID %in% excluded_IDs,
+         preserve = TRUE)
+
+rating_df <- rating_df %>%
+  filter(! ID %in% excluded_IDs,
+         preserve = TRUE)
+
+demo_psych <- demo_psych %>%
+  filter(! prolific_ID %in% excluded_IDs,
+         preserve = TRUE)
+```
+
+
+## Further analyses based on (according to preregistered criteria)
+
+
+```{r}
+summary <- trial_df %>%
+  select(ID, group, version)
+
+summary <- unique(summary) 
+
+summary <- summary %>%
+  group_by(group, version) %>%
+  summarise(n = n())
+
+summary %>%
+  kable("html") %>%
+  kable_styling(font_size = 18,
+                latex_options = "scale_down")
+```
+
+
+## Extreme AUDIT scores - matching of groups
+
+### Overview of current AUDIT scores
+
+
+```{r}
+# calculate 
+demo_psych <- demo_psych %>%
+  mutate(audit_pre = as.numeric(audit_sum_pre),
+         audit_post = as.numeric(audit_sum_post),
+         audit_mean = as.numeric(audit_sum_mean))
+
+audit_df <- demo_psych %>%
+  select(prolific_ID, group, version, audit_mean)
+
+audit_df_summary <- audit_df %>%
+  group_by(group, version) %>%
+  summarise(mean_audit = mean(audit_mean, na.rm = TRUE),
+            se_audit = sd(audit_mean, na.rm = TRUE)/sqrt(n()),
+            ci_l = ci(audit_mean, na.rm=TRUE)[2],
+            ci_u = ci(audit_mean, na.rm=TRUE)[3],
+            n = n()
+            ) 
+
+audit_df_summary %>%
+  kable("html") %>%
+  kable_styling(font_size = 12,
+                latex_options = "scale_down")
+```
+
+```{r}
+ggplot(audit_df, aes(x=group, y=audit_mean)) +
+  geom_boxplot(aes(fill = group)) +
+  scale_y_continuous(labels = scales::comma) +
+  xlab("") +
+  ylab("AUDIT score") +
+  facet_wrap(~ version) +
+  theme_light(base_size = 16) +
+  theme(legend.position = "none",
+        axis.text.x = element_text(angle = 50, vjust = 1, hjust=1)) +
+  scale_fill_viridis(option = "plasma", discrete = TRUE)
+```
+
+
+-   The difference in AUDIT scores between harmful and low-risk drinkers is significantly smaller for the alcohol version.
+
+
+```{r}
+lm_audit <- lm(audit_mean ~ group*version,
+               data = audit_df)
+
+tab_model(lm_audit, transform = NULL, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
+```
+
+
+### Exclude extreme AUDIT scores per group until n = 105
+
+
+```{r}
+# low risk drinker, monetary
+
+# select 105 highest values
+audit_df_lr_m <- audit_df %>%
+  filter(group == "Low-risk drinkers" & version == "Monetary version") %>%
+  slice_max(audit_mean, n=105)
+
+# too many rows as multiple occurences of lowest value - sample 5 rows with lowest value to exclude them
+excl_audit_df_lr_m <- audit_df_lr_m %>%
+  filter(audit_mean == min(audit_df_lr_m$audit_mean)) %>%
+  slice_sample(n=nrow(audit_df_lr_m)-105, replace=F)
+
+audit_df_lr_m <- audit_df_lr_m %>%
+  filter(! prolific_ID %in% excl_audit_df_lr_m$prolific_ID) 
+
+# low risk drinker, alcohol
+
+# select 105 lowest values
+audit_df_lr_a <- audit_df %>%
+  filter(group == "Low-risk drinkers" & version == "Alcohol version") %>%
+  slice_min(audit_mean, n=105)
+
+# too many rows as multiple occurences of highest value - sample 2 rows with highest value to exclude them
+excl_audit_df_lr_a <- audit_df_lr_a %>%
+  filter(audit_mean == max(audit_df_lr_a$audit_mean)) %>%
+  slice_sample(n=nrow(audit_df_lr_a)-105, replace=F)
+
+audit_df_lr_a <- audit_df_lr_a %>%
+  filter(! prolific_ID %in% excl_audit_df_lr_a$prolific_ID) 
+
+# harmful drinker, monetary
+
+# select 105 lowest values
+audit_df_hf_m <- audit_df %>%
+  filter(group == "Harmful drinkers" & version == "Monetary version") %>%
+  slice_min(audit_mean, n=105)
+
+# too many rows as multiple occurences of highest value - sample 1 rows with highest value to exclude them
+excl_audit_df_hf_m <- audit_df_hf_m %>%
+  filter(audit_mean == max(audit_df_hf_m$audit_mean)) %>%
+  slice_sample(n=nrow(audit_df_hf_m)-105, replace=F)
+
+audit_df_hf_m <- audit_df_hf_m %>%
+  filter(! prolific_ID %in% excl_audit_df_hf_m$prolific_ID) 
+
+# harmful drinker, alcohol
+
+# select 105 highest values
+audit_df_hr_a <- audit_df %>%
+  filter(group == "Harmful drinkers" & version == "Alcohol version") %>%
+  slice_max(audit_mean, n=105)
+
+# too many rows as multiple occurences of lowest value - sample 7 rows with lowest value to exclude them
+excl_audit_df_hr_a <- audit_df_hr_a %>%
+  filter(audit_mean == min(audit_df_hr_a$audit_mean)) %>%
+  slice_sample(n=nrow(audit_df_hr_a)-105, replace=F)
+
+audit_df_hr_a <- audit_df_hr_a %>%
+  filter(! prolific_ID %in% excl_audit_df_hr_a$prolific_ID) 
+
+audit_df <- rbind(audit_df_lr_m, audit_df_lr_a, audit_df_hf_m, audit_df_hr_a)
+```
+
+```{r}
+audit_df_summary_new <- audit_df %>%
+  group_by(group, version) %>%
+  summarise(mean_audit = mean(audit_mean, na.rm = TRUE),
+            se_audit = sd(audit_mean, na.rm = TRUE)/sqrt(n()),
+            ci_l = ci(audit_mean, na.rm=TRUE)[2],
+            ci_u = ci(audit_mean, na.rm=TRUE)[3],
+            n = n()
+            ) 
+
+audit_df_summary_new %>%
+  kable("html") %>%
+  kable_styling(font_size = 12,
+                latex_options = "scale_down")
+```
+
+```{r}
+ggplot(audit_df, aes(x=group, y=audit_mean)) +
+  geom_boxplot(aes(fill = group)) +
+  scale_y_continuous(labels = scales::comma) +
+  xlab("") +
+  ylab("AUDIT score") +
+  facet_wrap(~ version) +
+  theme_light(base_size = 16) +
+  theme(legend.position = "none",
+        axis.text.x = element_text(angle = 50, vjust = 1, hjust=1)) +
+  scale_fill_viridis(option = "plasma", discrete = TRUE)
+```
+
+
+-   After exclusion of subjects with the most extreme AUDIT scores until reaching n=105 per group, this effect becomes smaller, but remains significant.
+
+
+```{r}
+lm_audit_new <- lm(audit_mean ~ group*version,
+               data = audit_df)
+
+tab_model(lm_audit_new, transform = NULL, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
+```
+
+
+### Apply exclusion
+
+
+```{r}
+trial_df <- trial_df %>%
+  filter(ID %in% audit_df$prolific_ID,
+         preserve = TRUE) %>%
+  arrange(ID, 
+          condition_index,
+          phase,
+          trial,
+          state_index)
+
+component_df <- component_df %>%
+  filter(ID %in% audit_df$prolific_ID,
+         preserve = TRUE)
+
+rating_df <- rating_df %>%
+  filter(ID %in% audit_df$prolific_ID,
+         preserve = TRUE)
+
+demo_psych <- demo_psych %>%
+  filter(prolific_ID %in% audit_df$prolific_ID,
+         preserve = TRUE)
+```
+
+
+## Further analyses based on 105 per group & version
+
+
+```{r}
+summary <- trial_df %>%
+  select(ID, group, version)
+
+summary <- unique(summary) 
+
+summary <- summary %>%
+  group_by(group, version) %>%
+  summarise(n = n())
+
+summary %>%
+  kable("html") %>%
+  kable_styling(font_size = 18,
+                latex_options = "scale_down")
+```
+
+
+# Balancing checks
+
+## Variations
+
+Variations stand for a certain combination between condition, environment, and condition index. - Some variations were more common than others, which is due to a higher a priori probability of certain variations and subjects dropping out at different rates after variation assignment.
+
+
+```{r}
+# get percent correct over time
+balancing_variations_df <- component_df %>%
+  filter(component == "control-learning"
+         ) %>%
+  unique() 
+
+balancing_variations_df %>%
+  group_by(variation) %>%
+  summarise(n = n()
+            ) %>%
+  kable("html") %>%
+  kable_styling(font_size = 14,
+                latex_options = "scale_down")
+```
+
+```{r}
+ggplot(balancing_variations_df, aes(x=variation, fill=variation)) +
+  geom_bar() +
+  theme_light(base_size = 16) +
+  theme(legend.position = "none") +
+  scale_fill_viridis(option = "turbo", discrete = TRUE)
+```
+
+
+## Condition per condition index
+
+-   Every condition accoured roughly the same number of times at a certain index.
+
+
+```{r}
+# get percent correct over time
+balancing_index_df <- component_df %>%
+  mutate(condition_index = as.factor(condition_index)) %>%
+  filter(phase == "learning"
+         ) %>%
+  unique()
+
+balancing_index_df %>%
+  group_by(condition, condition_index) %>%
+  summarise(n = n()
+            ) %>%
+  kable("html") %>%
+  kable_styling(font_size = 14,
+                latex_options = "scale_down")
+```
+
+```{r}
+ggplot(balancing_index_df, aes(x=condition_index, fill=condition_index)) +
+  geom_bar() +
+  facet_grid(~condition) +
+  theme_light(base_size = 16) +
+  theme(legend.position = "none") +
+  scale_fill_viridis(option = "mako", discrete = TRUE)
+```
+
+
+## Environment per condition index
+
+-   Certain environments occured with a much higher probability at a certain index than at others.
+
+
+```{r}
+# get percent correct over time
+balancing_environment_df <- component_df %>%
+  mutate(condition_index = as.factor(condition_index)) %>%
+  filter(phase == "learning"
+         )
+
+balancing_environment_df %>%
+  group_by(version, condition_index, environment) %>%
+  summarise(n = n()
+            ) %>%
+  kable("html") %>%
+  kable_styling(font_size = 14,
+                latex_options = "scale_down")
+```
+
+```{r}
+ggplot(balancing_environment_df, aes(x=condition_index, fill=condition_index)) +
+  geom_bar() +
+  facet_wrap(~version+environment, nrow=2) +
+  theme_light(base_size = 16) +
+  theme(legend.position = "none") +
+  scale_fill_viridis(option = "mako", discrete = TRUE)
+```
+
+
+## Condition per environment
+
+-   Certain conditions took place with a higher probability in a certain environment than in others.
+
+
+```{r}
+# get percent correct over time
+balancing_con_environment_df <- component_df %>%
+  mutate(condition = as.factor(condition)) %>%
+  filter(phase == "learning"
+         )
+
+balancing_con_environment_df %>%
+  group_by(condition, environment) %>%
+  summarise(n = n()
+            ) %>%
+  kable("html") %>%
+  kable_styling(font_size = 14,
+                latex_options = "scale_down")
+```
+
+```{r}
+balancing_con_environment_df %>%
+  #filter(version == "control") %>%
+  ggplot(aes(x=environment, fill=environment)) +
+  geom_bar() +
+  facet_grid(vars(condition), vars(version), scales = "free_x") +
+  theme_light(base_size = 12) +
+  theme(legend.position = "none",
+        axis.text.x = element_text(angle = 50, vjust = 1, hjust=1)) +
+  scale_fill_viridis(option = "plasma", discrete = TRUE)
+```
+
+
+# Learning Phase
+
+## Main analysis: Percent correct paths from state 1 per component
+
+### Across conditions
+
+
+```{r}
+learning_paths_group_version_df <- trial_df %>%
+  filter(phase == "learning",
+         state %in% c(1)
+         ) %>%
+  group_by(group, version) %>%
+  summarise(mean_correct = mean(correct_path, na.rm = TRUE),
+            se_correct = sd(correct_path, na.rm = TRUE)/sqrt(n()),
+            ci_l = ci(correct_path, na.rm=TRUE)[2],
+            ci_u = ci(correct_path, na.rm=TRUE)[3],
+            n = n()
+            ) 
+
+learning_paths_group_version_df %>%
+  kable("html") %>%
+  kable_styling(font_size = 12,
+                latex_options = "scale_down")
+```
+
+
+#### LogReg: group \* versions
+
+-   No performance differences between groups and versions.
+
+
+```{r}
+logreg_learning_paths_group_version_df <- trial_df %>%
+  filter(phase == "learning",
+         state %in% c(1)) %>%
+  mutate(correct_path = as.factor(correct_path),
+         group = as.factor(group),
+         version = as.factor(version)) %>%
+  select(ID,
+         correct_path,
+         group,
+         version)
+
+log_model_learning_paths_allconditions <- glmer(correct_path ~ group*version + (1 | ID), data = logreg_learning_paths_group_version_df, family = "binomial", control=glmerControl(optimizer="bobyqa", optCtrl=list(maxfun=2e5)))
+
+tab_model(log_model_learning_paths_allconditions, transform = NULL, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
+```
+
+
+### Per condition
+
+
+```{r}
+learning_correct_path_group_version_condition_df <- trial_df %>%
+  filter(phase == "learning",
+         state %in% c(1)
+         ) %>%
+  group_by(group, version, condition) %>%
+  summarise(mean_correct = mean(correct_path, na.rm = TRUE),
+            se_correct = sd(correct_path, na.rm = TRUE)/sqrt(n()),
+            ci_l = ci(correct_path, na.rm=TRUE)[2],
+            ci_u = ci(correct_path, na.rm=TRUE)[3],
+            n = n()
+            )
+
+learning_correct_path_group_version_condition_df %>%
+  kable("html") %>%
+  kable_styling(font_size = 12,
+                latex_options = "scale_down")
+```
+
+```{r}
+# bar plot
+ggplot(learning_correct_path_group_version_condition_df, aes(x=condition, y=mean_correct*100)) +
+  geom_bar(stat="identity", aes(fill = condition)) +
+  geom_errorbar(aes(ymin=ci_l*100, ymax=ci_u*100), 
+                width=.2,
+                position=position_dodge(.9)) +
+  facet_grid(vars(group), vars(version)) +
+  scale_y_continuous("% Correct paths", limits = c(0, 105)) +
+  theme_light(base_size = 16) +
+  theme(legend.position = "none",
+        axis.title.x=element_blank(),
+        axis.text.x = element_text(angle = 50, vjust = 1, hjust=1)) +
+  scale_fill_viridis(option = "viridis", discrete = TRUE)
+
+```
+
+
+#### LogReg: Difference from control condition
+
+-   Better learning performance in reward and policy compared to control condition
+
+
+```{r}
+logreg_learning_correct_paths_group_version_condition_df <- trial_df %>%
+  filter(phase == "learning",
+         state == 1
+         ) %>%
+  mutate(correct_path = as.factor(correct_path),
+         condition = as.factor(condition),
+         group = as.factor(group),
+         version = as.factor(version)) %>%
+  select(ID,
+         correct_path,
+         condition,
+         group,
+         version)
+
+contrasts(logreg_learning_correct_paths_group_version_condition_df$condition) <- contr.treatment(5, base = 5)
+
+log_model_learning_paths_control <- glmer(correct_path ~ group*version*condition + (1 + condition | ID), data = logreg_learning_correct_paths_group_version_condition_df, family = "binomial", control=glmerControl(optimizer="bobyqa", optCtrl=list(maxfun=2e5))) 
+
+tab_model(log_model_learning_paths_control, transform = NULL, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
+```
+
+
+#### LogReg: Difference from goal-state condition
+
+-   Better learning performance in reward and policy compared to goal-state condition.
+-   The effect reward\>goal-state is smaller in the alcohol than in the control version, particularly for low-risk drinkers
+
+
+```{r}
+contrasts(logreg_learning_correct_paths_group_version_condition_df$condition) <- contr.treatment(5, base = 2)
+
+log_model_learning_paths_goalstate <- glmer(correct_path ~ group*version*condition + (1 + condition | ID), data = logreg_learning_correct_paths_group_version_condition_df, family = "binomial", control=glmerControl(optimizer="bobyqa", optCtrl=list(maxfun=2e5)))
+
+tab_model(log_model_learning_paths_goalstate, transform = NULL, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
+```
+
+
+#### LogReg: Difference from policy condition
+
+-   Worse learning performance in goal-state, transition, and control condition compared to policy condition
+-   Effect of transition\<policy condition weaker in alcohol compared to control version
+
+
+```{r}
+contrasts(logreg_learning_correct_paths_group_version_condition_df$condition) <- contr.treatment(5, base = 4)
+
+log_model_learning_paths_policy <- glmer(correct_path ~ group*version*condition + (1 + condition | ID), data = logreg_learning_correct_paths_group_version_condition_df, family = "binomial", control=glmerControl(optimizer="bobyqa", optCtrl=list(maxfun=2e5)))
+
+tab_model(log_model_learning_paths_policy, transform = NULL, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
+```
+
+
+#### LogReg: Difference from reward condition
+
+-   Harmful drinkers have lower learning performance in reward condition, particularly in monetary version
+-   Worse learning performance in goal-state, transition, and control condition compared to reward condition, particularly in monetary version, but for harmful drinkers and contrast goal-state\<reward also in alcohol version
+
+
+```{r}
+contrasts(logreg_learning_correct_paths_group_version_condition_df$condition) <- contr.treatment(5, base = 1)
+
+log_model_learning_paths_reward <- glmer(correct_path ~ group*version*condition + (1 + condition | ID), data = logreg_learning_correct_paths_group_version_condition_df, family = "binomial", control=glmerControl(optimizer="bobyqa", optCtrl=list(maxfun=2e5)))
+
+tab_model(log_model_learning_paths_reward, transform = NULL, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
+```
+
+
+#### LogReg: Difference from transition condition
+
+-   Better learning performance in reward and policy compared to transition condition, particularly in monetary version
+
+
+```{r}
+contrasts(logreg_learning_correct_paths_group_version_condition_df$condition) <- contr.treatment(5, base = 3)
+
+log_model_learning_paths_transition <- glmer(correct_path ~ group*version*condition + (1 + condition | ID), data = logreg_learning_correct_paths_group_version_condition_df, family = "binomial", control=glmerControl(optimizer="bobyqa", optCtrl=list(maxfun=2e5)))
+
+tab_model(log_model_learning_paths_transition, transform = NULL, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
+```
+
+
+## Time effects
+
+### Effect of accumulated state 1 visits per condition
+
+#### Across conditions
+
+
+```{r}
+# get percent correct over time
+learning_correct_paths_group_version_time_df <- trial_df %>%
+  filter(phase == "learning",
+         state %in% c(1)
+         ) %>%
+  group_by(ID, condition) %>%
+  mutate(accumulated_state1_visits = row_number()
+         ) %>%
+  group_by(group, version, accumulated_state1_visits) %>%
+  summarise(mean_correct = mean(correct_path, na.rm = TRUE),
+            se_correct = sd(correct_path, na.rm = TRUE)/sqrt(n()),
+            ci_l = ci(correct_path, na.rm=TRUE)[2],
+            ci_u = ci(correct_path, na.rm=TRUE)[3],
+            n = n()
+            )
+
+learning_correct_paths_group_version_time_df %>%
+  kable("html") %>%
+  kable_styling(font_size = 14,
+                latex_options = "scale_down")
+```
+
+```{r}
+ggplot(learning_correct_paths_group_version_time_df, aes(x=accumulated_state1_visits+4, y=mean_correct*100)) +
+  geom_line(size=1) +
+  geom_ribbon(aes(ymin = ci_l * 100, ymax = ci_u * 100), alpha = 0.2) + 
+  scale_y_continuous(limits = c(0, 110)) +
+  facet_grid(vars(group), vars(version)) +
+  theme_light(base_size = 16) +
+  xlab("Accumulated state 1 visits") +
+  ylab("% Correct paths") +
+  theme(legend.title = element_blank())
+```
+
+
+##### LogReg: Time effects across conditions
+
+-   Performance increases over time, with no differences between groups and versions
+
+
+```{r}
+logreg_learning_correct_paths_group_version_time_df <- trial_df %>%
+    filter(phase == "learning",
+         state %in% c(1)
+         ) %>%
+  group_by(ID) %>%
+  mutate(accumulated_state1_visits = row_number(),
+         correct = as.factor(correct_path),
+         version = as.factor(version),
+         group = as.factor(group)) %>%
+  select(group,
+         version, 
+         ID,
+         correct,
+         accumulated_state1_visits)
+
+contrasts(logreg_learning_correct_paths_group_version_time_df$group)
+contrasts(logreg_learning_correct_paths_group_version_time_df$version)
+
+log_model_learning_correct_paths_time <- glmer(correct ~ 1 + group*version*accumulated_state1_visits + (1 + accumulated_state1_visits | ID), data = logreg_learning_correct_paths_group_version_time_df, family = "binomial", control=glmerControl(optimizer="bobyqa", optCtrl=list(maxfun=2e5)))
+
+tab_model(log_model_learning_correct_paths_time, transform = NULL, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
+```
+
+
+#### Per condition
+
+
+```{r}
+# get percent correct over time
+learning_correct_paths_group_version_condition_time_df <- trial_df %>%
+  filter(phase == "learning",
+         state %in% c(1)
+         ) %>%
+  group_by(ID, condition) %>%
+  mutate(accumulated_state1_visits = row_number()
+         ) %>%
+  group_by(group, version, condition, accumulated_state1_visits) %>%
+  summarise(mean_correct = mean(correct_path, na.rm = TRUE),
+            se_correct = sd(correct_path, na.rm = TRUE)/sqrt(n()),
+            ci_l = ci(correct_state_1, na.rm=TRUE)[2],
+            ci_u = ci(correct_state_1, na.rm=TRUE)[3],
+            n = n()
+            )
+
+learning_correct_paths_group_version_condition_time_df %>%
+  kable("html") %>%
+  kable_styling(font_size = 14,
+                latex_options = "scale_down")
+```
+
+```{r}
+ggplot(learning_correct_paths_group_version_condition_time_df, aes(x=accumulated_state1_visits+4, y=mean_correct*100)) +
+  geom_line(aes(color=condition), size=1) +
+  geom_ribbon(aes(ymin = ci_l * 100, ymax = ci_u * 100, fill = condition), alpha = 0.2) + 
+  scale_y_continuous(limits = c(0, 110)) +
+  facet_grid(vars(group), vars(version)) +
+  theme_light(base_size = 16) +
+  xlab("Accumulated state 1 visits") +
+  ylab("% Correct paths") +
+  theme(legend.title = element_blank()) +
+  scale_color_viridis(option = "viridis", discrete = TRUE) +
+  scale_fill_viridis(option = "viridis", discrete = TRUE) 
+```
+
+
+##### LogReg: Difference from control condition
+
+
+```{r}
+logreg_learning_correct_paths_group_version_condition_time_df <- trial_df %>%
+    filter(phase == "learning",
+         state %in% c(1)
+         ) %>%
+  group_by(ID, condition) %>%
+  mutate(accumulated_state1_visits = row_number(),
+         correct = as.factor(correct_path),
+         condition = as.factor(condition),
+         version = as.factor(version),
+         group = as.factor(group)) %>%
+  select(group,
+         version,
+         ID,
+         correct,
+         condition,
+         accumulated_state1_visits)
+
+contrasts(logreg_learning_correct_paths_group_version_condition_time_df$condition) <- contr.treatment(5, base = 5)
+
+log_model_learning_correct_paths_time_control <- glmer(correct ~ 1 + group*version*condition*accumulated_state1_visits + (1 + condition + accumulated_state1_visits | ID), data = logreg_learning_correct_paths_group_version_condition_time_df, family = "binomial", control=glmerControl(optimizer="bobyqa", optCtrl=list(maxfun=2e5)))
+
+tab_model(log_model_learning_correct_paths_time_control, transform = NULL, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 10;'))
+```
+
+
+##### LogReg: Difference from goal-state condition
+
+
+```{r}
+contrasts(logreg_learning_correct_paths_group_version_condition_time_df$condition) <- contr.treatment(5, base = 2)
+
+log_model_learning_correct_paths_time_goal <- glmer(correct ~ 1 + group*version*condition*accumulated_state1_visits + (1 + condition + accumulated_state1_visits|ID), data = logreg_learning_correct_paths_group_version_condition_time_df, family = "binomial", control=glmerControl(optimizer="bobyqa", optCtrl=list(maxfun=2e5)))
+
+tab_model(log_model_learning_correct_paths_time_goal, transform = NULL, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 10;'))
+```
+
+
+##### LogReg: Difference from policy condition
+
+
+```{r}
+contrasts(logreg_learning_correct_paths_group_version_condition_time_df$condition) <- contr.treatment(5, base = 4)
+
+log_model_learning_correct_paths_time_policy <- glmer(correct ~ 1 + group*version*condition*accumulated_state1_visits + (1 + condition + accumulated_state1_visits|ID), data = logreg_learning_correct_paths_group_version_condition_time_df, family = "binomial", control=glmerControl(optimizer="bobyqa", optCtrl=list(maxfun=2e5)))
+
+tab_model(logreg_learning_correct_paths_group_version_condition_time_df, transform = NULL, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 10;'))
+```
+
+
+##### LogReg: Difference from reward condition
+
+
+```{r}
+contrasts(logreg_learning_correct_paths_group_version_condition_time_df$condition) <- contr.treatment(5, base = 1)
+
+log_model_learning_correct_paths_time_reward <- glmer(correct ~ 1 + group*version*condition*accumulated_state1_visits + (1 + condition + accumulated_state1_visits|ID), data = logreg_learning_correct_paths_group_version_condition_time_df, family = "binomial", control=glmerControl(optimizer="bobyqa", optCtrl=list(maxfun=2e5)))
+
+tab_model(log_model_learning_correct_paths_time_reward, transform = NULL, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 10;'))
+```
+
+
+##### LogReg: Difference from transition condition
+
+
+```{r}
+contrasts(logreg_learning_correct_paths_group_version_condition_time_df$condition) <- contr.treatment(5, base = 3)
+
+log_model_learning_correct_paths_time_transition <- glmer(correct ~ 1 + group*version*condition*accumulated_state1_visits + (1 + condition + accumulated_state1_visits|ID), data = logreg_learning_correct_paths_group_version_condition_time_df, family = "binomial", control=glmerControl(optimizer="bobyqa", optCtrl=list(maxfun=2e5)))
+
+tab_model(logreg_learning_correct_paths_group_version_condition_time_df, transform = NULL, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 10;'))
+```
+
+
+### Effect of condition index across conditions
+
+
+```{r}
+# get percent correct over time
+learning_paths_condition_index_df <- trial_df %>%
+  mutate(condition_index = as.factor(condition_index)) %>%
+  filter(phase == "learning",
+         state %in% c(1)
+         ) %>%
+  group_by(group, version, condition_index) %>%
+  summarise(mean_correct = mean(correct_path, na.rm = TRUE),
+            se_correct = sd(correct_path, na.rm = TRUE)/sqrt(n()),
+            ci_l = ci(correct_path, na.rm=TRUE)[2],
+            ci_u = ci(correct_path, na.rm=TRUE)[3],
+            n = n()
+            )
+
+learning_paths_condition_index_df %>%
+  kable("html") %>%
+  kable_styling(font_size = 14,
+                latex_options = "scale_down")
+```
+
+```{r}
+# bar plot
+ggplot(learning_paths_condition_index_df, aes(x=condition_index, y=mean_correct*100)) +
+  geom_bar(stat="identity", aes(fill=condition_index)) +
+  geom_errorbar(aes(ymin=ci_l*100, ymax=ci_u*100), width=.2, position=position_dodge(.9)) +
+  scale_y_continuous(limits = c(0, 105)) +
+  facet_grid(vars(group), vars(version)) +
+  xlab("Condition index") +
+  ylab("% Correct paths") +
+  theme_light(base_size = 16) +
+  theme(legend.position = "none") +
+  scale_fill_viridis(option = "mako", discrete = TRUE)
+```
+
+
+#### LogReg: group \* version \* condition index
+
+-   Learning performance increases across condition indices, with no differences between groups and versions
+
+
+```{r}
+logreg_learning_paths_group_version_index_df <- trial_df %>%
+  filter(phase == "learning",
+         state == 1) %>%
+  mutate(correct_path = as.factor(correct_path),
+         group = as.factor(group),
+         version = as.factor(version)) %>%
+  select(ID,
+         correct_path,
+         group,
+         version,
+         condition_index)
+
+contrasts(logreg_learning_paths_group_version_index_df$version)
+contrasts(logreg_learning_paths_group_version_index_df$group)
+
+log_model_learning_paths_group_version_index <- glmer(correct_path ~ group*version*condition_index + (1 + condition_index| ID), data = logreg_learning_paths_group_version_index_df, family = "binomial", control=glmerControl(optimizer="bobyqa", optCtrl=list(maxfun=2e5)))
+tab_model(log_model_learning_paths_group_version_index, transform = NULL, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
+```
+
+
+## Environment effects
+
+### Across conditions
+
+
+```{r}
+learning_paths_group_version_environment_df <- trial_df %>%
+  mutate(group = as.factor(group),
+         version = as.factor(version),
+         environment = as.character(environment)) %>%
+  filter(phase == "learning",
+         state %in% c(1)
+         ) %>%
+  group_by(version, group, environment) %>%
+  summarise(mean_correct_paths = mean(correct_path, na.rm = TRUE),
+            se_correct = sd(correct_path, na.rm = TRUE)/sqrt(n()),
+            ci_l = ci(correct_path, na.rm=TRUE)[2],
+            ci_u = ci(correct_path, na.rm=TRUE)[3],
+            n = n()
+            )
+
+learning_paths_group_version_environment_df %>%
+  kable("html") %>%
+  kable_styling(font_size = 14,
+                latex_options = "scale_down")
+```
+
+```{r}
+# bar plot
+ggplot(learning_paths_group_version_environment_df, aes(x=environment, y=mean_correct_paths*100, fill=environment)) +
+  geom_bar(stat="identity", aes(fill=environment), position=position_dodge()) +
+  geom_errorbar(aes(ymin=ci_l*100, ymax=ci_u*100), width=.2, position=position_dodge(.9)) +
+  scale_y_continuous(limits = c(0, 105)) +
+  facet_grid(vars(group), vars(version), scales = "free_x") +
+  xlab("Environment") +
+  ylab("% Correct paths") +
+  theme_light(base_size = 12) +
+  theme(legend.position = "none",,
+        axis.text.x = element_text(angle = 50, vjust = 1, hjust=1)) +
+  scale_fill_viridis(option = "plasma", discrete = TRUE)
+```
+
+
+#### LogReg: group \* environment
+
+-   No effects of environment across groups
+-   Harmful drinkers perform better than low-risk drinkers in "hip purple" and "sports bar" environments
+
+
+```{r}
+logreg_learning_paths_group_env_df <- trial_df %>%
+  filter(phase == "learning",
+         state == 1) %>%
+  mutate(correct_path = as.factor(correct_path),
+         environment = as.factor(environment)) %>%
+  select(ID,
+         correct_path,
+         group,
+         version,
+         environment)
+
+contrasts(logreg_learning_paths_group_env_df$environment) <- contr.sum(10)
+
+log_model_learning_paths_group_env <- glmer(correct_path ~ environment*group + (1 + environment | ID), data = logreg_learning_paths_group_env_df, family = "binomial", control=glmerControl(optimizer="bobyqa", optCtrl=list(maxfun=2e5)))
+
+tab_model(log_model_learning_paths_group_env, transform = NULL, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
+
+```
+
+
+### Per condition
+
+
+```{r}
+learning_paths_group_condition_environment_df <- trial_df %>%
+  mutate(group = as.factor(group),
+         version = as.factor(version),
+         environment = as.character(environment)) %>%
+  filter(phase == "learning",
+         state %in% c(1)
+         ) %>%
+  group_by(version, group, environment, condition) %>%
+  summarise(mean_correct_paths = mean(correct_path, na.rm = TRUE),
+            se_correct = sd(correct_path, na.rm = TRUE)/sqrt(n()),
+            ci_l = ci(correct_path, na.rm=TRUE)[2],
+            ci_u = ci(correct_path, na.rm=TRUE)[3],
+            n = n()
+            )
+
+learning_paths_group_version_environment_df %>%
+  kable("html") %>%
+  kable_styling(font_size = 14,
+                latex_options = "scale_down")
+```
+
+```{r}
+# bar plot
+ggplot(learning_paths_group_condition_environment_df, aes(x=environment, y=mean_correct_paths*100, fill=condition)) +
+  geom_bar(stat="identity", aes(fill=condition), position=position_dodge()) +
+  geom_errorbar(aes(ymin=ci_l*100, ymax=ci_u*100), width=.2, position=position_dodge(.9), color="#636363") +
+  scale_y_continuous(limits = c(0, 105)) +
+  facet_grid(vars(group), vars(version), scales = "free_x") +
+  xlab("Environment") +
+  ylab("% Correct paths") +
+  theme_light(base_size = 12) +
+  theme(axis.text.x = element_text(angle = 50, vjust = 1, hjust=1)) +
+  scale_fill_viridis(option = "viridis", discrete = TRUE)
+```
+
+
+#### LogReg: group \* condition \* environment
+
+
+```{r}
+logreg_learning_paths_group_condition_env_df <- trial_df %>%
+  filter(phase == "learning",
+         state == 1) %>%
+  mutate(correct_path = as.factor(correct_path),
+         environment = as.factor(environment)) %>%
+  select(ID,
+         correct_path,
+         group,
+         version,
+         condition,
+         environment)
+
+contrasts(logreg_learning_paths_group_condition_env_df$environment) <- contr.sum(10)
+
+log_model_learning_paths_group_cond_env <- glmer(correct_path ~ group*environment*condition + (1 + condition + environment | ID), data = logreg_learning_paths_group_condition_env_df, family = "binomial", control=glmerControl(optimizer="bobyqa", optCtrl=list(maxfun=2e5)))
+
+tab_model(log_model_learning_paths_group_cond_env, transform = NULL, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
+
+```
+
+
+# Test Phase
+
+## Main analysis: % Correct paths starting from state 1 across all 5 test trials
+
+
+```{r}
+test_correct_paths_group_version_condition_df <- trial_df %>%
+  filter(phase == "test",
+         state %in% c(1)
+         ) %>%
+  group_by(group, version, condition) %>%
+  summarise(mean_correct = mean(correct_path, na.rm = TRUE),
+            se_correct = sd(correct_path, na.rm = TRUE)/sqrt(n()),
+            ci_l = ci(correct_path, na.rm=TRUE)[2],
+            ci_u = ci(correct_path, na.rm=TRUE)[3],
+            n = n()
+            )
+
+test_correct_paths_group_version_condition_df %>%
+  kable("html") %>%
+  kable_styling(font_size = 18,
+                latex_options = "scale_down")
+```
+
+```{r}
+# bar plot
+ggplot(test_correct_paths_group_version_condition_df, aes(x=condition, y=mean_correct*100)) +
+  geom_bar(stat="identity", aes(fill = condition)) +
+  geom_errorbar(aes(ymin=ci_l*100, ymax=ci_u*100), 
+                width=.2,
+                position=position_dodge(.9)) +
+  facet_grid(vars(group), vars(version)) +
+  scale_y_continuous("% Correct paths", limits = c(0, 105)) +
+  theme_light(base_size = 16) +
+  theme(legend.position = "none",
+        axis.title.x=element_blank(),
+        axis.text.x = element_text(angle = 50, vjust = 1, hjust=1)) +
+  scale_fill_viridis(option = "viridis", discrete = TRUE)
+```
+
+```{r}
+# Prepare LogReg dfs
+logreg_test_path_group_version_condition_df_full <- trial_df %>%
+  filter(phase == "test",
+         state == 1) %>%
+  mutate(condition = as.factor(condition),
+         version = as.factor(version),
+         group = as.factor(group)) %>%
+  select(group,
+         version,
+         ID,
+         correct_path,
+         condition)
+
+logreg_test_path_condition_df_lowrisk_control <- trial_df %>%
+  filter(phase == "test",
+         state == 1,
+         group == "Low-risk drinkers",
+         version == "Monetary version") %>%
+  mutate(condition = as.factor(condition)) %>%
+  select(ID,
+         correct_path,
+         condition)
+
+logreg_test_path_group_condition_df_alcohol <- trial_df %>%
+  filter(phase == "test",
+         state == 1,
+         version == "Alcohol version") %>%
+  mutate(condition = as.factor(condition),
+         group = as.factor(group)) %>%
+  select(group,
+         ID,
+         correct_path,
+         condition)
+```
+
+
+### Model 1: Low-risk drinkers, control version, compare against transition revaluation
+
+> **Hypothesis 1:** **Main effect of condition (reward vs. transition revaluation, goal-state vs. transition revaluation)**
+>
+> Low-risk drinkers use SR to some extent when learning in a non-alcohol context. Specifically, we expect more correct test phase paths in the reward revaluation and the goal-state revaluation conditions compared to the transition revaluation condition, respectively.
+
+-   Hypothesis 1 not rejected
+    -   Low-risk drinkers choose more correct test phase paths in the reward revaluation and the goal-state revaluation conditions compared to the transition revaluation condition, respectively.
+    -   This indicates that low-risk drinkers use SR to some extent when learning in a non-alcohol context.
+
+
+```{r}
+contrasts(logreg_test_path_condition_df_lowrisk_control$condition) <- contr.treatment(5, base = 3)
+
+model1 <- glmer(correct_path ~ condition + (1 + condition | ID), data = logreg_test_path_condition_df_lowrisk_control, family = "binomial", glmerControl(optimizer = "bobyqa", optCtrl=list(maxfun=2e5)))
+
+tab_model(model1, transform = NULL, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
+```
+
+
+### Model 2: Low-risk drinkers, control version, compare against policy revaluation
+
+> **Hypothesis 2:** **Main effect of condition (reward vs. policy revaluation, goal-state vs. policy revaluation)**
+>
+> The differences between reward and transition revaluation and between goal-state and transition revaluation cannot fully be explained by use of a model-based strategy with a higher learning rate for the reward compared to the transition structure. Specifically, we expect fewer correct test phase paths in the policy revaluation condition compared to the reward and goal-state revaluation conditions, respectively.
+
+-   Hypothesis 2a not rejected
+    -   Low-risk drinkers choose fewer correct test phase paths in the policy revaluation condition compared to the reward condition
+    -   This indicates that the difference between reward and transition revaluation cannot fully be explained by use of a model-based strategy with a higher learning rate for the reward compared to the transition structure
+-   Hypothesis 2b rejected
+    -   Low-risk drinkers do not choose fewer correct test phase paths in the policy revaluation condition compared to the goal-state condition, which should be at the same level of reward revaluation in case of SR use
+    -   Lower performance in goal-state compared to reward revaluation can be explained by reduced SR use
+
+
+```{r}
+contrasts(logreg_test_path_condition_df_lowrisk_control$condition) <- contr.treatment(5, base = 4)
+
+model2 <- glmer(correct_path ~ condition + (1 + condition | ID), data = logreg_test_path_condition_df_lowrisk_control, family = "binomial", glmerControl(optimizer = "bobyqa", optCtrl=list(maxfun=2e5)))
+tab_model(model2, transform = NULL, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
+```
+
+
+### Model 3: Full dataset, compare against transition revaluation
+
+> **Hypothesis 3:** **Interaction of condition (reward vs. transition revaluation) \* group (harmful vs. low-risk drinkers)**
+>
+> Individuals with harmful alcohol use (harmful drinkers) show a higher degree of SR use compared to individuals with low-risk alcohol use (low-risk drinkers). Specifically, we expect more correct test phase paths in the reward revaluation condition compared to the transition revaluation condition for harmful drinkers compared to low-risk drinkers.
+
+> **Hypothesis 4:** **Interaction of condition (reward vs. transition revaluation) \* group (harmful vs. low-risk drinkers) \* context (alcohol vs. non-alcohol)**
+>
+> Harmful drinkers show a higher degree of SR use compared to low-risk drinkers when learning in an alcohol compared to a non-alcohol context. Specifically, we expect more correct test phase paths in the reward revaluation compared to the transition revaluation condition for harmful drinkers compared to low-risk drinkers in the alcohol compared to the non-alcohol task version.
+
+-   Hypothesis 3 rejected
+
+    -   Harmful drinkers do not, across versions, choose more correct test phase paths in the reward revaluation condition compared to the transition revaluation condition
+
+-   Hypothesis 4 rejected
+
+    -   Different from what we expected, harmful drinkers choose more correct test phase paths in the reward revaluation condition compared to the transition revaluation condition only in the monetary version, but not in the alcohol version
+
+
+```{r}
+contrasts(logreg_test_path_group_version_condition_df_full$condition) <- contr.treatment(5, base = 3)
+
+# create model matrices
+mm_version <- model.matrix(correct_path ~ 1 + version, data=logreg_test_path_group_version_condition_df_full)
+version_alc <- mm_version[,2] # version alc compared to version monetary
+
+mm_group <- model.matrix(correct_path ~ 1 + group, data=logreg_test_path_group_version_condition_df_full)
+group_harmful <- mm_group[,2] # group harmful compared to low-risk
+
+mm_condition <- model.matrix(correct_path ~ 1 + condition, data=logreg_test_path_group_version_condition_df_full)
+condition_control <- mm_condition[,5] # condition control compared to transition
+condition_goalstate <- mm_condition[,3] # condition goalstate compared to transition
+condition_policy <- mm_condition[,4] # condition policy compared to transition
+condition_reward <- mm_condition[,2] # condition reward compared to transition
+
+model3 <- glmer(correct_path ~ 
+                  condition_control + condition_goalstate + condition_policy + condition_reward + group_harmful +
+                  condition_control:group_harmful + condition_goalstate:group_harmful +
+                  condition_policy:group_harmful + condition_reward:group_harmful +
+                  condition_control:group_harmful:version_alc + condition_goalstate:group_harmful:version_alc +
+                  condition_policy:group_harmful:version_alc + condition_reward:group_harmful:version_alc + 
+                  (1 + condition | ID), 
+                data = logreg_test_path_group_version_condition_df_full, 
+                family = "binomial", 
+                glmerControl(optimizer = "bobyqa", optCtrl=list(maxfun=2e5)))
+
+tab_model(model3, transform = NULL, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
+```
+
+
+### Model 4: Alcohol context, compare against reward revaluation
+
+> **Hypothesis 5: Interaction of condition (goal-state vs. reward revaluation) \* group (harmful vs. low-risk drinkers)**
+>
+> Harmful drinkers show a higher degree of rigid goal-based reduced SR use when learning in an alcohol context compared to low-risk drinkers. Specifically, we expect less correct test phase paths in the goal-state compared to the reward revaluation condition for harmful drinkers compared to low-risk drinkers.
+
+-   Hypothesis 5 rejected
+    -   Harmful drinkers *don't* choose less correct test phase paths in the goal-state compared to the reward revaluation condition compared to low-risk drinkers. We find a trend in the opposite direction.
+    -   This indicates that harmful drinkers *don't* show a higher degree of rigid goal-based reduced SR use when learning in an alcohol context compared to low-risk drinkers.
+
+
+```{r}
+contrasts(logreg_test_path_group_condition_df_alcohol$condition) <- contr.treatment(5, base = 1)
+
+model4 <- glmer(correct_path ~ condition*group + (1 + condition | ID), data = logreg_test_path_group_condition_df_alcohol, family = "binomial", glmerControl(optimizer = "bobyqa", optCtrl=list(maxfun=2e5)))
+
+tab_model(model4, transform = NULL, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
+```
+
+
+### Model 5: Full dataset, compare against reward revaluation
+
+> **Hypothesis 6: Interaction of condition (goal-state vs. reward revaluation) \* group (harmful vs. low-risk drinkers) \* context (alcohol vs. non-alcohol)**
+>
+> Harmful drinkers show a higher degree of rigid goal-based reduced SR use compared to low-risk drinkers when learning in an alcohol compared to a non-alcohol context. Specifically, we expect less correct test phase paths in the goal-state compared to the reward revaluation condition for harmful drinkers compared to low-risk drinkers in the alcohol compared to the non-alcohol task version.
+
+-   Hypothesis 6 rejected:
+
+    -   Harmful drinkers *don't* choose less correct test phase paths in the goal-state compared to the reward revaluation condition compared when learning in an alcohol compared to monetary context
+
+    -   Instead: Harmful drinkers choose more correct test phase paths in the goal-state compared to the reward revaluation condition in the monetary, but not the alcohol version
+
+
+```{r}
+contrasts(logreg_test_path_group_version_condition_df_full$condition) <- contr.treatment(5, base = 1)
+
+# create model matrices
+mm_version <- model.matrix(correct_path ~ 1 + version, data=logreg_test_path_group_version_condition_df_full)
+version_alc <- mm_version[,2] # version alc compared to version monetary
+
+mm_group <- model.matrix(correct_path ~ 1 + group, data=logreg_test_path_group_version_condition_df_full)
+group_harmful <- mm_group[,2] # group harmful compared to low-risk
+
+mm_condition <- model.matrix(correct_path ~ 1 + condition, data=logreg_test_path_group_version_condition_df_full)
+condition_control <- mm_condition[,5] # condition control compared to reward
+condition_goalstate <- mm_condition[,2] # condition goalstate compared to reward
+condition_policy <- mm_condition[,4] # condition policy compared to reward
+condition_transition <- mm_condition[,3] # condition transition compared to reward
+
+model5 <- glmer(correct_path ~ 
+                  condition_control + condition_goalstate + condition_policy + condition_transition + group_harmful +
+                  condition_control:group_harmful + condition_goalstate:group_harmful + 
+                  condition_policy:group_harmful + condition_transition:group_harmful + 
+                  condition_control:group_harmful:version_alc + condition_goalstate:group_harmful:version_alc +
+                  condition_policy:group_harmful:version_alc + condition_transition:group_harmful:version_alc + 
+                  (1 + condition | ID), 
+                data = logreg_test_path_group_version_condition_df_full, 
+                family = "binomial", 
+                glmerControl(optCtrl=list(maxfun=2e5), 
+                             optimizer = "bobyqa"))
+
+tab_model(model5, transform = NULL, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
+```
+
+
+## Compare to control condition
+
+### Model 1: Low-risk drinkers, control version, compare against control condition
+
+-   Lower performance in all conditions
+
+
+```{r}
+contrasts(logreg_test_path_condition_df_lowrisk_control$condition) <- contr.treatment(5, base = 5)
+
+model1_control <- glmer(correct_path ~ condition + (1 + condition | ID), data = logreg_test_path_condition_df_lowrisk_control, family = "binomial", glmerControl(optimizer = "bobyqa", optCtrl=list(maxfun=2e5)))
+
+tab_model(model1_control, transform = NULL, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
+```
+
+
+### Model 3: Full dataset, compare against control condition
+
+-   Lower performance in all conditions
+
+
+```{r}
+contrasts(logreg_test_path_group_version_condition_df_full$condition) <- contr.treatment(5, base = 5)
+
+# create model matrices
+mm_version <- model.matrix(correct_path ~ 1 + version, data=logreg_test_path_group_version_condition_df_full)
+version_alc <- mm_version[,2] # version alc compared to version monetary
+
+mm_group <- model.matrix(correct_path ~ 1 + group, data=logreg_test_path_group_version_condition_df_full)
+group_harmful <- mm_group[,2] # group harmful compared to low-risk
+
+mm_condition <- model.matrix(correct_path ~ 1 + condition, data=logreg_test_path_group_version_condition_df_full)
+condition_transition <- mm_condition[,4] # condition control compared to transition
+condition_goalstate <- mm_condition[,3] # condition goalstate compared to transition
+condition_policy <- mm_condition[,5] # condition policy compared to transition
+condition_reward <- mm_condition[,2] # condition reward compared to transition
+
+model3_control <- glmer(correct_path ~ 
+                  condition_transition + condition_goalstate + condition_policy + condition_reward + group_harmful +
+                  condition_transition:group_harmful + condition_goalstate:group_harmful +
+                  condition_policy:group_harmful + condition_reward:group_harmful +
+                  condition_transition:group_harmful:version_alc + condition_goalstate:group_harmful:version_alc +
+                  condition_policy:group_harmful:version_alc + condition_reward:group_harmful:version_alc + 
+                  (1 + condition | ID), 
+                data = logreg_test_path_group_version_condition_df_full, 
+                family = "binomial", 
+                glmerControl(optimizer = "bobyqa", 
+                             optCtrl=list(maxfun=2e5)))
+
+tab_model(model3_control, transform = NULL, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
+```
+
+
+### Model 4: Alcohol context, compare against reward revaluation
+
+-   Lower performance in all conditions
+
+
+```{r}
+contrasts(logreg_test_path_group_condition_df_alcohol$condition) <- contr.treatment(5, base = 5)
+
+model4_control <- glmer(correct_path ~ condition*group + (1 + condition | ID), data = logreg_test_path_group_condition_df_alcohol, family = "binomial", glmerControl(optimizer = "bobyqa", optCtrl=list(maxfun=2e5)))
+
+tab_model(model4_control, transform = NULL, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
+```
+
+
+## Exploratory analysis 1: Include all effects of version into models 3 and 5
+
+### Model 3_expl1: Full dataset, compare against transition revaluation
+
+No conclusions can be drawn at this point because of low n in cell control version / harmful drinkers. - Model does not converge
+
+
+```{r}
+contrasts(logreg_test_path_group_version_condition_df_full$condition) <- contr.treatment(5, base = 3)
+
+model3_expl1 <- glmer(correct_path ~ condition*group*version + (1 + condition | ID),
+                data = logreg_test_path_group_version_condition_df_full,
+                family = "binomial",
+                glmerControl(optCtrl=list(maxfun=2e5),
+                             optimizer = "bobyqa"))
+
+tab_model(model3_expl1, transform = NULL, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
+```
+
+
+### Model 5_expl1: Full dataset, compare against reward revaluation
+
+No conclusions can be drawn at this point because of low n in cell control version / harmful drinkers. - Model does not converge
+
+
+```{r}
+contrasts(logreg_test_path_group_version_condition_df_full$condition) <- contr.treatment(5, base = 1)
+
+model5_expl1 <- glmer(correct_path ~ condition*group*version + (1 + condition | ID),
+                data = logreg_test_path_group_version_condition_df_full,
+                family = "binomial",
+                glmerControl(optCtrl=list(maxfun=2e5),
+                             optimizer = "bobyqa"))
+tab_model(model5_expl1, transform = NULL, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
+```
+
+
+## Time effects
+
+### Within each conditions test phase
+
+
+```{r}
+test_path_group_version_condition_trial_df <- trial_df %>%
+  filter(phase == "test",
+         state == 1) %>%
+  group_by(group, version, condition, trial) %>%
+  summarise(n = n(),
+            sum_correct_path = sum(correct_path, na.rm=T),
+            mean_correct_path = mean(correct_path, na.rm=T),
+            se_correct_path = sd(correct_path, na.rm = TRUE)/sqrt(n()),
+            ci_l = ci(correct_path, na.rm=TRUE)[2],
+            ci_u = ci(correct_path, na.rm=TRUE)[3]
+            )
+
+test_path_group_version_condition_trial_df %>%
+  kable("html") %>%
+  kable_styling(font_size = 18,
+                latex_options = "scale_down")
+```
+
+```{r}
+# line plot state 1
+ggplot(test_path_group_version_condition_trial_df, aes(x=trial, y=mean_correct_path*100)) +
+  geom_line(aes(color=condition), size=1) +
+  geom_ribbon(aes(ymin = ci_l * 100, ymax = ci_u * 100, fill = condition), alpha = 0.2) + 
+  scale_y_continuous(limits = c(-20, 150)) +
+  facet_grid(vars(group), vars(version)) +
+  theme_light(base_size = 16) +
+  xlab("Test trial") +
+  ylab("% Correct paths") +
+  theme(legend.title = element_blank()) +
+  scale_color_viridis(option = "viridis", discrete = TRUE) +
+  scale_fill_viridis(option = "viridis", discrete = TRUE)
+```
+
+```{r}
+# Prepare LogReg dfs
+logreg_test_path_group_version_condition_trial_df_full <- trial_df %>%
+  filter(phase == "test",
+         state == 1) %>%
+  mutate(correct_path = as.factor(correct_path),
+         condition = as.factor(condition),
+         version = as.factor(version),
+         group = as.factor(group),
+         trial = as.numeric(trial)) %>%
+  select(group,
+         version,
+         ID,
+         correct_path,
+         condition,
+         trial)
+
+logreg_test_path_condition_trial_df_lowrisk_control <- trial_df %>%
+  filter(phase == "test",
+         state == 1,
+         group == "Low-risk drinkers",
+         version == "Monetary version") %>%
+  mutate(correct_path = as.factor(correct_path),
+         condition = as.factor(condition),
+         trial = as.numeric(trial)) %>%
+  select(ID,
+         correct_path,
+         condition,
+         trial)
+
+logreg_test_path_group_condition_trial_df_alcohol <- trial_df %>%
+  filter(phase == "test",
+         state == 1,
+         version == "Alcohol version") %>%
+  mutate(correct_path = as.factor(correct_path),
+         condition = as.factor(condition),
+         group = as.factor(group),
+         trial = as.numeric(trial)) %>%
+  select(group,
+         ID,
+         correct_path,
+         condition,
+         trial)
+```
+
+
+#### Model 1_timewithin: Low-risk drinkers, control version, compare against transition revaluation
+
+
+```{r}
+contrasts(logreg_test_path_condition_trial_df_lowrisk_control$condition) <- contr.treatment(5, base = 3)
+
+model1_timewithin <- glmer(correct_path ~ condition*trial + (1 + condition + trial | ID), data = logreg_test_path_condition_trial_df_lowrisk_control, family = "binomial", glmerControl(optimizer = "bobyqa", optCtrl=list(maxfun=2e5)))
+
+tab_model(model1_timewithin, transform = NULL, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
+```
+
+
+#### Model 2_timewithin: Low-risk drinkers, control version, compare against policy revaluation
+
+
+```{r}
+contrasts(logreg_test_path_condition_trial_df_lowrisk_control$condition) <- contr.treatment(5, base = 4)
+
+model2_timewithin <- glmer(correct_path ~ condition*trial + (1 + condition + trial | ID), data = logreg_test_path_condition_trial_df_lowrisk_control, family = "binomial", glmerControl(optimizer = "bobyqa", optCtrl=list(maxfun=2e5)))
+
+tab_model(model2_timewithin, transform = NULL, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
+```
+
+
+#### Model 3_timewithin: Full dataset, compare against transition revaluation
+
+
+```{r}
+contrasts(logreg_test_path_group_version_condition_trial_df_full$condition) <- contr.treatment(5, base = 3)
+
+# create model matrices
+mm_version <- model.matrix(correct_path ~ 1 + version, data=logreg_test_path_group_version_condition_trial_df_full)
+version_alc <- mm_version[,2] # version alc compared to version monetary
+
+mm_group <- model.matrix(correct_path ~ 1 + group, data=logreg_test_path_group_version_condition_trial_df_full)
+group_harmful <- mm_group[,2] # group harmful compared to low-risk
+
+mm_condition <- model.matrix(correct_path ~ 1 + condition, data=logreg_test_path_group_version_condition_trial_df_full)
+condition_control <- mm_condition[,5] # condition control compared to transition
+condition_goalstate <- mm_condition[,3] # condition goalstate compared to transition
+condition_policy <- mm_condition[,4] # condition policy compared to transition
+condition_reward <- mm_condition[,2] # condition reward compared to transition
+
+model3_timewithin <- glmer(correct_path ~ trial +
+                  condition_control + condition_goalstate + condition_policy + condition_reward + group_harmful +
+                  condition_control:trial + condition_goalstate:trial + condition_policy:trial + condition_reward:trial + group_harmful:trial +
+                  condition_control:group_harmful + condition_goalstate:group_harmful +
+                  condition_policy:group_harmful + condition_reward:group_harmful +
+                  condition_control:group_harmful:trial + condition_goalstate:group_harmful:trial +
+                  condition_policy:group_harmful:trial + condition_reward:group_harmful:trial +
+                  condition_control:group_harmful:version_alc + condition_goalstate:group_harmful:version_alc +
+                  condition_policy:group_harmful:version_alc + condition_reward:group_harmful:version_alc + 
+                  condition_control:group_harmful:version_alc:trial + condition_goalstate:group_harmful:version_alc:trial +
+                  condition_policy:group_harmful:version_alc:trial + condition_reward:group_harmful:version_alc:trial + 
+                  (1 + condition + trial| ID), 
+                data = logreg_test_path_group_version_condition_trial_df_full, 
+                family = "binomial", 
+                glmerControl(optimizer = "bobyqa", optCtrl=list(maxfun=2e5)))
+
+tab_model(model3_timewithin, transform = NULL, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
+```
+
+
+#### Model 4: Alcohol context, compare against reward revaluation
+
+
+```{r}
+contrasts(logreg_test_path_group_condition_trial_df_alcohol$condition) <- contr.treatment(5, base = 1)
+
+model4_timewithin <- glmer(correct_path ~ condition*group*trial + (1 + condition + trial | ID), data = logreg_test_path_group_condition_trial_df_alcohol, family = "binomial", glmerControl(optimizer = "bobyqa", optCtrl=list(maxfun=2e5)))
+
+tab_model(model4_timewithin, transform = NULL, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
+```
+
+
+#### Model 5: Full dataset, compare against reward revaluation
+
+
+```{r}
+contrasts(logreg_test_path_group_version_condition_trial_df_full$condition) <- contr.treatment(5, base = 1)
+
+# create model matrices
+mm_version <- model.matrix(correct_path ~ 1 + version, data=logreg_test_path_group_version_condition_trial_df_full)
+version_alc <- mm_version[,2] # version alc compared to version monetary
+
+mm_group <- model.matrix(correct_path ~ 1 + group, data=logreg_test_path_group_version_condition_trial_df_full)
+group_harmful <- mm_group[,2] # group harmful compared to low-risk
+
+mm_condition <- model.matrix(correct_path ~ 1 + condition, data=logreg_test_path_group_version_condition_trial_df_full)
+condition_control <- mm_condition[,5] # condition control compared to reward
+condition_goalstate <- mm_condition[,2] # condition goalstate compared to reward
+condition_policy <- mm_condition[,4] # condition policy compared to reward
+condition_transition <- mm_condition[,3] # condition transition compared to reward
+
+model5_timewithin <- glmer(correct_path ~ trial +
+                  condition_control + condition_goalstate + condition_policy + condition_transition + group_harmful +
+                  condition_control:trial + condition_goalstate:trial + condition_policy:trial + condition_transition:trial + group_harmful:trial +
+                  condition_control:group_harmful + condition_goalstate:group_harmful + 
+                  condition_policy:group_harmful + condition_transition:group_harmful + 
+                  condition_control:group_harmful:trial + condition_goalstate:group_harmful:trial + 
+                  condition_policy:group_harmful:trial + condition_transition:group_harmful:trial + 
+                  condition_control:group_harmful:version_alc + condition_goalstate:group_harmful:version_alc +
+                  condition_policy:group_harmful:version_alc + condition_transition:group_harmful:version_alc + 
+                  condition_control:group_harmful:version_alc:trial + condition_goalstate:group_harmful:version_alc:trial +
+                  condition_policy:group_harmful:version_alc:trial + condition_transition:group_harmful:version_alc:trial + 
+                  (1 + condition + trial | ID), 
+                data = logreg_test_path_group_version_condition_trial_df_full, 
+                family = "binomial", 
+                glmerControl(optCtrl=list(maxfun=2e5), 
+                             optimizer = "bobyqa"))
+
+tab_model(model5_timewithin, transform = NULL, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
+```
+
+
+### Across conditions
+
+
+```{r}
+# get percent correct over time
+test_paths_group_version_condition_index_df <- trial_df %>%
+  mutate(condition_index = as.factor(condition_index)) %>%
+  filter(phase == "test",
+         state == 1
+         ) %>%
+  group_by(group, version, condition, condition_index) %>%
+  summarise(mean_correct = mean(correct_path, na.rm = TRUE),
+            se_correct = sd(correct_path, na.rm = TRUE)/sqrt(n()),
+            ci_l = ci(correct_path, na.rm=TRUE)[2],
+            ci_u = ci(correct_path, na.rm=TRUE)[3],
+            n = n()
+            )
+
+test_paths_group_version_condition_index_df %>%
+  kable("html") %>%
+  kable_styling(font_size = 16,
+                latex_options = "scale_down")
+```
+
+```{r}
+# bar plot
+ggplot(test_paths_group_version_condition_index_df, aes(x=condition_index, y=mean_correct*100, fill=condition)) +
+  geom_bar(stat="identity", position=position_dodge(), aes(fill = condition)) +
+  geom_errorbar(aes(ymin=ci_l*100, ymax=ci_u*100), width=.2, position=position_dodge(.9)) +
+  facet_grid(vars(group), vars(version)) +
+  scale_y_continuous("% Correct paths", limits = c(-10, 105)) +
+  xlab("Condition index") +
+  theme_light(base_size = 16) +
+  scale_fill_viridis("Condition", option = "viridis", discrete = TRUE)
+```
+
+```{r}
+# Prepare LogReg dfs
+logreg_test_path_group_version_condition_index_df_full <- trial_df %>%
+  filter(phase == "test",
+         state == 1) %>%
+  mutate(correct_path = as.factor(correct_path),
+         condition = as.factor(condition),
+         version = as.factor(version),
+         group = as.factor(group)) %>%
+  select(group,
+         version,
+         ID,
+         correct_path,
+         condition,
+         condition_index)
+
+logreg_test_path_condition_index_df_lowrisk_control <- trial_df %>%
+  filter(phase == "test",
+         state == 1,
+         group == "Low-risk drinkers",
+         version == "Monetary version") %>%
+  mutate(correct_path = as.factor(correct_path),
+         condition = as.factor(condition)) %>%
+  select(ID,
+         correct_path,
+         condition,
+         condition_index)
+
+logreg_test_path_group_condition_index_df_alcohol <- trial_df %>%
+  filter(phase == "test",
+         state == 1,
+         version == "Alcohol version") %>%
+  mutate(correct_path = as.factor(correct_path),
+         condition = as.factor(condition),
+         group = as.factor(group)) %>%
+  select(group,
+         ID,
+         correct_path,
+         condition,
+         condition_index)
+```
+
+
+#### Model 1_timebetween: Low-risk drinkers, control version, compare against transition revaluation
+
+
+```{r}
+contrasts(logreg_test_path_condition_index_df_lowrisk_control$condition) <- contr.treatment(5, base = 3)
+
+model1_timebetween <- glmer(correct_path ~ condition*condition_index + (1 + condition + condition_index | ID), data = logreg_test_path_condition_index_df_lowrisk_control, family = "binomial", glmerControl(optimizer = "bobyqa", optCtrl=list(maxfun=2e5)))
+
+tab_model(model1_timebetween, transform = NULL, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
+```
+
+
+#### Model 2_timebetween: Low-risk drinkers, control version, compare against policy revaluation
+
+
+```{r}
+contrasts(logreg_test_path_condition_index_df_lowrisk_control$condition) <- contr.treatment(5, base = 4)
+
+model2_timewithin <- glmer(correct_path ~ condition*condition_index + (1 + condition + condition_index | ID), data = logreg_test_path_condition_index_df_lowrisk_control, family = "binomial", glmerControl(optimizer = "bobyqa", optCtrl=list(maxfun=2e5)))
+
+tab_model(model2_timewithin, transform = NULL, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
+```
+
+
+#### Model 3_timewithin: Full dataset, compare against transition revaluation
+
+
+```{r}
+contrasts(logreg_test_path_group_version_condition_index_df_full$condition) <- contr.treatment(5, base = 3)
+
+# create model matrices
+mm_version <- model.matrix(correct_path ~ 1 + version, data=logreg_test_path_group_version_condition_index_df_full)
+version_alc <- mm_version[,2] # version alc compared to version monetary
+
+mm_group <- model.matrix(correct_path ~ 1 + group, data=logreg_test_path_group_version_condition_index_df_full)
+group_harmful <- mm_group[,2] # group harmful compared to low-risk
+
+mm_condition <- model.matrix(correct_path ~ 1 + condition, data=logreg_test_path_group_version_condition_index_df_full)
+condition_control <- mm_condition[,5] # condition control compared to transition
+condition_goalstate <- mm_condition[,3] # condition goalstate compared to transition
+condition_policy <- mm_condition[,4] # condition policy compared to transition
+condition_reward <- mm_condition[,2] # condition reward compared to transition
+
+model3_timebetween <- glmer(correct_path ~ condition_index +
+                  condition_control + condition_goalstate + condition_policy + condition_reward + group_harmful +
+                  condition_control:condition_index + condition_goalstate:condition_index + condition_policy:condition_index + condition_reward:condition_index + group_harmful:condition_index +
+                  condition_control:group_harmful + condition_goalstate:group_harmful +
+                  condition_policy:group_harmful + condition_reward:group_harmful +
+                  condition_control:group_harmful:condition_index + condition_goalstate:group_harmful:condition_index +
+                  condition_policy:group_harmful:condition_index + condition_reward:group_harmful:condition_index +
+                  condition_control:group_harmful:version_alc + condition_goalstate:group_harmful:version_alc +
+                  condition_policy:group_harmful:version_alc + condition_reward:group_harmful:version_alc + 
+                  condition_control:group_harmful:version_alc:condition_index + condition_goalstate:group_harmful:version_alc:condition_index +
+                  condition_policy:group_harmful:version_alc:condition_index + condition_reward:group_harmful:version_alc:condition_index + 
+                  (1 + condition + condition_index | ID), 
+                data = logreg_test_path_group_version_condition_index_df_full, 
+                family = "binomial", 
+                glmerControl(optimizer = "bobyqa", optCtrl=list(maxfun=2e5)))
+
+tab_model(model3_timebetween, transform = NULL, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
+```
+
+
+#### Model 4: Alcohol context, compare against reward revaluation
+
+
+```{r}
+contrasts(logreg_test_path_group_condition_index_df_alcohol$condition) <- contr.treatment(5, base = 1)
+
+model4_timebetween <- glmer(correct_path ~ condition*group*condition_index + (1 + condition + condition_index | ID), data = logreg_test_path_group_condition_index_df_alcohol, family = "binomial", glmerControl(optimizer = "bobyqa", optCtrl=list(maxfun=2e5)))
+
+tab_model(model4_timebetween, transform = NULL, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
+```
+
+
+#### Model 5: Full dataset, compare against reward revaluation
+
+
+```{r}
+contrasts(logreg_test_path_group_version_condition_index_df_full$condition) <- contr.treatment(5, base = 1)
+
+# create model matrices
+mm_version <- model.matrix(correct_path ~ 1 + version, data=logreg_test_path_group_version_condition_index_df_full)
+version_alc <- mm_version[,2] # version alc compared to version monetary
+
+mm_group <- model.matrix(correct_path ~ 1 + group, data=logreg_test_path_group_version_condition_index_df_full)
+group_harmful <- mm_group[,2] # group harmful compared to low-risk
+
+mm_condition <- model.matrix(correct_path ~ 1 + condition, data=logreg_test_path_group_version_condition_index_df_full)
+condition_control <- mm_condition[,5] # condition control compared to reward
+condition_goalstate <- mm_condition[,2] # condition goalstate compared to reward
+condition_policy <- mm_condition[,4] # condition policy compared to reward
+condition_transition <- mm_condition[,3] # condition transition compared to reward
+
+model5_timebetween <- glmer(correct_path ~ condition_index +
+                  condition_control + condition_goalstate + condition_policy + condition_transition + group_harmful +
+                  condition_control:condition_index + condition_goalstate:condition_index + condition_policy:condition_index + condition_transition:condition_index + group_harmful:condition_index +  
+                  condition_control:group_harmful + condition_goalstate:group_harmful + 
+                  condition_policy:group_harmful + condition_transition:group_harmful + 
+                  condition_control:group_harmful:condition_index + condition_goalstate:group_harmful:condition_index + 
+                  condition_policy:group_harmful:condition_index + condition_transition:group_harmful:condition_index + 
+                  condition_control:group_harmful:version_alc + condition_goalstate:group_harmful:version_alc +
+                  condition_policy:group_harmful:version_alc + condition_transition:group_harmful:version_alc + 
+                  condition_control:group_harmful:version_alc:condition_index + condition_goalstate:group_harmful:version_alc:condition_index +
+                  condition_policy:group_harmful:version_alc:condition_index + condition_transition:group_harmful:version_alc:condition_index + 
+                  (1 + condition + condition_index | ID), 
+                data = logreg_test_path_group_version_condition_index_df_full, 
+                family = "binomial", 
+                glmerControl(optCtrl=list(maxfun=2e5), 
+                             optimizer = "bobyqa"))
+tab_model(model5_timebetween, transform = NULL, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
+```
+
+
+## Controlling for environment effects
+
+
+```{r}
+# get percent correct over time
+test_path_component_environment_df <- trial_df %>%
+  mutate(environment = as.factor(environment)) %>%
+  filter(phase == "test",
+         state == 1
+         ) %>%
+  group_by(version, group, condition, environment) %>%
+  summarise(mean_correct = mean(correct_path, na.rm = TRUE),
+            se_correct = sd(correct_path, na.rm = TRUE)/sqrt(n()),
+            ci_l = ci(correct_path, na.rm=TRUE)[2],
+            ci_u = ci(correct_path, na.rm=TRUE)[3],
+            n = n())
+
+test_path_component_environment_df %>%
+  kable("html") %>%
+  kable_styling(font_size = 16,
+                latex_options = "scale_down")
+```
+
+```{r}
+# bar plot 
+ggplot(test_path_component_environment_df, aes(x=environment, y=mean_correct*100, fill=condition)) +
+  geom_bar(stat="identity", aes(fill=condition), position=position_dodge()) +
+  geom_errorbar(aes(ymin=ci_l*100, ymax=ci_u*100), width=.2, position=position_dodge(.9)) +
+  scale_y_continuous(limits = c(0, 105)) +
+  facet_grid(vars(group), vars(version), scales = "free_x") +
+  xlab("Environment") +
+  ylab("% Correct paths") +
+  theme_light(base_size = 12) +
+  theme(axis.text.x = element_text(angle = 50, vjust = 1, hjust=1)) +
+  scale_fill_viridis(option = "viridis", discrete = TRUE)
+```
+
+```{r}
+# Prepare LogReg dfs
+logreg_test_path_group_version_condition_env_df_full <- trial_df %>%
+  filter(phase == "test",
+         state == 1) %>%
+  mutate(correct_path = as.factor(correct_path),
+         condition = as.factor(condition),
+         version = as.factor(version),
+         group = as.factor(group),
+         environment = as.factor(environment)) %>%
+  select(group,
+         version,
+         ID,
+         correct_path,
+         condition,
+         environment)
+
+logreg_test_path_condition_env_df_lowrisk_control <- trial_df %>%
+  filter(phase == "test",
+         state == 1,
+         group == "Low-risk drinkers",
+         version == "Monetary version") %>%
+  mutate(correct_path = as.factor(correct_path),
+         condition = as.factor(condition),
+         environment = as.factor(environment)) %>%
+  select(ID,
+         correct_path,
+         condition,
+         environment)
+
+logreg_test_path_group_condition_env_df_alcohol <- trial_df %>%
+  filter(phase == "test",
+         state == 1,
+         version == "Alcohol version") %>%
+  mutate(correct_path = as.factor(correct_path),
+         condition = as.factor(condition),
+         group = as.factor(group),
+         environment = as.factor(environment)) %>%
+  select(group,
+         ID,
+         correct_path,
+         condition,
+         environment)
+```
+
+
+#### Model 1_env: Low-risk drinkers, control version, compare against transition revaluation
+
+
+```{r}
+contrasts(logreg_test_path_condition_env_df_lowrisk_control$condition) <- contr.treatment(5, base = 3)
+contrasts(logreg_test_path_condition_env_df_lowrisk_control$environment) <- contr.sum(5)
+
+model1_env <- glmer(correct_path ~ condition + (1 + condition | ID) + (1 + condition | environment), data = logreg_test_path_condition_env_df_lowrisk_control, family = "binomial", glmerControl(optimizer = "bobyqa", optCtrl=list(maxfun=2e5)))
+
+tab_model(model1_env, transform = NULL, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
+```
+
+
+#### Model 2_env: Low-risk drinkers, control version, compare against policy revaluation
+
+
+```{r}
+contrasts(logreg_test_path_condition_env_df_lowrisk_control$condition) <- contr.treatment(5, base = 4)
+contrasts(logreg_test_path_condition_env_df_lowrisk_control$environment) <- contr.sum(5)
+
+model2_env <- glmer(correct_path ~ condition + (1 + condition | ID) + (1 + condition | environment), data = logreg_test_path_condition_env_df_lowrisk_control, family = "binomial", glmerControl(optimizer = "bobyqa", optCtrl=list(maxfun=2e5)))
+
+tab_model(model2_env, transform = NULL, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
+```
+
+
+#### Model 3_env: Full dataset, compare against transition revaluation
+
+
+```{r}
+contrasts(logreg_test_path_group_version_condition_env_df_full$condition) <- contr.treatment(5, base = 3)
+contrasts(logreg_test_path_group_version_condition_env_df_full$environment) <- contr.sum(10)
+
+# create model matrices
+mm_version <- model.matrix(correct_path ~ 1 + version, data=logreg_test_path_group_version_condition_env_df_full)
+version_alc <- mm_version[,2] # version alc compared to version monetary
+
+mm_group <- model.matrix(correct_path ~ 1 + group, data=logreg_test_path_group_version_condition_env_df_full)
+group_harmful <- mm_group[,2] # group harmful compared to low-risk
+
+mm_condition <- model.matrix(correct_path ~ 1 + condition, data=logreg_test_path_group_version_condition_env_df_full)
+condition_control <- mm_condition[,5] # condition control compared to transition
+condition_goalstate <- mm_condition[,3] # condition goalstate compared to transition
+condition_policy <- mm_condition[,4] # condition policy compared to transition
+condition_reward <- mm_condition[,2] # condition reward compared to transition
+
+# model3_env <- glmer(correct_path ~ environment +
+#                   condition_control + condition_goalstate + condition_policy + condition_reward + group_harmful +
+#                   condition_control:environment + condition_goalstate:environment + condition_policy:environment + condition_reward:environment + group_harmful:environment +
+#                   condition_control:group_harmful + condition_goalstate:group_harmful +
+#                   condition_policy:group_harmful + condition_reward:group_harmful +
+#                   condition_control:group_harmful:environment + condition_goalstate:group_harmful:environment +
+#                   condition_policy:group_harmful:environment + condition_reward:group_harmful:environment +
+#                   condition_control:group_harmful:version_alc + condition_goalstate:group_harmful:version_alc +
+#                   condition_policy:group_harmful:version_alc + condition_reward:group_harmful:version_alc + 
+#                   condition_control:group_harmful:version_alc:environment + condition_goalstate:group_harmful:version_alc:environment +
+#                   condition_policy:group_harmful:version_alc:environment + condition_reward:group_harmful:version_alc:environment + 
+#                   (1 | ID), 
+#                 data = logreg_test_path_group_version_condition_env_df_full, 
+#                 family = "binomial", 
+#                 glmerControl(optimizer = "bobyqa"))
+
+model3_env <- glmer(correct_path ~ environment +
+                  condition_control + condition_goalstate + condition_policy + condition_reward + group_harmful +
+                  condition_control:group_harmful + condition_goalstate:group_harmful +
+                  condition_policy:group_harmful + condition_reward:group_harmful +
+                  condition_control:group_harmful:version_alc + condition_goalstate:group_harmful:version_alc +
+                  condition_policy:group_harmful:version_alc + condition_reward:group_harmful:version_alc + 
+                  (1 + condition | ID) + (1 + condition | environment), 
+                data = logreg_test_path_group_version_condition_env_df_full, 
+                family = "binomial", 
+                glmerControl(optimizer = "bobyqa", optCtrl=list(maxfun=2e5)))
+
+tab_model(model3_env, transform = NULL, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
+```
+
+
+#### Model 4: Alcohol context, compare against reward revaluation
+
+
+```{r}
+contrasts(logreg_test_path_group_condition_env_df_alcohol$condition) <- contr.treatment(5, base = 1)
+
+model4_env <- glmer(correct_path ~ condition*group + (1 + condition | ID) + (1 + condition | environment), data = logreg_test_path_group_condition_env_df_alcohol, family = "binomial", glmerControl(optimizer = "bobyqa", optCtrl=list(maxfun=2e5)))
+
+tab_model(model4_env, transform = NULL, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
+```
+
+
+#### Model 5: Full dataset, compare against reward revaluation
+
+
+```{r}
+contrasts(logreg_test_path_group_version_condition_env_df_full$condition) <- contr.treatment(5, base = 1)
+contrasts(logreg_test_path_group_version_condition_env_df_full$environment) <- contr.sum(10)
+
+# create model matrices
+mm_version <- model.matrix(correct_path ~ 1 + version, data=logreg_test_path_group_version_condition_env_df_full)
+version_alc <- mm_version[,2] # version alc compared to version monetary
+
+mm_group <- model.matrix(correct_path ~ 1 + group, data=logreg_test_path_group_version_condition_env_df_full)
+group_harmful <- mm_group[,2] # group harmful compared to low-risk
+
+mm_condition <- model.matrix(correct_path ~ 1 + condition, data=logreg_test_path_group_version_condition_env_df_full)
+condition_control <- mm_condition[,5] # condition control compared to reward
+condition_goalstate <- mm_condition[,2] # condition goalstate compared to reward
+condition_policy <- mm_condition[,4] # condition policy compared to reward
+condition_transition <- mm_condition[,3] # condition transition compared to reward
+
+model5_timebetween <- glmer(correct_path ~
+                  condition_control + condition_goalstate + condition_policy + condition_transition + group_harmful +
+                  condition_control:group_harmful + condition_goalstate:group_harmful + 
+                  condition_policy:group_harmful + condition_transition:group_harmful + 
+                  condition_control:group_harmful:version_alc + condition_goalstate:group_harmful:version_alc +
+                  condition_policy:group_harmful:version_alc + condition_transition:group_harmful:version_alc + 
+                  (1 + condition | ID) + (1 + condition | environment), 
+                data = logreg_test_path_group_version_condition_env_df_full, 
+                family = "binomial", 
+                glmerControl(optCtrl=list(maxfun=2e5), 
+                             optimizer = "bobyqa"))
+tab_model(model5_timebetween, transform = NULL, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
+```
+
+
+# Reaction times
+
+## RT across states per condition and phase
+
+
+```{r}
+RT_condition_phase_df <- trial_df %>%
+  filter(component %in% c("control-learning",
+                          "control-relearning",
+                          "control-test",
+                          "reward-learning",
+                          "reward-relearning",
+                          "reward-test",
+                          "transition-learning",
+                          "transition-relearning",
+                          "transition-test",
+                          "policy-learning",
+                          "policy-relearning",
+                          "policy-test",
+                          "goal-state-learning",
+                          "goal-state-relearning",
+                          "goal-state-test")) %>%
+  group_by(group, version, condition, phase) %>%
+  summarise(mean_RT = mean(RT),
+            se_RT = sd(RT, na.rm = TRUE)/sqrt(n()),
+            ci_l = ci(RT, na.rm=TRUE)[2],
+            ci_u = ci(RT, na.rm=TRUE)[3])
+
+RT_condition_phase_df %>%
+  kable("html") %>%
+  kable_styling(font_size = 16,
+                latex_options = "scale_down")
+```
+
+```{r}
+ggplot(trial_df, aes(x=phase, y=RT, fill = condition)) +
+  geom_boxplot() +
+  scale_y_continuous(labels = scales::comma) +
+  facet_grid(vars(group), vars(version)) +
+  theme_light(base_size = 16) +
+  xlab("Phase") +
+  ylab("Reaction times") +
+  scale_fill_viridis("Condition", option = "cividis", discrete = TRUE)
+```
+
+
+TODO test this
+
+## RT in 2-choice states per condition and phase
+
+
+```{r}
+RT_twochoice_condition_phase_df <- trial_df %>%
+  filter(state %in% c(1,2,3),
+         component %in% c("control-learning",
+                          "control-test",
+                          "reward-learning",
+                          "reward-test",
+                          "transition-learning",
+                          "transition-test",
+                          "policy-learning",
+                          "policy-test",
+                          "goal-state-learning",
+                          "goal-state-test")) %>%
+  group_by(group, version, condition, phase) %>%
+  summarise(mean_RT = mean(RT),
+            se_RT = sd(RT, na.rm = TRUE)/sqrt(n()),
+            ci_l = ci(RT, na.rm=TRUE)[2],
+            ci_u = ci(RT, na.rm=TRUE)[3])
+
+RT_twochoice_condition_phase_df %>%
+  kable("html") %>%
+  kable_styling(font_size = 16,
+                latex_options = "scale_down")
+```
+
+```{r}
+RT_twochoice_plotting_df <- trial_df %>%
+  filter(component %in% c("control-learning",
+                          "control-test",
+                          "reward-learning",
+                          "reward-test",
+                          "transition-learning",
+                          "transition-test",
+                          "policy-learning",
+                          "policy-test",
+                          "goal-state-learning",
+                          "goal-state-test"),
+         state %in% c(1,2,3))
+
+ggplot(RT_twochoice_plotting_df, aes(x=phase, y=RT, fill = condition)) +
+  geom_boxplot() +
+  scale_y_continuous(labels = scales::comma) +
+  facet_grid(vars(group), vars(version)) +
+  theme_light(base_size = 16) +
+  xlab("Phase") +
+  ylab("Reaction times") +
+  scale_fill_viridis("Condition", option = "cividis", discrete = TRUE)
+```
+
+
+TODO test this
+
+## RT in state 1 per condition and phase
+
+
+```{r}
+RT_state1_condition_phase_df <- trial_df %>%
+  filter(component %in% c("control-learning",
+                          "control-test",
+                          "reward-learning",
+                          "reward-test",
+                          "transition-learning",
+                          "transition-test",
+                          "policy-learning",
+                          "policy-test",
+                          "goal-state-learning",
+                          "goal-state-test"),
+         state %in% c(1)) %>%
+  group_by(group, version, condition, phase) %>%
+  summarise(mean_RT = mean(RT),
+            se_RT = sd(RT, na.rm = TRUE)/sqrt(n()),
+            ci_l = ci(RT, na.rm=TRUE)[2],
+            ci_u = ci(RT, na.rm=TRUE)[3])
+
+RT_state1_condition_phase_df %>%
+  kable("html") %>%
+  kable_styling(font_size = 16,
+                latex_options = "scale_down")
+```
+
+```{r}
+RT_state1_plotting_df <- trial_df %>%
+  filter(component %in% c("control-learning",
+                          "control-test",
+                          "reward-learning",
+                          "reward-test",
+                          "transition-learning",
+                          "transition-test",
+                          "policy-learning",
+                          "policy-test",
+                          "goal-state-learning",
+                          "goal-state-test"),
+         state %in% c(1))
+
+ggplot(RT_state1_plotting_df, aes(x=phase, y=RT, fill = condition)) +
+  geom_boxplot() +
+  scale_y_continuous(labels = scales::comma) +
+  facet_grid(vars(group), vars(version)) +
+  theme_light(base_size = 16) +
+  xlab("Phase") +
+  ylab("Reaction times") +
+  scale_fill_viridis("Condition", option = "cividis", discrete = TRUE)
+```
+
+
+TODO test this
+
+## Relation RT - correct
+
+### RT in 2-choice states - correct choice
+
+
+```{r}
+RT_twochoice_condition_phase_correct_df <- trial_df %>%
+  filter(component %in% c("control-learning",
+                          "control-test",
+                          "reward-learning",
+                          "reward-test",
+                          "transition-learning",
+                          "transition-test",
+                          "policy-learning",
+                          "policy-test",
+                          "goal-state-learning",
+                          "goal-state-test"),
+         state %in% c(1,2,3)) %>%
+  group_by(group, version, condition, phase, correct) %>%
+  summarise(mean_RT = mean(RT),
+            se_RT = sd(RT, na.rm = TRUE)/sqrt(n()),
+            ci_l = ci(RT, na.rm=TRUE)[2],
+            ci_u = ci(RT, na.rm=TRUE)[3],
+            n = n())
+
+RT_twochoice_condition_phase_correct_df %>%
+  kable("html") %>%
+  kable_styling(font_size = 16,
+                latex_options = "scale_down")
+```
+
+```{r}
+RT_twochoice_correct_df <- trial_df %>%
+  mutate(correct = as.factor(correct)) %>%
+  filter(component %in% c("control-learning",
+                          "control-test",
+                          "reward-learning",
+                          "reward-test",
+                          "transition-learning",
+                          "transition-test",
+                          "policy-learning",
+                          "policy-test",
+                          "goal-state-learning",
+                          "goal-state-test"),
+         state %in% c(1,2,3))
+
+ggplot(RT_twochoice_correct_df, aes(x=phase, y=RT, fill = correct)) +
+  geom_boxplot() +
+  scale_y_continuous(labels = scales::comma) +
+  facet_grid(vars(group), vars(version)) +
+  theme_light(base_size = 16) +
+  xlab("Phase") +
+  ylab("Reaction times") +
+  scale_fill_viridis("Correct", option = "magma", discrete = TRUE)
+```
+
+
+TODO test this
+
+### RT in state 1 - correct choice
+
+
+```{r}
+RT_state1_condition_phase_correct_df <- trial_df %>%
+  filter(component %in% c("control-learning",
+                          "control-test",
+                          "reward-learning",
+                          "reward-test",
+                          "transition-learning",
+                          "transition-test",
+                          "policy-learning",
+                          "policy-test",
+                          "goal-state-learning",
+                          "goal-state-test"),
+         state %in% c(1)) %>%
+  group_by(group, version, condition, phase, correct) %>%
+  summarise(mean_RT = mean(RT),
+            se_RT = sd(RT, na.rm = TRUE)/sqrt(n()),
+            ci_l = ci(RT, na.rm=TRUE)[2],
+            ci_u = ci(RT, na.rm=TRUE)[3],
+            n = n())
+
+RT_state1_condition_phase_correct_df %>%
+  kable("html") %>%
+  kable_styling(font_size = 16,
+                latex_options = "scale_down")
+```
+
+```{r}
+RT_state1_correct_df <- trial_df %>%
+  mutate(correct = as.factor(correct)) %>%
+  filter(component %in% c("control-learning",
+                          "control-test",
+                          "reward-learning",
+                          "reward-test",
+                          "transition-learning",
+                          "transition-test",
+                          "policy-learning",
+                          "policy-test",
+                          "goal-state-learning",
+                          "goal-state-test"),
+         state %in% c(1))
+
+ggplot(RT_state1_correct_df, aes(x=phase, y=RT, fill = correct)) +
+  geom_boxplot() +
+  scale_y_continuous(labels = scales::comma) +
+  facet_grid(vars(group), vars(version)) +
+  theme_light(base_size = 16) +
+  xlab("Phase") +
+  ylab("Reaction times") +
+  scale_fill_viridis("Correct", option = "magma", discrete = TRUE)
+```
+
+
+TODO test this
+
+## RT in 1-choice states per condition and phase
+
+
+```{r}
+RT_onechoice_condition_phase_df <- trial_df %>%
+  filter(component %in% c("control-learning",
+                          "control-relearning",
+                          "reward-learning",
+                          "reward-relearning",
+                          "transition-learning",
+                          "transition-relearning",
+                          "policy-learning",
+                          "policy-relearning",
+                          "goal-state-learning",
+                          "goal-state-relearning"),
+         state %in% c(4,5,6,7,8,9,10)) %>%
+  group_by(group, version, condition, phase) %>%
+  summarise(mean_RT = mean(RT),
+            se_RT = sd(RT, na.rm = TRUE)/sqrt(n()),
+            ci_l = ci(RT, na.rm=TRUE)[2],
+            ci_u = ci(RT, na.rm=TRUE)[3])
+
+RT_onechoice_condition_phase_df %>%
+  kable("html") %>%
+  kable_styling(font_size = 16,
+                latex_options = "scale_down")
+```
+
+```{r}
+RT_onechoice_df <- trial_df %>%
+  filter(component %in% c("control-learning",
+                          "control-relearning",
+                          "reward-learning",
+                          "reward-relearning",
+                          "transition-learning",
+                          "transition-relearning",
+                          "policy-learning",
+                          "policy-relearning",
+                          "goal-state-learning",
+                          "goal-state-relearning"),
+         state %in% c(4,5,6,7,8,9,10))
+
+ggplot(RT_onechoice_df, aes(x=phase, y=RT, fill = condition)) +
+  geom_boxplot() +
+  scale_y_continuous(labels = scales::comma) +
+  facet_grid(vars(group), vars(version)) +
+  theme_light(base_size = 16) +
+  xlab("Phase") +
+  ylab("Reaction times") +
+  scale_fill_viridis("Correct", option = "cividis", discrete = TRUE)
+```
+
+
+TODO test this
+
+# Payment criterion
+
+
+```{r}
+# payment_df <- trial_df %>%
+#   group_by(group, version, ID) %>%
+#   summarise(mean_correct = mean(correct, na.rm = TRUE))
+# 
+# payment_df[payment_df$mean_correct==max(payment_df$mean_correct[payment_df$version=="alcohol version" & payment_df$group=="low-risk drinkers"]),]
+# 
+# payment_df[payment_df$mean_correct==max(payment_df$mean_correct[payment_df$version=="alcohol version" & payment_df$group=="harmful drinkers"]),]
+# 
+# payment_df[payment_df$mean_correct==max(payment_df$mean_correct[payment_df$version=="monetary version" & payment_df$group=="low-risk drinkers"]),]
+# 
+# payment_df[payment_df$mean_correct==max(payment_df$mean_correct[payment_df$version=="monetary version" & payment_df$group=="harmful drinkers"]),]
+```
+
