@@ -22,7 +22,7 @@ editor_options:
 rm(list = ls(all = TRUE))
 
 # Load packages
-packages <- c("ggplot2", "dplyr", "tidyr", "kableExtra", "gmodels", "lme4", "sjPlot", "viridis", "forcats")
+packages <- c("ggplot2", "dplyr", "tidyr", "kableExtra", "gmodels", "lme4", "sjPlot", "viridis", "forcats", "lmerTest")
 #install.packages(packages)
 sapply(packages, require, character.only = TRUE)
 
@@ -75,7 +75,7 @@ summary %>%
                 latex_options = "scale_down")
 ```
 
-## Inconsistent AUDIT scores
+## Preregistered exclusion criterion 1: Inconsistent AUDIT scores
 
 ```{r}
 audit_inconsistent_df <- demo_psych %>%
@@ -125,7 +125,7 @@ demo_psych <- demo_psych %>%
          preserve = TRUE)
 ```
 
-## Correct path taken in less than 3 out of the last 5 learning phase trials in any of the 5 conditions
+## Preregistered exclusion criterion 2: Correct path taken in less than 3 out of the last 5 learning phase trials in any of the 5 conditions
 
 ```{r}
 # get last paths
@@ -270,7 +270,7 @@ demo_psych <- demo_psych %>%
 summary <- trial_df %>%
   select(ID, group, version)
 
-summary <- unique(summary) 
+summary <- unique(summary)
 
 summary <- summary %>%
   group_by(group, version) %>%
@@ -282,9 +282,88 @@ summary %>%
                 latex_options = "scale_down")
 ```
 
-## Extreme AUDIT scores - matching of groups
+## Balancing checks
 
-### Overview of current AUDIT scores
+### Condition index per condition
+
+```{r}
+# get percent correct over time
+balancing_df <- component_df %>%
+  mutate(condition_index = as.factor(condition_index),
+         condition = as.factor(condition)) %>%
+  filter(phase == "learning"
+         ) %>%
+  filter(! condition == "other") %>%
+  droplevels() %>%
+  unique() %>%
+  select(ID, group, version, condition, condition_index, environment)
+
+index_summary <- balancing_df %>%
+  group_by(group, version, condition, condition_index) %>%
+  summarise(n = n()
+            )
+index_summary %>%
+  kable("html") %>%
+  kable_styling(font_size = 14,
+                latex_options = "scale_down")
+```
+
+```{r}
+ggplot(balancing_df, aes(x=condition, fill=condition_index)) +
+  geom_bar() +
+  geom_text(stat = "count", aes(label = ..count..),
+            position = position_stack(vjust = 0.5), size = 4) +
+  facet_grid(vars(group), vars(version)) +
+  theme_light(base_size = 16) +
+  theme(axis.text.x = element_text(angle = 50, vjust = 1, hjust=1)) +
+  scale_fill_viridis(option = "plasma", discrete = TRUE)
+```
+
+```{r}
+# Chi-square test
+index_table <- balancing_df %>%
+  filter(group == "harmful" & version == "alcohol")
+
+chisq.test(table(index_table$condition, index_table$condition_index))
+```
+
+### Environment per condition
+
+```{r}
+# get percent correct over time
+environment_summary <- balancing_df %>%
+  group_by(group, version, condition, environment) %>%
+  summarise(n = n()
+            )
+
+environment_summary %>%
+  kable("html") %>%
+  kable_styling(font_size = 14,
+                latex_options = "scale_down")
+```
+
+```{r}
+balancing_df %>%
+  ggplot(aes(x=condition, fill=environment)) +
+  geom_bar() +
+  geom_text(stat = "count", aes(label = ..count..),
+            position = position_stack(vjust = 0.5), size = 4) +
+  facet_grid(vars(group), vars(version), scales = "free_x") +
+  theme_light(base_size = 16) +
+  theme(axis.text.x = element_text(angle = 50, vjust = 1, hjust=1)) +
+  scale_fill_viridis(option = "turbo", discrete = TRUE)
+```
+
+```{r}
+# Chi-square test
+env_table <- balancing_df %>%
+  filter(group == "low-risk" & version == "alcohol") %>%
+  droplevels()
+
+chisq.test(table(env_table$condition, env_table$environment), simulate.p.value = F)
+```
+
+## Overview of current AUDIT scores
 
 ```{r}
 # calculate 
@@ -324,281 +403,11 @@ ggplot(audit_df, aes(x=group, y=audit_mean)) +
   scale_fill_viridis(option = "plasma", discrete = TRUE)
 ```
 
--   The difference in AUDIT scores between harmful and low-risk drinkers is significantly smaller for the alcohol version.
-
 ```{r}
 lm_audit <- lm(audit_mean ~ group*version,
                data = audit_df)
 
 tab_model(lm_audit, transform = NULL, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
-```
-
-### Exclude extreme AUDIT scores per group until n = 105
-
-```{r}
-# low risk drinker, monetary
-
-# select 105 highest values
-audit_df_lr_m <- audit_df %>%
-  filter(group == "Low-risk drinkers" & version == "Monetary version") %>%
-  slice_max(audit_mean, n=105)
-
-# too many rows as multiple occurences of lowest value - sample 5 rows with lowest value to exclude them
-excl_audit_df_lr_m <- audit_df_lr_m %>%
-  filter(audit_mean == min(audit_df_lr_m$audit_mean)) %>%
-  slice_sample(n=nrow(audit_df_lr_m)-105, replace=F)
-
-audit_df_lr_m <- audit_df_lr_m %>%
-  filter(! prolific_ID %in% excl_audit_df_lr_m$prolific_ID) 
-
-# low risk drinker, alcohol
-
-# select 105 lowest values
-audit_df_lr_a <- audit_df %>%
-  filter(group == "Low-risk drinkers" & version == "Alcohol version") %>%
-  slice_min(audit_mean, n=105)
-
-# too many rows as multiple occurences of highest value - sample 2 rows with highest value to exclude them
-excl_audit_df_lr_a <- audit_df_lr_a %>%
-  filter(audit_mean == max(audit_df_lr_a$audit_mean)) %>%
-  slice_sample(n=nrow(audit_df_lr_a)-105, replace=F)
-
-audit_df_lr_a <- audit_df_lr_a %>%
-  filter(! prolific_ID %in% excl_audit_df_lr_a$prolific_ID) 
-
-# harmful drinker, monetary
-
-# select 105 lowest values
-audit_df_hf_m <- audit_df %>%
-  filter(group == "Harmful drinkers" & version == "Monetary version") %>%
-  slice_min(audit_mean, n=105)
-
-# too many rows as multiple occurences of highest value - sample 1 rows with highest value to exclude them
-excl_audit_df_hf_m <- audit_df_hf_m %>%
-  filter(audit_mean == max(audit_df_hf_m$audit_mean)) %>%
-  slice_sample(n=nrow(audit_df_hf_m)-105, replace=F)
-
-audit_df_hf_m <- audit_df_hf_m %>%
-  filter(! prolific_ID %in% excl_audit_df_hf_m$prolific_ID) 
-
-# harmful drinker, alcohol
-
-# select 105 highest values
-audit_df_hr_a <- audit_df %>%
-  filter(group == "Harmful drinkers" & version == "Alcohol version") %>%
-  slice_max(audit_mean, n=105)
-
-# too many rows as multiple occurences of lowest value - sample 7 rows with lowest value to exclude them
-excl_audit_df_hr_a <- audit_df_hr_a %>%
-  filter(audit_mean == min(audit_df_hr_a$audit_mean)) %>%
-  slice_sample(n=nrow(audit_df_hr_a)-105, replace=F)
-
-audit_df_hr_a <- audit_df_hr_a %>%
-  filter(! prolific_ID %in% excl_audit_df_hr_a$prolific_ID) 
-
-audit_df <- rbind(audit_df_lr_m, audit_df_lr_a, audit_df_hf_m, audit_df_hr_a)
-```
-
-```{r}
-audit_df_summary_new <- audit_df %>%
-  group_by(group, version) %>%
-  summarise(mean_audit = mean(audit_mean, na.rm = TRUE),
-            se_audit = sd(audit_mean, na.rm = TRUE)/sqrt(n()),
-            ci_l = ci(audit_mean, na.rm=TRUE)[2],
-            ci_u = ci(audit_mean, na.rm=TRUE)[3],
-            n = n()
-            ) 
-
-audit_df_summary_new %>%
-  kable("html") %>%
-  kable_styling(font_size = 12,
-                latex_options = "scale_down")
-```
-
-```{r}
-ggplot(audit_df, aes(x=group, y=audit_mean)) +
-  geom_boxplot(aes(fill = group)) +
-  scale_y_continuous(labels = scales::comma) +
-  xlab("") +
-  ylab("AUDIT score") +
-  facet_wrap(~ version) +
-  theme_light(base_size = 16) +
-  theme(legend.position = "none",
-        axis.text.x = element_text(angle = 50, vjust = 1, hjust=1)) +
-  scale_fill_viridis(option = "plasma", discrete = TRUE)
-```
-
--   After exclusion of subjects with the most extreme AUDIT scores until reaching n=105 per group, this effect becomes smaller, but remains significant.
-
-```{r}
-lm_audit_new <- lm(audit_mean ~ group*version,
-               data = audit_df)
-
-tab_model(lm_audit_new, transform = NULL, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
-```
-
-### Apply exclusion
-
-```{r}
-trial_df <- trial_df %>%
-  filter(ID %in% audit_df$prolific_ID,
-         preserve = TRUE) %>%
-  arrange(ID, 
-          condition_index,
-          phase,
-          trial,
-          state_index)
-
-component_df <- component_df %>%
-  filter(ID %in% audit_df$prolific_ID,
-         preserve = TRUE)
-
-rating_df <- rating_df %>%
-  filter(ID %in% audit_df$prolific_ID,
-         preserve = TRUE)
-
-demo_psych <- demo_psych %>%
-  filter(prolific_ID %in% audit_df$prolific_ID,
-         preserve = TRUE)
-```
-
-## Further analyses based on 105 per group & version
-
-```{r}
-summary <- trial_df %>%
-  select(ID, group, version)
-
-summary <- unique(summary) 
-
-summary <- summary %>%
-  group_by(group, version) %>%
-  summarise(n = n())
-
-summary %>%
-  kable("html") %>%
-  kable_styling(font_size = 18,
-                latex_options = "scale_down")
-```
-
-# Balancing checks
-
-## Variations
-
-Variations stand for a certain combination between condition, environment, and condition index. - Some variations were more common than others, which is due to a higher a priori probability of certain variations and subjects dropping out at different rates after variation assignment.
-
-```{r}
-# get percent correct over time
-balancing_variations_df <- component_df %>%
-  filter(component == "control-learning"
-         ) %>%
-  unique() 
-
-balancing_variations_df %>%
-  group_by(variation) %>%
-  summarise(n = n()
-            ) %>%
-  kable("html") %>%
-  kable_styling(font_size = 14,
-                latex_options = "scale_down")
-```
-
-```{r}
-ggplot(balancing_variations_df, aes(x=variation, fill=variation)) +
-  geom_bar() +
-  theme_light(base_size = 16) +
-  theme(legend.position = "none") +
-  scale_fill_viridis(option = "turbo", discrete = TRUE)
-```
-
-## Condition per condition index
-
--   Every condition accoured roughly the same number of times at a certain index.
-
-```{r}
-# get percent correct over time
-balancing_index_df <- component_df %>%
-  mutate(condition_index = as.factor(condition_index)) %>%
-  filter(phase == "learning"
-         ) %>%
-  unique()
-
-balancing_index_df %>%
-  group_by(condition, condition_index) %>%
-  summarise(n = n()
-            ) %>%
-  kable("html") %>%
-  kable_styling(font_size = 14,
-                latex_options = "scale_down")
-```
-
-```{r}
-ggplot(balancing_index_df, aes(x=condition_index, fill=condition_index)) +
-  geom_bar() +
-  facet_grid(~condition) +
-  theme_light(base_size = 16) +
-  theme(legend.position = "none") +
-  scale_fill_viridis(option = "mako", discrete = TRUE)
-```
-
-## Environment per condition index
-
--   Certain environments occured with a much higher probability at a certain index than at others.
-
-```{r}
-# get percent correct over time
-balancing_environment_df <- component_df %>%
-  mutate(condition_index = as.factor(condition_index)) %>%
-  filter(phase == "learning"
-         )
-
-balancing_environment_df %>%
-  group_by(version, condition_index, environment) %>%
-  summarise(n = n()
-            ) %>%
-  kable("html") %>%
-  kable_styling(font_size = 14,
-                latex_options = "scale_down")
-```
-
-```{r}
-ggplot(balancing_environment_df, aes(x=condition_index, fill=condition_index)) +
-  geom_bar() +
-  facet_wrap(~version+environment, nrow=2) +
-  theme_light(base_size = 16) +
-  theme(legend.position = "none") +
-  scale_fill_viridis(option = "mako", discrete = TRUE)
-```
-
-## Condition per environment
-
--   Certain conditions took place with a higher probability in a certain environment than in others.
-
-```{r}
-# get percent correct over time
-balancing_con_environment_df <- component_df %>%
-  mutate(condition = as.factor(condition)) %>%
-  filter(phase == "learning"
-         )
-
-balancing_con_environment_df %>%
-  group_by(condition, environment) %>%
-  summarise(n = n()
-            ) %>%
-  kable("html") %>%
-  kable_styling(font_size = 14,
-                latex_options = "scale_down")
-```
-
-```{r}
-balancing_con_environment_df %>%
-  #filter(version == "control") %>%
-  ggplot(aes(x=environment, fill=environment)) +
-  geom_bar() +
-  facet_grid(vars(condition), vars(version), scales = "free_x") +
-  theme_light(base_size = 12) +
-  theme(legend.position = "none",
-        axis.text.x = element_text(angle = 50, vjust = 1, hjust=1)) +
-  scale_fill_viridis(option = "plasma", discrete = TRUE)
 ```
 
 # Learning Phase
@@ -685,7 +494,9 @@ logreg_learning_correct_paths_group_version_condition_df <- trial_df %>%
 
 contrasts(logreg_learning_correct_paths_group_version_condition_df$condition) <- contr.treatment(5, base = 5)
 
-log_model_learning_paths_control <- glmer(correct_path ~ group*version*condition + (1 + condition | ID), data = logreg_learning_correct_paths_group_version_condition_df, family = "binomial", control=glmerControl(optimizer="bobyqa", optCtrl=list(maxfun=2e5))) 
+log_model_learning_paths_control <- glmer(correct_path ~ group*version*condition + (1 + condition | ID), data = logreg_learning_correct_paths_group_version_condition_df, family = "binomial", control=glmerControl(optimizer="bobyqa", optCtrl=list(maxfun=1e6))) 
+
+car::Anova(log_model_learning_paths_control, type=3)
 
 tab_model(log_model_learning_paths_control, transform = NULL, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
 ```
@@ -697,7 +508,7 @@ tab_model(log_model_learning_paths_control, transform = NULL, show.est = T, show
 ```{r}
 contrasts(logreg_learning_correct_paths_group_version_condition_df$condition) <- contr.treatment(5, base = 2)
 
-log_model_learning_paths_goalstate <- glmer(correct_path ~ group*version*condition + (1 + condition | ID), data = logreg_learning_correct_paths_group_version_condition_df, family = "binomial", control=glmerControl(optimizer="bobyqa", optCtrl=list(maxfun=2e5)))
+log_model_learning_paths_goalstate <- glmer(correct_path ~ group*version*condition + (1 + condition | ID), data = logreg_learning_correct_paths_group_version_condition_df, family = "binomial", control=glmerControl(optimizer="bobyqa", optCtrl=list(maxfun=1e6)))
 
 tab_model(log_model_learning_paths_goalstate, transform = NULL, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
 ```
@@ -709,7 +520,7 @@ tab_model(log_model_learning_paths_goalstate, transform = NULL, show.est = T, sh
 ```{r}
 contrasts(logreg_learning_correct_paths_group_version_condition_df$condition) <- contr.treatment(5, base = 4)
 
-log_model_learning_paths_policy <- glmer(correct_path ~ group*version*condition + (1 + condition | ID), data = logreg_learning_correct_paths_group_version_condition_df, family = "binomial", control=glmerControl(optimizer="bobyqa", optCtrl=list(maxfun=2e5)))
+log_model_learning_paths_policy <- glmer(correct_path ~ group*version*condition + (1 + condition | ID), data = logreg_learning_correct_paths_group_version_condition_df, family = "binomial", control=glmerControl(optimizer="bobyqa", optCtrl=list(maxfun=1e6)))
 
 tab_model(log_model_learning_paths_policy, transform = NULL, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
 ```
@@ -722,7 +533,7 @@ tab_model(log_model_learning_paths_policy, transform = NULL, show.est = T, show.
 ```{r}
 contrasts(logreg_learning_correct_paths_group_version_condition_df$condition) <- contr.treatment(5, base = 1)
 
-log_model_learning_paths_reward <- glmer(correct_path ~ group*version*condition + (1 + condition | ID), data = logreg_learning_correct_paths_group_version_condition_df, family = "binomial", control=glmerControl(optimizer="bobyqa", optCtrl=list(maxfun=2e5)))
+log_model_learning_paths_reward <- glmer(correct_path ~ group*version*condition + (1 + condition | ID), data = logreg_learning_correct_paths_group_version_condition_df, family = "binomial", control=glmerControl(optimizer="bobyqa", optCtrl=list(maxfun=1e6)))
 
 tab_model(log_model_learning_paths_reward, transform = NULL, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
 ```
@@ -734,7 +545,7 @@ tab_model(log_model_learning_paths_reward, transform = NULL, show.est = T, show.
 ```{r}
 contrasts(logreg_learning_correct_paths_group_version_condition_df$condition) <- contr.treatment(5, base = 3)
 
-log_model_learning_paths_transition <- glmer(correct_path ~ group*version*condition + (1 + condition | ID), data = logreg_learning_correct_paths_group_version_condition_df, family = "binomial", control=glmerControl(optimizer="bobyqa", optCtrl=list(maxfun=2e5)))
+log_model_learning_paths_transition <- glmer(correct_path ~ group*version*condition + (1 + condition | ID), data = logreg_learning_correct_paths_group_version_condition_df, family = "binomial", control=glmerControl(optimizer="bobyqa", optCtrl=list(maxfun=1e6)))
 
 tab_model(log_model_learning_paths_transition, transform = NULL, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
 ```
@@ -751,7 +562,7 @@ learning_paths_group_version_environment_df <- trial_df %>%
   filter(phase == "learning",
          state %in% c(1)
          ) %>%
-  group_by(version, group, environment) %>%
+  group_by(environment) %>%
   summarise(mean_correct_paths = mean(correct_path, na.rm = TRUE),
             se_correct = sd(correct_path, na.rm = TRUE)/sqrt(n()),
             ci_l = ci(correct_path, na.rm=TRUE)[2],
@@ -771,13 +582,13 @@ ggplot(learning_paths_group_version_environment_df, aes(x=environment, y=mean_co
   geom_bar(stat="identity", aes(fill=environment), position=position_dodge()) +
   geom_errorbar(aes(ymin=ci_l*100, ymax=ci_u*100), width=.2, position=position_dodge(.9)) +
   scale_y_continuous(limits = c(0, 105)) +
-  facet_grid(vars(group), vars(version), scales = "free_x") +
+  #facet_grid(vars(group), vars(version), scales = "free_x") +
   xlab("Environment") +
   ylab("% Correct paths") +
   theme_light(base_size = 12) +
   theme(legend.position = "none",,
         axis.text.x = element_text(angle = 50, vjust = 1, hjust=1)) +
-  scale_fill_viridis(option = "plasma", discrete = TRUE)
+  scale_fill_viridis(option = "turbo", discrete = TRUE)
 ```
 
 ### Per condition
@@ -813,7 +624,7 @@ ggplot(learning_paths_group_condition_environment_df, aes(x=environment, y=mean_
   facet_grid(vars(group), vars(version), scales = "free_x") +
   xlab("Environment") +
   ylab("% Correct paths") +
-  theme_light(base_size = 12) +
+  theme_light(base_size = 16) +
   theme(axis.text.x = element_text(angle = 50, vjust = 1, hjust=1)) +
   scale_fill_viridis(option = "viridis", discrete = TRUE)
 ```
@@ -839,7 +650,7 @@ logreg_learning_correct_paths_group_version_condition_env_df <- trial_df %>%
 
 contrasts(logreg_learning_correct_paths_group_version_condition_env_df$condition) <- contr.treatment(5, base = 5)
 
-log_model_learning_paths_env_control <- glmer(correct_path ~ group*version*condition + (1 + condition | ID) + (1 + group*version*condition | environment), data = logreg_learning_correct_paths_group_version_condition_env_df, family = "binomial", control=glmerControl(optimizer="bobyqa", optCtrl=list(maxfun=2e5))) 
+log_model_learning_paths_env_control <- glmer(correct_path ~ group*version*condition + (1 + condition | ID) + (1 + condition | environment), data = logreg_learning_correct_paths_group_version_condition_env_df, family = "binomial", control=glmerControl(optimizer="bobyqa", optCtrl=list(maxfun=1e6))) 
 
 tab_model(log_model_learning_paths_env_control, transform = NULL, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
 ```
@@ -849,7 +660,7 @@ tab_model(log_model_learning_paths_env_control, transform = NULL, show.est = T, 
 ```{r}
 contrasts(logreg_learning_correct_paths_group_version_condition_env_df$condition) <- contr.treatment(5, base = 2)
 
-log_model_learning_paths_env_goalstate <- glmer(correct_path ~ group*version*condition + (1 + condition | ID) + (1 + group*version*condition | environment), data = logreg_learning_correct_paths_group_version_condition_env_df, family = "binomial", control=glmerControl(optimizer="bobyqa", optCtrl=list(maxfun=2e5)))
+log_model_learning_paths_env_goalstate <- glmer(correct_path ~ group*version*condition + (1 + condition | ID) + (1 + condition | environment), data = logreg_learning_correct_paths_group_version_condition_env_df, family = "binomial", control=glmerControl(optimizer="bobyqa", optCtrl=list(maxfun=1e6)))
 
 tab_model(log_model_learning_paths_env_goalstate, transform = NULL, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
 ```
@@ -859,7 +670,7 @@ tab_model(log_model_learning_paths_env_goalstate, transform = NULL, show.est = T
 ```{r}
 contrasts(logreg_learning_correct_paths_group_version_condition_env_df$condition) <- contr.treatment(5, base = 4)
 
-log_model_learning_paths_env_policy <- glmer(correct_path ~ group*version*condition + (1 + condition | ID) + (1 + group*version*condition | environment), data = logreg_learning_correct_paths_group_version_condition_env_df, family = "binomial", control=glmerControl(optimizer="bobyqa", optCtrl=list(maxfun=2e5)))
+log_model_learning_paths_env_policy <- glmer(correct_path ~ group*version*condition + (1 + condition | ID) + (1 + condition | environment), data = logreg_learning_correct_paths_group_version_condition_env_df, family = "binomial", control=glmerControl(optimizer="bobyqa", optCtrl=list(maxfun=1e6)))
 
 tab_model(log_model_learning_paths_env_policy, transform = NULL, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
 ```
@@ -869,7 +680,7 @@ tab_model(log_model_learning_paths_env_policy, transform = NULL, show.est = T, s
 ```{r}
 contrasts(logreg_learning_correct_paths_group_version_condition_env_df$condition) <- contr.treatment(5, base = 1)
 
-log_model_learning_paths_env_reward <- glmer(correct_path ~ group*version*condition + (1 + condition | ID) + (1 + group*version*condition | environment), data = logreg_learning_correct_paths_group_version_condition_env_df, family = "binomial", control=glmerControl(optimizer="bobyqa", optCtrl=list(maxfun=2e5)))
+log_model_learning_paths_env_reward <- glmer(correct_path ~ group*version*condition + (1 + condition | ID) + (1 + condition | environment), data = logreg_learning_correct_paths_group_version_condition_env_df, family = "binomial", control=glmerControl(optimizer="bobyqa", optCtrl=list(maxfun=1e6)))
 
 tab_model(log_model_learning_paths_env_reward, transform = NULL, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
 ```
@@ -879,7 +690,7 @@ tab_model(log_model_learning_paths_env_reward, transform = NULL, show.est = T, s
 ```{r}
 contrasts(logreg_learning_correct_paths_group_version_condition_env_df$condition) <- contr.treatment(5, base = 3)
 
-log_model_learning_paths_env_transition <- glmer(correct_path ~ group*version*condition + (1 + condition | ID) + (1 + group*version*condition | environment), data = logreg_learning_correct_paths_group_version_condition_env_df, family = "binomial", control=glmerControl(optimizer="bobyqa", optCtrl=list(maxfun=2e5)))
+log_model_learning_paths_env_transition <- glmer(correct_path ~ group*version*condition + (1 + condition | ID) + (1 + condition | environment), data = logreg_learning_correct_paths_group_version_condition_env_df, family = "binomial", control=glmerControl(optimizer="bobyqa", optCtrl=list(maxfun=1e6)))
 
 tab_model(log_model_learning_paths_env_transition, transform = NULL, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
 ```
@@ -922,10 +733,10 @@ ggplot(learning_paths_condition_index_df, aes(x=condition_index, y=mean_correct*
   ylab("% Correct paths") +
   theme_light(base_size = 16) +
   theme(legend.position = "none") +
-  scale_fill_viridis(option = "mako", discrete = TRUE)
+  scale_fill_viridis(option = "plasma", discrete = TRUE)
 ```
 
-##### Trial number 
+##### Trial number
 
 ```{r}
 # get percent correct over time
@@ -1001,6 +812,101 @@ ggplot(learning_paths_condition_condition_index_df, aes(x=condition_index, y=mea
   scale_fill_viridis(option = "viridis", discrete = TRUE)
 ```
 
+###### LogReg: Difference from control condition
+
+```{r}
+logreg_learning_paths_group_version_condition_env_time_df <- trial_df %>%
+  filter(phase == "learning",
+         state == 1) %>%
+  group_by(ID, condition) %>%
+  mutate(accumulated_state1_visits = row_number()) %>%
+  ungroup() %>%
+  mutate(correct_path = as.factor(correct_path),
+         group = as.factor(group),
+         version = as.factor(version),
+         condition = as.factor(condition),
+         environment = as.factor(environment)) %>%
+  select(ID,
+         correct_path,
+         group,
+         version,
+         condition,
+         condition_index,
+         accumulated_state1_visits,
+         environment)
+
+contrasts(logreg_learning_paths_group_version_condition_env_time_df$condition) <- contr.treatment(5, base = 5)
+
+log_model_learning_paths_time_control <- glmer(correct_path ~ group*version*condition*condition_index 
+                                               + (1 + condition + condition_index | ID) 
+                                               + (1 + condition + condition_index | environment), 
+                                               data = logreg_learning_paths_group_version_condition_env_time_df, 
+                                               family = "binomial", 
+                                               control=glmerControl(optimizer="bobyqa", optCtrl=list(maxfun=1e6)))
+
+tab_model(log_model_learning_paths_time_control, transform = NULL, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
+```
+
+###### LogReg: Difference from goal-state condition
+
+```{r}
+contrasts(logreg_learning_paths_group_version_condition_env_time_df$condition) <- contr.treatment(5, base = 2)
+
+log_model_learning_paths_time_goalstate <- glmer(correct_path ~ group*version*condition*condition_index 
+                                               + (1 + condition + condition_index | ID) 
+                                               + (1 + condition + condition_index | environment), 
+                                               data = logreg_learning_paths_group_version_condition_env_time_df, 
+                                               family = "binomial", 
+                                               control=glmerControl(optimizer="bobyqa", optCtrl=list(maxfun=1e6)))
+
+tab_model(log_model_learning_paths_time_goalstate, transform = NULL, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
+```
+
+###### LogReg: Difference from policy condition
+
+```{r}
+contrasts(logreg_learning_paths_group_version_condition_env_time_df$condition) <- contr.treatment(5, base = 4)
+
+log_model_learning_paths_time_policy <- glmer(correct_path ~ group*version*condition*condition_index 
+                                               + (1 + condition + condition_index | ID) 
+                                               + (1 + condition + condition_index | environment), 
+                                               data = logreg_learning_paths_group_version_condition_env_time_df, 
+                                               family = "binomial", 
+                                               control=glmerControl(optimizer="bobyqa", optCtrl=list(maxfun=1e6)))
+
+tab_model(log_model_learning_paths_time_policy, transform = NULL, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
+```
+
+###### LogReg: Difference from reward condition
+
+```{r}
+contrasts(logreg_learning_paths_group_version_condition_env_time_df$condition) <- contr.treatment(5, base = 1)
+
+log_model_learning_paths_time_reward <- glmer(correct_path ~ group*version*condition*condition_index 
+                                               + (1 + condition + condition_index | ID) 
+                                               + (1 + condition + condition_index | environment), 
+                                               data = logreg_learning_paths_group_version_condition_env_time_df, 
+                                               family = "binomial", 
+                                               control=glmerControl(optimizer="bobyqa", optCtrl=list(maxfun=1e6)))
+
+tab_model(log_model_learning_paths_time_reward, transform = NULL, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
+```
+
+###### LogReg: Difference from transition condition
+
+```{r}
+contrasts(logreg_learning_paths_group_version_condition_env_time_df$condition) <- contr.treatment(5, base = 3)
+
+log_model_learning_paths_time_transition <- glmer(correct_path ~ group*version*condition*condition_index 
+                                               + (1 + condition + condition_index | ID) 
+                                               + (1 + condition + condition_index | environment), 
+                                               data = logreg_learning_paths_group_version_condition_env_time_df, 
+                                               family = "binomial", 
+                                               control=glmerControl(optimizer="bobyqa", optCtrl=list(maxfun=1e6)))
+
+tab_model(log_model_learning_paths_time_transition, transform = NULL, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
+```
+
 ##### Trial number
 
 ```{r}
@@ -1040,72 +946,77 @@ ggplot(learning_correct_paths_group_version_condition_time_df, aes(x=accumulated
   scale_fill_viridis(option = "viridis", discrete = TRUE) 
 ```
 
-##### LogReg: Difference from control condition
+###### LogReg: Difference from control condition
 
 ```{r}
-logreg_learning_paths_group_version_condition_env_time_df <- trial_df %>%
-  filter(phase == "learning",
-         state == 1) %>%
-  group_by(ID, condition) %>%
-  mutate(accumulated_state1_visits = row_number()) %>%
-  ungroup() %>%
-  mutate(correct_path = as.factor(correct_path),
-         group = as.factor(group),
-         version = as.factor(version),
-         condition = as.factor(condition),
-         environment = as.factor(environment)) %>%
-  select(ID,
-         correct_path,
-         group,
-         version,
-         condition,
-         condition_index,
-         accumulated_state1_visits,
-         environment)
-
 contrasts(logreg_learning_paths_group_version_condition_env_time_df$condition) <- contr.treatment(5, base = 5)
 
-log_model_learning_paths_time_control <- glmer(correct_path ~ group*version*condition*(condition_index+accumulated_state1_visits) + (1 + condition*(condition_index+accumulated_state1_visits) | ID) + (1 + group*version*condition*(condition_index+accumulated_state1_visits) | environment), data = logreg_learning_paths_group_version_condition_env_time_df, family = "binomial", control=glmerControl(optimizer="bobyqa", optCtrl=list(maxfun=2e5)))
+log_model_learning_paths_time_control <- glmer(correct_path ~ group*version*condition*accumulated_state1_visits 
+                                               + (1 + condition + accumulated_state1_visits | ID) 
+                                               + (1 + condition + accumulated_state1_visits | environment), 
+                                               data = logreg_learning_paths_group_version_condition_env_time_df, 
+                                               family = "binomial", 
+                                               control=glmerControl(optimizer="bobyqa", optCtrl=list(maxfun=1e6)))
 
 tab_model(log_model_learning_paths_time_control, transform = NULL, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
 ```
 
-##### LogReg: Difference from goal-state condition
+###### LogReg: Difference from goal-state condition
 
 ```{r}
 contrasts(logreg_learning_paths_group_version_condition_env_time_df$condition) <- contr.treatment(5, base = 2)
 
-log_model_learning_paths_time_goalstate <- glmer(correct_path ~ group*version*condition*(condition_index+accumulated_state1_visits) + (1 + condition*(condition_index+accumulated_state1_visits) | ID) + (1 + group*version*condition*(condition_index+accumulated_state1_visits) | environment), data = logreg_learning_paths_group_version_condition_env_time_df, family = "binomial", control=glmerControl(optimizer="bobyqa", optCtrl=list(maxfun=2e5)))
+log_model_learning_paths_time_goalstate <- glmer(correct_path ~ group*version*condition*accumulated_state1_visits 
+                                               + (1 + condition + accumulated_state1_visits | ID) 
+                                               + (1 + condition + accumulated_state1_visits | environment), 
+                                               data = logreg_learning_paths_group_version_condition_env_time_df, 
+                                               family = "binomial", 
+                                               control=glmerControl(optimizer="bobyqa", optCtrl=list(maxfun=1e6)))
 
 tab_model(log_model_learning_paths_time_goalstate, transform = NULL, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
 ```
 
-##### LogReg: Difference from policy condition
+###### LogReg: Difference from policy condition
 
 ```{r}
 contrasts(logreg_learning_paths_group_version_condition_env_time_df$condition) <- contr.treatment(5, base = 4)
 
-log_model_learning_paths_time_policy <- glmer(correct_path ~ group*version*condition*(condition_index+accumulated_state1_visits) + (1 + condition*(condition_index+accumulated_state1_visits) | ID) + (1 + group*version*condition*(condition_index+accumulated_state1_visits) | environment), data = logreg_learning_paths_group_version_condition_env_time_df, family = "binomial", control=glmerControl(optimizer="bobyqa", optCtrl=list(maxfun=2e5)))
+log_model_learning_paths_time_policy <- glmer(correct_path ~ group*version*condition*accumulated_state1_visits 
+                                               + (1 + condition + accumulated_state1_visits | ID) 
+                                               + (1 + condition + accumulated_state1_visits | environment), 
+                                               data = logreg_learning_paths_group_version_condition_env_time_df, 
+                                               family = "binomial", 
+                                               control=glmerControl(optimizer="bobyqa", optCtrl=list(maxfun=1e6)))
 
 tab_model(log_model_learning_paths_time_policy, transform = NULL, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
 ```
 
-##### LogReg: Difference from reward condition
+###### LogReg: Difference from reward condition
 
 ```{r}
 contrasts(logreg_learning_paths_group_version_condition_env_time_df$condition) <- contr.treatment(5, base = 1)
 
-log_model_learning_paths_time_reward <- glmer(correct_path ~ group*version*condition*(condition_index+accumulated_state1_visits) + (1 + condition*(condition_index+accumulated_state1_visits) | ID) + (1 + group*version*condition*(condition_index+accumulated_state1_visits) | environment), data = logreg_learning_paths_group_version_condition_env_time_df, family = "binomial", control=glmerControl(optimizer="bobyqa", optCtrl=list(maxfun=2e5)))
+log_model_learning_paths_time_reward <- glmer(correct_path ~ group*version*condition*accumulated_state1_visits 
+                                               + (1 + condition + accumulated_state1_visits | ID) 
+                                               + (1 + condition + accumulated_state1_visits | environment), 
+                                               data = logreg_learning_paths_group_version_condition_env_time_df, 
+                                               family = "binomial", 
+                                               control=glmerControl(optimizer="bobyqa", optCtrl=list(maxfun=1e6)))
 
 tab_model(log_model_learning_paths_time_reward, transform = NULL, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
 ```
 
-##### LogReg: Difference from transition condition
+###### LogReg: Difference from transition condition
 
 ```{r}
 contrasts(logreg_learning_paths_group_version_condition_env_time_df$condition) <- contr.treatment(5, base = 3)
 
-log_model_learning_paths_time_transition <- glmer(correct_path ~ group*version*condition*(condition_index+accumulated_state1_visits) + (1 + condition*(condition_index+accumulated_state1_visits) | ID) + (1 + group*version*condition*(condition_index+accumulated_state1_visits) | environment), data = logreg_learning_paths_group_version_condition_condition_index_df, family = "binomial", control=glmerControl(optimizer="bobyqa", optCtrl=list(maxfun=2e5)))
+log_model_learning_paths_time_transition <- glmer(correct_path ~ group*version*condition*accumulated_state1_visits 
+                                               + (1 + condition + accumulated_state1_visits | ID) 
+                                               + (1 + condition + accumulated_state1_visits | environment), 
+                                               data = logreg_learning_paths_group_version_condition_env_time_df, 
+                                               family = "binomial", 
+                                               control=glmerControl(optimizer="bobyqa", optCtrl=list(maxfun=1e6)))
 
 tab_model(log_model_learning_paths_time_transition, transform = NULL, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
 ```
@@ -1200,7 +1111,7 @@ logreg_test_path_group_condition_df_alcohol <- trial_df %>%
 ```{r}
 contrasts(logreg_test_path_condition_df_lowrisk_control$condition) <- contr.treatment(5, base = 3)
 
-model1 <- glmer(correct_path ~ condition + (1 | ID), data = logreg_test_path_condition_df_lowrisk_control, family = "binomial", glmerControl(optimizer = "bobyqa", optCtrl=list(maxfun=2e5)))
+model1 <- glmer(correct_path ~ condition + (1 | ID), data = logreg_test_path_condition_df_lowrisk_control, family = "binomial", glmerControl(optimizer = "bobyqa", optCtrl=list(maxfun=1e6)))
 
 tab_model(model1, transform = NULL, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
 ```
@@ -1221,7 +1132,7 @@ tab_model(model1, transform = NULL, show.est = T, show.stat = T, auto.label = FA
 ```{r}
 contrasts(logreg_test_path_condition_df_lowrisk_control$condition) <- contr.treatment(5, base = 4)
 
-model2 <- glmer(correct_path ~ condition + (1 | ID), data = logreg_test_path_condition_df_lowrisk_control, family = "binomial", glmerControl(optimizer = "bobyqa", optCtrl=list(maxfun=2e5)))
+model2 <- glmer(correct_path ~ condition + (1 | ID), data = logreg_test_path_condition_df_lowrisk_control, family = "binomial", glmerControl(optimizer = "bobyqa", optCtrl=list(maxfun=1e6)))
 tab_model(model2, transform = NULL, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
 ```
 
@@ -1268,7 +1179,7 @@ model3 <- glmer(correct_path ~
                   (1 | ID), 
                 data = logreg_test_path_group_version_condition_df_full, 
                 family = "binomial", 
-                glmerControl(optimizer = "bobyqa", optCtrl=list(maxfun=2e5)))
+                glmerControl(optimizer = "bobyqa", optCtrl=list(maxfun=1e6)))
 
 tab_model(model3, transform = NULL, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
 ```
@@ -1286,7 +1197,7 @@ tab_model(model3, transform = NULL, show.est = T, show.stat = T, auto.label = FA
 ```{r}
 contrasts(logreg_test_path_group_condition_df_alcohol$condition) <- contr.treatment(5, base = 1)
 
-model4 <- glmer(correct_path ~ condition*group + (1 | ID), data = logreg_test_path_group_condition_df_alcohol, family = "binomial", glmerControl(optimizer = "bobyqa", optCtrl=list(maxfun=2e5)))
+model4 <- glmer(correct_path ~ condition*group + (1 | ID), data = logreg_test_path_group_condition_df_alcohol, family = "binomial", glmerControl(optimizer = "bobyqa", optCtrl=list(maxfun=1e6)))
 
 tab_model(model4, transform = NULL, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
 ```
@@ -1328,7 +1239,7 @@ model5 <- glmer(correct_path ~
                   (1 | ID), 
                 data = logreg_test_path_group_version_condition_df_full, 
                 family = "binomial", 
-                glmerControl(optCtrl=list(maxfun=2e5), 
+                glmerControl(optCtrl=list(maxfun=1e6), 
                              optimizer = "bobyqa"))
 
 tab_model(model5, transform = NULL, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
@@ -1343,7 +1254,7 @@ tab_model(model5, transform = NULL, show.est = T, show.stat = T, auto.label = FA
 ```{r}
 contrasts(logreg_test_path_condition_df_lowrisk_control$condition) <- contr.treatment(5, base = 5)
 
-model1_control <- glmer(correct_path ~ condition + (1 | ID), data = logreg_test_path_condition_df_lowrisk_control, family = "binomial", glmerControl(optimizer = "bobyqa", optCtrl=list(maxfun=2e5)))
+model1_control <- glmer(correct_path ~ condition + (1 | ID), data = logreg_test_path_condition_df_lowrisk_control, family = "binomial", glmerControl(optimizer = "bobyqa", optCtrl=list(maxfun=1e6)))
 
 tab_model(model1_control, transform = NULL, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
 ```
@@ -1378,7 +1289,7 @@ model3_control <- glmer(correct_path ~
                 data = logreg_test_path_group_version_condition_df_full, 
                 family = "binomial", 
                 glmerControl(optimizer = "bobyqa", 
-                             optCtrl=list(maxfun=2e5)))
+                             optCtrl=list(maxfun=1e6)))
 
 tab_model(model3_control, transform = NULL, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
 ```
@@ -1390,7 +1301,7 @@ tab_model(model3_control, transform = NULL, show.est = T, show.stat = T, auto.la
 ```{r}
 contrasts(logreg_test_path_group_condition_df_alcohol$condition) <- contr.treatment(5, base = 5)
 
-model4_control <- glmer(correct_path ~ condition*group + (1 | ID), data = logreg_test_path_group_condition_df_alcohol, family = "binomial", glmerControl(optimizer = "bobyqa", optCtrl=list(maxfun=2e5)))
+model4_control <- glmer(correct_path ~ condition*group + (1 | ID), data = logreg_test_path_group_condition_df_alcohol, family = "binomial", glmerControl(optimizer = "bobyqa", optCtrl=list(maxfun=1e6)))
 
 tab_model(model4_control, transform = NULL, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
 ```
@@ -1406,7 +1317,7 @@ tab_model(model4_control, transform = NULL, show.est = T, show.stat = T, auto.la
 ```{r}
 contrasts(logreg_test_path_condition_df_lowrisk_control$condition) <- contr.treatment(5, base = 3)
 
-model1_full <- glmer(correct_path ~ condition + (1 + condition | ID), data = logreg_test_path_condition_df_lowrisk_control, family = "binomial", glmerControl(optimizer = "bobyqa", optCtrl=list(maxfun=2e5)))
+model1_full <- glmer(correct_path ~ condition + (1 + condition | ID), data = logreg_test_path_condition_df_lowrisk_control, family = "binomial", glmerControl(optimizer = "bobyqa", optCtrl=list(maxfun=1e6)))
 
 tab_model(model1_full, transform = NULL, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
 ```
@@ -1420,7 +1331,7 @@ tab_model(model1_full, transform = NULL, show.est = T, show.stat = T, auto.label
 ```{r}
 contrasts(logreg_test_path_condition_df_lowrisk_control$condition) <- contr.treatment(5, base = 4)
 
-model2_full <- glmer(correct_path ~ condition + (1 + condition | ID), data = logreg_test_path_condition_df_lowrisk_control, family = "binomial", glmerControl(optimizer = "bobyqa", optCtrl=list(maxfun=2e5)))
+model2_full <- glmer(correct_path ~ condition + (1 + condition | ID), data = logreg_test_path_condition_df_lowrisk_control, family = "binomial", glmerControl(optimizer = "bobyqa", optCtrl=list(maxfun=1e6)))
 tab_model(model2_full, transform = NULL, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
 ```
 
@@ -1440,7 +1351,7 @@ contrasts(logreg_test_path_group_version_condition_df_full$condition) <- contr.t
 model3_full <- glmer(correct_path ~ group*version*condition + (1 + condition | ID), 
                 data = logreg_test_path_group_version_condition_df_full, 
                 family = "binomial", 
-                glmerControl(optimizer = "bobyqa", optCtrl=list(maxfun=2e5)))
+                glmerControl(optimizer = "bobyqa", optCtrl=list(maxfun=1e6)))
 
 tab_model(model3_full, transform = NULL, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
 ```
@@ -1454,7 +1365,7 @@ tab_model(model3_full, transform = NULL, show.est = T, show.stat = T, auto.label
 ```{r}
 contrasts(logreg_test_path_group_condition_df_alcohol$condition) <- contr.treatment(5, base = 1)
 
-model4_full <- glmer(correct_path ~ condition*group + (1 + condition | ID), data = logreg_test_path_group_condition_df_alcohol, family = "binomial", glmerControl(optimizer = "bobyqa", optCtrl=list(maxfun=2e5)))
+model4_full <- glmer(correct_path ~ condition*group + (1 + condition | ID), data = logreg_test_path_group_condition_df_alcohol, family = "binomial", glmerControl(optimizer = "bobyqa", optCtrl=list(maxfun=1e6)))
 
 tab_model(model4_full, transform = NULL, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
 ```
@@ -1471,7 +1382,7 @@ contrasts(logreg_test_path_group_version_condition_df_full$condition) <- contr.t
 model5_full <- glmer(correct_path ~ group*version*condition (1 + condition | ID), 
                 data = logreg_test_path_group_version_condition_df_full, 
                 family = "binomial", 
-                glmerControl(optCtrl=list(maxfun=2e5), 
+                glmerControl(optCtrl=list(maxfun=1e6), 
                              optimizer = "bobyqa"))
 
 tab_model(model5_full, transform = NULL, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
@@ -1486,7 +1397,7 @@ tab_model(model5_full, transform = NULL, show.est = T, show.stat = T, auto.label
 ```{r}
 contrasts(logreg_test_path_condition_df_lowrisk_control$condition) <- contr.treatment(5, base = 5)
 
-model1_full_control <- glmer(correct_path ~ condition + (1 + condition | ID), data = logreg_test_path_condition_df_lowrisk_control, family = "binomial", glmerControl(optimizer = "bobyqa", optCtrl=list(maxfun=2e5)))
+model1_full_control <- glmer(correct_path ~ condition + (1 + condition | ID), data = logreg_test_path_condition_df_lowrisk_control, family = "binomial", glmerControl(optimizer = "bobyqa", optCtrl=list(maxfun=1e6)))
 
 tab_model(model1_full_control, transform = NULL, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
 ```
@@ -1501,7 +1412,7 @@ contrasts(logreg_test_path_group_version_condition_df_full$condition) <- contr.t
 model3_full_control <- glmer(correct_path ~ group*version*condition + (1 + condition | ID), 
                 data = logreg_test_path_group_version_condition_df_full, 
                 family = "binomial", 
-                glmerControl(optimizer = "bobyqa", optCtrl=list(maxfun=2e5)))
+                glmerControl(optimizer = "bobyqa", optCtrl=list(maxfun=1e6)))
 
 tab_model(model3_full_control, transform = NULL, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
 ```
@@ -1513,7 +1424,7 @@ tab_model(model3_full_control, transform = NULL, show.est = T, show.stat = T, au
 ```{r}
 contrasts(logreg_test_path_group_condition_df_alcohol$condition) <- contr.treatment(5, base = 5)
 
-model4_full_control <- glmer(correct_path ~ condition*group + (1 + condition | ID), data = logreg_test_path_group_condition_df_alcohol, family = "binomial", glmerControl(optimizer = "bobyqa", optCtrl=list(maxfun=2e5)))
+model4_full_control <- glmer(correct_path ~ condition*group + (1 + condition | ID), data = logreg_test_path_group_condition_df_alcohol, family = "binomial", glmerControl(optimizer = "bobyqa", optCtrl=list(maxfun=1e6)))
 
 tab_model(model4_full_control, transform = NULL, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
 ```
@@ -1604,7 +1515,7 @@ logreg_test_path_group_condition_env_df_alcohol <- trial_df %>%
 ```{r}
 contrasts(logreg_test_path_condition_env_df_lowrisk_control$condition) <- contr.treatment(5, base = 3)
 
-model1_env <- glmer(correct_path ~ condition + (1 + condition | ID) + (1 + condition | environment), data = logreg_test_path_condition_env_df_lowrisk_control, family = "binomial", glmerControl(optimizer = "bobyqa", optCtrl=list(maxfun=2e5)))
+model1_env <- glmer(correct_path ~ condition + (1 + condition | ID) + (1 + condition | environment), data = logreg_test_path_condition_env_df_lowrisk_control, family = "binomial", glmerControl(optimizer = "bobyqa", optCtrl=list(maxfun=1e6)))
 
 tab_model(model1_env, transform = NULL, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
 ```
@@ -1614,7 +1525,7 @@ tab_model(model1_env, transform = NULL, show.est = T, show.stat = T, auto.label 
 ```{r}
 contrasts(logreg_test_path_condition_env_df_lowrisk_control$condition) <- contr.treatment(5, base = 4)
 
-model2_env <- glmer(correct_path ~ condition + (1 + condition | ID) + (1 + condition | environment), data = logreg_test_path_condition_env_df_lowrisk_control, family = "binomial", glmerControl(optimizer = "bobyqa", optCtrl=list(maxfun=2e5)))
+model2_env <- glmer(correct_path ~ condition + (1 + condition | ID) + (1 + condition | environment), data = logreg_test_path_condition_env_df_lowrisk_control, family = "binomial", glmerControl(optimizer = "bobyqa", optCtrl=list(maxfun=1e6)))
 
 tab_model(model2_env, transform = NULL, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
 ```
@@ -1627,7 +1538,7 @@ contrasts(logreg_test_path_group_version_condition_env_df_full$condition) <- con
 model3_env <- glmer(correct_path ~ group*version*condition + (1 + condition | ID) + (1 + group*version*condition | environment), 
                 data = logreg_test_path_group_version_condition_df_full, 
                 family = "binomial", 
-                glmerControl(optimizer = "bobyqa", optCtrl=list(maxfun=2e5)))
+                glmerControl(optimizer = "bobyqa", optCtrl=list(maxfun=1e6)))
 
 tab_model(model3_env, transform = NULL, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
 ```
@@ -1637,7 +1548,7 @@ tab_model(model3_env, transform = NULL, show.est = T, show.stat = T, auto.label 
 ```{r}
 contrasts(logreg_test_path_group_condition_env_df_alcohol$condition) <- contr.treatment(5, base = 1)
 
-model4_env <- glmer(correct_path ~ condition*group + (1 + condition | ID) + (1 + group*version*condition | environment), data = logreg_test_path_group_condition_env_df_alcohol, family = "binomial", glmerControl(optimizer = "bobyqa", optCtrl=list(maxfun=2e5)))
+model4_env <- glmer(correct_path ~ condition*group + (1 + condition | ID) + (1 + group*version*condition | environment), data = logreg_test_path_group_condition_env_df_alcohol, family = "binomial", glmerControl(optimizer = "bobyqa", optCtrl=list(maxfun=1e6)))
 
 tab_model(model4_env, transform = NULL, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
 ```
@@ -1650,7 +1561,7 @@ contrasts(logreg_test_path_group_version_condition_env_df_full$condition) <- con
 model5_env <- glmer(correct_path ~ group*version*condition + (1 + condition | ID) + (1 + group*version*condition | environment), 
                 data = logreg_test_path_group_version_condition_df_full, 
                 family = "binomial", 
-                glmerControl(optimizer = "bobyqa", optCtrl=list(maxfun=2e5)))
+                glmerControl(optimizer = "bobyqa", optCtrl=list(maxfun=1e6)))
 
 tab_model(model5_env, transform = NULL, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
 ```
@@ -1664,7 +1575,7 @@ tab_model(model5_env, transform = NULL, show.est = T, show.stat = T, auto.label 
 ```{r}
 contrasts(logreg_test_path_condition_env_df_lowrisk_control$condition) <- contr.treatment(5, base = 5)
 
-model1_env_control <- glmer(correct_path ~ condition + (1 + condition | ID) + (1 + condition | environment), data = logreg_test_path_condition_env_df_lowrisk_control, family = "binomial", glmerControl(optimizer = "bobyqa", optCtrl=list(maxfun=2e5)))
+model1_env_control <- glmer(correct_path ~ condition + (1 + condition | ID) + (1 + condition | environment), data = logreg_test_path_condition_env_df_lowrisk_control, family = "binomial", glmerControl(optimizer = "bobyqa", optCtrl=list(maxfun=1e6)))
 
 tab_model(model1_env_control, transform = NULL, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
 ```
@@ -1679,7 +1590,7 @@ contrasts(logreg_test_path_group_version_condition_env_df_full$condition) <- con
 model3_env_control <- glmer(correct_path ~ group*version*condition + (1 + condition | ID) + (1 + group*version*condition | environment), 
                 data = logreg_test_path_group_version_condition_env_df_full, 
                 family = "binomial", 
-                glmerControl(optimizer = "bobyqa", optCtrl=list(maxfun=2e5)))
+                glmerControl(optimizer = "bobyqa", optCtrl=list(maxfun=1e6)))
 
 tab_model(model3_env_control, transform = NULL, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
 ```
@@ -1691,7 +1602,7 @@ tab_model(model3_env_control, transform = NULL, show.est = T, show.stat = T, aut
 ```{r}
 contrasts(logreg_test_path_group_condition_env_df_alcohol$condition) <- contr.treatment(5, base = 5)
 
-model4_env_control <- glmer(correct_path ~ condition*group + (1 + condition | ID) + (1 + group*condition | environment), data = logreg_test_path_group_condition_env_df_alcohol, family = "binomial", glmerControl(optimizer = "bobyqa", optCtrl=list(maxfun=2e5)))
+model4_env_control <- glmer(correct_path ~ condition*group + (1 + condition | ID) + (1 + group*condition | environment), data = logreg_test_path_group_condition_env_df_alcohol, family = "binomial", glmerControl(optimizer = "bobyqa", optCtrl=list(maxfun=1e6)))
 
 tab_model(model4_env_control, transform = NULL, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
 ```
@@ -1834,7 +1745,7 @@ logreg_test_path_group_condition_env_time_df_alcohol <- trial_df %>%
 ```{r}
 contrasts(logreg_test_path_condition_env_time_df_lowrisk_control$condition) <- contr.treatment(5, base = 3)
 
-model1_time <- glmer(correct_path ~ condition*(condition_index+accumulated_state1_visits) + (1 + condition*(condition_index+accumulated_state1_visits) | ID) + (1 + condition*(condition_index+accumulated_state1_visits) | environment), data = logreg_test_path_condition_env_time_df_lowrisk_control, family = "binomial", glmerControl(optimizer = "bobyqa", optCtrl=list(maxfun=2e5)))
+model1_time <- glmer(correct_path ~ condition*(condition_index+accumulated_state1_visits) + (1 + condition*(condition_index+accumulated_state1_visits) | ID) + (1 + condition*(condition_index+accumulated_state1_visits) | environment), data = logreg_test_path_condition_env_time_df_lowrisk_control, family = "binomial", glmerControl(optimizer = "bobyqa", optCtrl=list(maxfun=1e6)))
 
 tab_model(model1_time, transform = NULL, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
 ```
@@ -1844,7 +1755,7 @@ tab_model(model1_time, transform = NULL, show.est = T, show.stat = T, auto.label
 ```{r}
 contrasts(logreg_test_path_condition_env_time_df_lowrisk_control$condition) <- contr.treatment(5, base = 4)
 
-model2_time <- glmer(correct_path ~ condition*(condition_index+accumulated_state1_visits) + (1 + condition*(condition_index+accumulated_state1_visits) | ID) + (1 + condition*(condition_index+accumulated_state1_visits) | environment), data = logreg_test_path_condition_env_time_df_lowrisk_control, family = "binomial", glmerControl(optimizer = "bobyqa", optCtrl=list(maxfun=2e5)))
+model2_time <- glmer(correct_path ~ condition*(condition_index+accumulated_state1_visits) + (1 + condition*(condition_index+accumulated_state1_visits) | ID) + (1 + condition*(condition_index+accumulated_state1_visits) | environment), data = logreg_test_path_condition_env_time_df_lowrisk_control, family = "binomial", glmerControl(optimizer = "bobyqa", optCtrl=list(maxfun=1e6)))
 
 tab_model(model2_time, transform = NULL, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
 ```
@@ -1857,7 +1768,7 @@ contrasts(logreg_test_path_group_version_condition_env_time_df_full$condition) <
 model3_time <- glmer(correct_path ~ group*version*condition*(condition_index+accumulated_state1_visits) + (1 + condition*(condition_index+accumulated_state1_visits) | ID) + (1 + group*version*condition*(condition_index+accumulated_state1_visits) | environment), 
                 data = logreg_test_path_group_version_condition_env_time_df_full, 
                 family = "binomial", 
-                glmerControl(optimizer = "bobyqa", optCtrl=list(maxfun=2e5)))
+                glmerControl(optimizer = "bobyqa", optCtrl=list(maxfun=1e6)))
 
 tab_model(model3_time, transform = NULL, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
 ```
@@ -1867,7 +1778,7 @@ tab_model(model3_time, transform = NULL, show.est = T, show.stat = T, auto.label
 ```{r}
 contrasts(logreg_test_path_group_condition_env_time_df_alcohol$condition) <- contr.treatment(5, base = 1)
 
-model4_time <- glmer(correct_path ~ condition*group*(condition_index+accumulated_state1_visits) + (1 + condition*(condition_index+accumulated_state1_visits) | ID) + (1 + group*version*condition*(condition_index+accumulated_state1_visits) | environment), data = logreg_test_path_group_condition_env_time_df_alcohol, family = "binomial", glmerControl(optimizer = "bobyqa", optCtrl=list(maxfun=2e5)))
+model4_time <- glmer(correct_path ~ condition*group*(condition_index+accumulated_state1_visits) + (1 + condition*(condition_index+accumulated_state1_visits) | ID) + (1 + group*version*condition*(condition_index+accumulated_state1_visits) | environment), data = logreg_test_path_group_condition_env_time_df_alcohol, family = "binomial", glmerControl(optimizer = "bobyqa", optCtrl=list(maxfun=1e6)))
 
 tab_model(model4_time, transform = NULL, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
 ```
@@ -1880,7 +1791,7 @@ contrasts(logreg_test_path_group_condition_env_time_df_alcohol$condition) <- con
 model5_time <- glmer(correct_path ~ group*version*condition*(condition_index+accumulated_state1_visits) + (1 + condition*(condition_index+accumulated_state1_visits) | ID) + (1 + group*version*condition*(condition_index+accumulated_state1_visits) | environment), 
                 data = logreg_test_path_group_condition_env_time_df_alcohol, 
                 family = "binomial", 
-                glmerControl(optimizer = "bobyqa", optCtrl=list(maxfun=2e5)))
+                glmerControl(optimizer = "bobyqa", optCtrl=list(maxfun=1e6)))
 
 tab_model(model5_time, transform = NULL, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
 ```

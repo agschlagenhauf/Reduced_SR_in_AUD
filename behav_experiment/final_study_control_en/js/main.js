@@ -64,9 +64,11 @@ function prepareComponentFlow() { // prepare list of what we should show
         StaticComponents.Intro4
     ); 
 
-    const variation = Variations[runningID % Variations.length]; // get element of Variations based on runningID
-    variationID = Object.keys(variation)[0]; // get e.g. A1, A2 etc. key
-    const entries = variation[variationID]; // get content of variation element e.g. A1
+    // const variation = Variations[runningID % Variations.length]; // get element of Variations based on runningID
+    // variationID = Object.keys(variation)[0]; // get e.g. A1, A2 etc. key
+    variationID = jatos.studyJsonInput["variationID"];
+    // const entries = variation[variationID]; // get content of variation element e.g. A1
+    const entries = jatos.studyJsonInput["variation"]; // for balancing after initial recruitment, all subjects get particular version independent of running ID
 
     entries.forEach(function (entry, entryIndex) {
         const condition = Object.keys(entry)[0]; // get condition (key)
@@ -983,7 +985,7 @@ const Phases = [
 /*
  * Variations
  */
-const Variations = [
+/*const Variations = [
     
     {
         "A1": [
@@ -1211,6 +1213,6 @@ const Variations = [
         ]
     }
 ];
-
+*/
 
 // callback is a function that is passed into another function so that it can be executed after waiting for asynchronous event
