@@ -29,7 +29,8 @@ sapply(packages, require, character.only = TRUE)
 # set color scheme
 
 # define paths
-data_path <- "~/work/group_folder/B01_FP2_WP3/WP3_DATA/FINAL_STUDY/RDFs"
+#data_path <- "~/work/group_folder/B01_FP2_WP3/WP3_DATA/FINAL_STUDY/RDFs"
+data_path <- "~/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/PhD/04_B01/WP3/WP3_DATA/FINAL_STUDY/RDFs"
 
 # read dfs
 load(file.path(data_path, "final_data_complete.RData"))
@@ -262,6 +263,8 @@ rating_df <- rating_df %>%
 demo_psych <- demo_psych %>%
   filter(! prolific_ID %in% excluded_IDs,
          preserve = TRUE)
+
+save(demo_psych, file = file.path(data_path, "demo_psych_data_included.RData"))
 ```
 
 ## Further analyses based on (according to preregistered criteria)
@@ -2166,8 +2169,6 @@ logreg_test_path_group_condition_df_alcohol <- trial_df %>%
 
 > **Hypothesis 1:** **Main effect of condition (reward vs. transition revaluation, goal-state vs. transition revaluation)**
 
->
-
 > Low-risk drinkers use SR to some extent when learning in a non-alcohol context. Specifically, we expect more correct test phase paths in the reward revaluation and the goal-state revaluation conditions compared to the transition revaluation condition, respectively.
 
 ```{r}
@@ -2197,8 +2198,6 @@ tab_model(model1_rs_env_rs, show.est = T, show.stat = T, auto.label = FALSE, CSS
 #### Model 2: Low-risk drinkers, control version, compare against policy revaluation
 
 > **Hypothesis 2:** **Main effect of condition (reward vs. policy revaluation, goal-state vs. policy revaluation)**
-
->
 
 > The differences between reward and transition revaluation and between goal-state and transition revaluation cannot fully be explained by use of a model-based strategy with a higher learning rate for the reward compared to the transition structure. Specifically, we expect fewer correct test phase paths in the policy revaluation condition compared to the reward and goal-state revaluation conditions, respectively.
 
@@ -2308,13 +2307,9 @@ ggplot(exploration_df, aes(x=percent_exploration, y=individual_slope)) +
 
 > **Hypothesis 3:** **Interaction of condition (reward vs. transition revaluation) \* group (harmful vs. low-risk drinkers)**
 
->
-
 > Individuals with harmful alcohol use (harmful drinkers) show a higher degree of SR use compared to individuals with low-risk alcohol use (low-risk drinkers). Specifically, we expect more correct test phase paths in the reward revaluation condition compared to the transition revaluation condition for harmful drinkers compared to low-risk drinkers.
 
 > **Hypothesis 4:** **Interaction of condition (reward vs. transition revaluation) \* group (harmful vs. low-risk drinkers) \* context (alcohol vs. non-alcohol)**
-
->
 
 > Harmful drinkers show a higher degree of SR use compared to low-risk drinkers when learning in an alcohol compared to a non-alcohol context. Specifically, we expect more correct test phase paths in the reward revaluation compared to the transition revaluation condition for harmful drinkers compared to low-risk drinkers in the alcohol compared to the non-alcohol task version.
 
@@ -2456,8 +2451,6 @@ tab_model(model3_rs_vers, show.est = T, show.stat = T, auto.label = FALSE, CSS =
 
 > **Hypothesis 5: Interaction of condition (goal-state vs. reward revaluation) \* group (harmful vs. low-risk drinkers)**
 
->
-
 > Harmful drinkers show a higher degree of rigid goal-based reduced SR use when learning in an alcohol context compared to low-risk drinkers. Specifically, we expect less correct test phase paths in the goal-state compared to the reward revaluation condition for harmful drinkers compared to low-risk drinkers.
 
 ```{r}
@@ -2487,8 +2480,6 @@ tab_model(model4_rs_env_rs, show.est = T, show.stat = T, auto.label = FALSE, CSS
 #### Model 5: Full dataset, compare against reward revaluation
 
 > **Hypothesis 6: Interaction of condition (goal-state vs. reward revaluation) \* group (harmful vs. low-risk drinkers) \* context (alcohol vs. non-alcohol)**
-
->
 
 > Harmful drinkers show a higher degree of rigid goal-based reduced SR use compared to low-risk drinkers when learning in an alcohol compared to a non-alcohol context. Specifically, we expect less correct test phase paths in the goal-state compared to the reward revaluation condition for harmful drinkers compared to low-risk drinkers in the alcohol compared to the non-alcohol task version.
 

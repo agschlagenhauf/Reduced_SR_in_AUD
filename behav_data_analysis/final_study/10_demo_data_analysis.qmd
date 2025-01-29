@@ -1,83 +1,205 @@
 ---
-title: "demo_data_analysis"
+title: "Demographic and psychometric data"
+doi: "https://doi.org/10.17605/OSF.IO/9TUZE"
+author: "Milena Musial"
+date: 01/29/2025
 format: html
 editor: visual
+toc: TRUE
+code-fold: FALSE
+warning: FALSE
+number-sections: TRUE
+embed-resources: true
+execute: 
+  warning: FALSE
+editor_options: 
+  chunk_output_type: console
 ---
 
-```{r}
+```{r message=FALSE}
 # Set up
 rm(list = ls(all = TRUE))
 
 # Load packages
-packages <- c("ggplot2", "dplyr", "tidyr", "kableExtra", "gmodels", "lme4", "sjPlot")
+packages <- c("ggplot2", "dplyr", "tidyr", "kableExtra", "gmodels", "lme4", "sjPlot", "lmerTest")
 #install.packages(packages)
 lapply(packages, library, character.only = TRUE)
 
 # define paths
-demo_path <- "~/work/group_folder/B01_FP2_WP3/WP3_DATA/FINAL_STUDY/RDFs"
+#demo_path <- "~/work/group_folder/B01_FP2_WP3/WP3_DATA/FINAL_STUDY/RDFs"
+demo_path <- "~/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/PhD/04_B01/WP3/WP3_DATA/FINAL_STUDY/RDFs"
 
 # read dfs
-load(file.path(demo_path, "demo_psych_data.RData"))
-```
-
-```{r}
-# formatting (TODO move this to read in script)
+load(file.path(demo_path, "demo_psych_data_included.RData"))
 
 demo_psych <- demo_psych %>%
-  mutate(nicotine_maxperyear = if_else(nicotine_lifetime == 0, 0, nicotine_maxperyear),
-         nicotine_past3months = if_else(nicotine_lifetime == 0, 0, nicotine_past3months),
-         cannabis_maxperyear = if_else(cannabis_lifetime == 0, 0, cannabis_maxperyear),
-         cannabis_past3months = if_else(cannabis_lifetime == 0, 0, cannabis_past3months),
-         cannabis_first = if_else(cannabis_lifetime == 0, 0, cannabis_first),
-         cannabis_diagnosis = if_else(cannabis_lifetime == 0, 0, cannabis_diagnosis),
-         drugs_maxperyear = if_else(drugs_lifetime == 0, 0, drugs_maxperyear),
-         drugs_past3months = if_else(drugs_lifetime == 0, 0, drugs_past3months),
-         drugs_diagnosis = if_else(drugs_lifetime == 0, 0, drugs_diagnosis))
+  mutate(group_version = paste(demo_psych$group, demo_psych$version))
 
-demo_psych <- demo_psych %>%
-  mutate(nicotine_maxperyear = fct_recode(as.factor(nicotine_maxperyear), 
-                                         "less than 1x per month" = "0",
-                                         "1-3 x per month" = "1",
-                                         "1-4 x per week" = "2",
-                                         "5-7 x per week" = "3"),
-         nicotine_past3months = fct_recode(as.factor(nicotine_past3months),
-                                           "never" = "0",
-                                           "less than 1x per month" = "1",
-                                           "1-3 x per month" = "2",
-                                           "1-4 x per week" = "3",
-                                           "5-7 x per week" = "4"))
+contrasts(demo_psych$group) <- contr.treatment(2)
+contrasts(demo_psych$version) <- contr.treatment(2)
 ```
 
+# Demographic data
 
-# Summary demo table
+## Summary table
 
 ```{r}
 demo_table <- demo_psych %>%
   group_by(group, version) %>%
   summarise(
     n = dplyr::n(),
-    sample_GER = sum(sample == "GER", na.rm = TRUE),
-    sample_EU = sum(sample == "EU", na.rm = TRUE),
-    sample_UK = sum(sample == "UK", na.rm = TRUE),
     mean_age = mean(age, na.rm = TRUE),
     sd_age = sd(age, na.rm = TRUE),
     male_count = sum(sex == "male", na.rm = TRUE),
     female_count = sum(sex == "female", na.rm = TRUE),
     othersex_count = sum(sex == "female", na.rm = TRUE),
+    sample_GER = sum(sample == "GER", na.rm = TRUE),
+    sample_EU = sum(sample == "EU", na.rm = TRUE),
+    sample_UK = sum(sample == "UK", na.rm = TRUE),
+    native_language_eng = sum(native_language == "English", na.rm = TRUE),
+    native_language_ger = sum(native_language == "German", na.rm = TRUE),
+    native_language_other = sum(native_language %in% c("Arabic", "Bengali", "Cantonese", 
+                                                       "Chinese", "Dutch", "Greek",
+                                                       "Hindi", "Hungarian", "Italian",
+                                                       "Korean", "Polish", "Portuguese",
+                                                       "Romanian", "Russian", "Serbian",
+                                                       "Spanish", "Tagalog-Filipino", "Tamil",
+                                                       "Turkish", "Ukrainian", "Urdu",
+                                                       "Vietnamese", "Welsh", "Afrikaans",
+                                                       "Albanian", "Bulgarian", "Croatian",
+                                                       "French", "Indonesian", "Latvian",
+                                                       "Lithuanian", "Mandarin", "Slovak",
+                                                       "Slovenian", "Thai"), na.rm = TRUE),
+    ethnicity_asian = sum(ethnicity == "Asian", na.rm = TRUE),
+    ethnicity_black = sum(ethnicity == "Black", na.rm = TRUE),
+    ethnicity_white = sum(ethnicity == "White", na.rm = TRUE),
+    ethnicity_mixed = sum(ethnicity == "Mixed", na.rm = TRUE),
+    ethnicity_other = sum(ethnicity == "Other", na.rm = TRUE),
     student_count = sum(student == "Yes", na.rm = TRUE),
     nostudent_count = sum(student == "No", na.rm = TRUE),
     employed_count = sum(employment %in% c("Full-Time", "Part-Time"), na.rm = TRUE),
     jobseeking_count = sum(employment == "Unemployed (and job seeking)", na.rm = TRUE),
+    .groups = "drop"
+  ) 
+
+demo_table %>%
+  kable("html") %>%
+  kable_styling(font_size = 18,
+                latex_options = "scale_down")
+```
+
+## Age
+
+```{r}
+model_age <- lm(age ~ group*version, data=demo_psych)
+tab_model(model_age, show.stat = T, show.df = T)
+```
+
+# Sex
+
+```{r}
+table_sex <- table(demo_psych$group_version, demo_psych$sex)
+table_sex_group <- table(demo_psych$group, demo_psych$sex)
+table_sex_version <- table(demo_psych$version, demo_psych$sex)
+
+chisq.test(table_sex, simulate.p.value = T)
+chisq.test(table_sex_group, simulate.p.value = T)
+chisq.test(table_sex_version, simulate.p.value = T)
+```
+
+## Sample
+
+```{r}
+table_sample <- table(demo_psych$group_version, demo_psych$sample)
+table_sample_group <- table(demo_psych$group, demo_psych$sample)
+table_sample_version <- table(demo_psych$version, demo_psych$sample)
+
+chisq.test(table_sample)
+chisq.test(table_sample_group)
+chisq.test(table_sample_version)
+```
+
+## Native language
+
+```{r}
+lang_df <- demo_psych %>%
+  filter(native_language %in% c("English", "German")) %>%
+  droplevels()
+
+table_lang <- table(lang_df$group_version, lang_df$native_language)
+table_lang_group <- table(lang_df$group, lang_df$native_language)
+table_lang_version <- table(lang_df$version, lang_df$native_language)
+
+chisq.test(table_lang)
+chisq.test(table_lang_group)
+chisq.test(table_lang_version)
+```
+
+## Ethnicity
+
+```{r}
+table_ethnicity <- table(demo_psych$group_version, demo_psych$ethnicity)
+table_ethnicity_group <- table(demo_psych$group, demo_psych$ethnicity)
+table_ethnicity_version <- table(demo_psych$version, demo_psych$ethnicity)
+
+chisq.test(table_ethnicity, simulate.p.value = T)
+chisq.test(table_ethnicity_group, simulate.p.value = T)
+chisq.test(table_ethnicity_version, simulate.p.value = T)
+```
+
+## Student status
+
+```{r}
+table_student <- table(demo_psych$group_version, demo_psych$student)
+table_student_group <- table(demo_psych$group, demo_psych$student)
+table_student_version <- table(demo_psych$version, demo_psych$student)
+
+chisq.test(table_student)
+chisq.test(table_student_group)
+chisq.test(table_student_version)
+```
+
+## Employment status
+
+```{r}
+table_employ <- table(demo_psych$group_version, demo_psych$employment)
+table_employ_group <- table(demo_psych$group, demo_psych$employment)
+table_employ_version <- table(demo_psych$version, demo_psych$employment)
+
+chisq.test(table_employ)
+chisq.test(table_employ_group)
+chisq.test(table_employ_version)
+```
+
+# Psychometric data
+
+## Summary table
+
+```{r}
+psych_table <- demo_psych %>%
+  group_by(group, version) %>%
+  summarise(
+    n = dplyr::n(),
+    sample_GER = sum(sample == "GER", na.rm = TRUE),
+    sample_EU = sum(sample == "EU", na.rm = TRUE),
+    sample_UK = sum(sample == "UK", na.rm = TRUE),
     mean_audit = mean(audit_sum_mean, na.rm = TRUE),
     sd_audit = sd(audit_sum_mean, na.rm = TRUE),
     mean_aud = mean(aud_sum, na.rm = TRUE),
     sd_aud = sd(aud_sum, na.rm = TRUE),
+    sum_aud_group = sum(aud_group == "yes"),
+    sum_noaud_group = sum(aud_group == "no"),
     mean_dailydrinks = mean(drinks_per_day, na.rm = TRUE),
     sd_dailydrinks = sd(drinks_per_day, na.rm = TRUE),
-    mean_dailydrinks = mean(drinks_per_day, na.rm = TRUE),
-    sd_dailydrinks = sd(drinks_per_day, na.rm = TRUE),
-    nosmoker_count = sum(nicotine_past3months %in% c("never", "less than 1x per month"), na.rm = TRUE),
-    smoker_count = sum(nicotine_past3months %in% c("1-3 x per month", "1-4 x per week", "5-7 x per week"), na.rm = TRUE),
+    nosmoker_count = sum(nicotine_past3months %in% c("never"), na.rm = TRUE),
+    smoker_count = sum(nicotine_past3months %in% c("less than 1x per month", "1-3 x per month", 
+                                                   "1-4 x per week", "5-7 x per week"), na.rm = TRUE),
+    nocannabis_user_count = sum(cannabis_past3months %in% c("never"), na.rm = TRUE),
+    cannabis_user_count = sum(cannabis_past3months %in% c("less than 1x per month", "1-3 x per month", 
+                                                   "1-4 x per week", "5-7 x per week"), na.rm = TRUE),
+    nodrug_user_count = sum(drugs_past3months %in% c("never"), na.rm = TRUE),
+    drug_user_count = sum(drugs_past3months %in% c("less than 1x per month", "1-3 x per month", 
+                                                   "1-4 x per week", "5-7 x per week"), na.rm = TRUE),
     mean_casa_nonvol = mean(casa_gf_nonvolitional, na.rm = TRUE),
     sd_casa_nonvol = sd(casa_gf_nonvolitional, na.rm = TRUE),
     mean_casa_unaware = mean(casa_gf_unaware, na.rm = TRUE),
@@ -90,80 +212,114 @@ demo_table <- demo_psych %>%
     sd_dmq = sd(dmq_total, na.rm = TRUE),
     .groups = "drop"
   ) 
-```
 
-# Age
-
-```{r}
-age_df <- demo_psych %>%
-  summarise(mean = mean(age),
-            se_correct = sd(age, na.rm = TRUE)/sqrt(n()),
-            ci_l = ci(age, na.rm=TRUE)[2],
-            ci_u = ci(age, na.rm=TRUE)[3],
-            n = n())
-
-age_df %>%
+psych_table %>%
   kable("html") %>%
-  kable_styling(font_size = 14,
+  kable_styling(font_size = 18,
                 latex_options = "scale_down")
 ```
 
+## AUDIT score
+
 ```{r}
-ggplot(demo_psych, aes(x=age)) +
-  geom_bar(fill = "lightblue") +
-  theme_light()
+model_audit <- lm(audit_sum_mean ~ group*version, data=demo_psych)
+tab_model(model_audit, show.stat = T, show.df = T)
 ```
 
-# Sex
+## AUD criteria
 
 ```{r}
-sex_df <- demo_psych %>%
-  group_by(sex) %>%
-  summarise(n = n())
-
-sex_df %>%
-  kable("html") %>%
-  kable_styling(font_size = 14,
-                latex_options = "scale_down")
+model_aud <- lm(aud_sum ~ group*version, data=demo_psych)
+tab_model(model_aud, show.stat = T, show.df = T)
 ```
 
-# AUD criteria
+## Daily drinks past 3 months
 
 ```{r}
-aud_df <- demo_psych %>%
-  group_by(aud_sum) %>%
-  summarise(n = n())
+model_drinks <- lm(drinks_per_day ~ group*version, data=demo_psych)
+tab_model(model_drinks, show.stat = T, show.df = T)
+```
 
-aud_df %>%
-  kable("html") %>%
-  kable_styling(font_size = 14,
-                latex_options = "scale_down")
+## Nicotine past 3 months
+
+```{r}
+table_nicotine <- table(demo_psych$group_version, demo_psych$nicotine_past3months)
+table_nicotine_group <- table(demo_psych$group, demo_psych$nicotine_past3months)
+table_nicotine_version <- table(demo_psych$version, demo_psych$nicotine_past3months)
+
+chisq.test(table_nicotine)
+chisq.test(table_nicotine_group)
+chisq.test(table_nicotine_version)
+```
+
+## Cannabis past 3 months
+
+```{r}
+table_cannabis <- table(demo_psych$group_version, demo_psych$cannabis_past3months)
+table_cannabis_group <- table(demo_psych$group, demo_psych$cannabis_past3months)
+table_cannabis_version <- table(demo_psych$version, demo_psych$cannabis_past3months)
+
+chisq.test(table_cannabis, simulate.p.value = T)
+chisq.test(table_cannabis_group, simulate.p.value = T)
+chisq.test(table_cannabis_version, simulate.p.value = T)
+```
+
+## Other drugs past 3 months
+
+```{r}
+table_drugs <- table(demo_psych$group_version, demo_psych$drugs_past3months)
+table_drugs_group <- table(demo_psych$group, demo_psych$drugs_past3months)
+table_drugs_version <- table(demo_psych$version, demo_psych$drugs_past3months)
+
+chisq.test(table_drugs, simulate.p.value = T)
+chisq.test(table_drugs_group, simulate.p.value = T)
+chisq.test(table_drugs_version, simulate.p.value = T)
+```
+
+## CASA
+
+```{r}
+model_casa_unaware <- lm(casa_gf_unaware ~ group*version, data=demo_psych)
+tab_model(model_casa_unaware, show.stat = T, show.df = T)
 ```
 
 ```{r}
-ggplot(demo_psych, aes(x=aud_sum)) +
-  geom_bar(fill = "lightblue") +
-  theme_light()
+model_casa_nonvol <- lm(casa_gf_nonvolitional ~ group*version, data=demo_psych)
+tab_model(model_casa_nonvol, show.stat = T, show.df = T)
 ```
 
-# AUDIT score
+## UPPSP
 
 ```{r}
-audit_df <- demo_psych %>%
-  summarise(mean = mean(audit_sum),
-            se_correct = sd(audit_sum, na.rm = TRUE)/sqrt(n()),
-            ci_l = ci(audit_sum, na.rm=TRUE)[2],
-            ci_u = ci(audit_sum, na.rm=TRUE)[3],
-            n = n())
+model_uppsp <- lm(uppsp_total ~ group*version, data=demo_psych)
+tab_model(model_uppsp, show.stat = T, show.df = T)
+```
 
-audit_df %>%
-  kable("html") %>%
-  kable_styling(font_size = 14,
-                latex_options = "scale_down")
+## OCI
+
+```{r}
+model_oci <- lm(oci_total ~ group*version, data=demo_psych)
+tab_model(model_oci, show.stat = T, show.df = T)
+```
+
+## DMQ
+
+```{r}
+model_dmq_social <- lm(dmq_social ~ group*version, data=demo_psych)
+tab_model(model_dmq_social, show.stat = T, show.df = T)
 ```
 
 ```{r}
-ggplot(demo_psych_df, aes(x=audit_sum)) +
-  geom_bar(fill = "lightblue") +
-  theme_light()
+model_dmq_enhance <- lm(dmq_enhancement ~ group*version, data=demo_psych)
+tab_model(model_dmq_enhance, show.stat = T, show.df = T)
+```
+
+```{r}
+model_dmq_coping <- lm(dmq_coping ~ group*version, data=demo_psych)
+tab_model(model_dmq_coping, show.stat = T, show.df = T)
+```
+
+```{r}
+model_dmq_conformity <- lm(dmq_conformity ~ group*version, data=demo_psych)
+tab_model(model_dmq_conformity, show.stat = T, show.df = T)
 ```
