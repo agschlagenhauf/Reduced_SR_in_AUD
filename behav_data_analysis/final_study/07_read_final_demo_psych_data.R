@@ -778,5 +778,20 @@ if (min(demo_psych_con$audit_sum_pre[demo_psych_con$group=="harmful"])>7) {
 ##### bind con and alc dfs
 demo_psych <- rbind(demo_psych_alc, demo_psych_con)
 
+##### releveling factors TODO
+
+demo_psych <- demo_psych %>%
+  mutate(nicotine_maxperyear = fct_recode(as.factor(nicotine_maxperyear), 
+                                         "less than 1x per month" = "0",
+                                         "1-3 x per month" = "1",
+                                         "1-4 x per week" = "2",
+                                         "5-7 x per week" = "3"),
+         nicotine_past3months = fct_recode(as.factor(nicotine_past3months),
+                                           "never" = "0",
+                                           "less than 1x per month" = "1",
+                                           "1-3 x per month" = "2",
+                                           "1-4 x per week" = "3",
+                                           "5-7 x per week" = "4"))
+
 ##############################  save   ##############################  
 save(demo_psych, file = file.path(data_path, "RDFs/demo_psych_data_w_oldrating.RData"))

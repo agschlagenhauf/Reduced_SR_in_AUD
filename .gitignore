@@ -6,4 +6,5 @@ venv
 .RData
 .DS_Store
 data_analysis/**/*.html
+*.html
 results
