@@ -226,6 +226,44 @@ model_audit <- lm(audit_sum_mean ~ group*version, data=demo_psych)
 tab_model(model_audit, show.stat = T, show.df = T)
 ```
 
+```{r}
+# calculate
+demo_psych <- demo_psych %>%
+  mutate(audit_pre = as.numeric(audit_sum_pre),
+         audit_post = as.numeric(audit_sum_post),
+         audit_mean = as.numeric(audit_sum_mean))
+
+audit_df <- demo_psych %>%
+  select(prolific_ID, group, version, audit_mean)
+
+audit_df_summary <- audit_df %>%
+  group_by(group, version) %>%
+  summarise(mean_audit = mean(audit_mean, na.rm = TRUE),
+            se_audit = sd(audit_mean, na.rm = TRUE)/sqrt(n()),
+            ci_l = ci(audit_mean, na.rm=TRUE)[2],
+            ci_u = ci(audit_mean, na.rm=TRUE)[3],
+            n = n()
+            )
+
+audit_df_summary %>%
+  kable("html") %>%
+  kable_styling(font_size = 12,
+                latex_options = "scale_down")
+```
+
+```{r}
+ggplot(audit_df, aes(x=group, y=audit_mean)) +
+  geom_boxplot(aes(fill = group)) +
+  scale_y_continuous(labels = scales::comma) +
+  xlab("") +
+  ylab("AUDIT score") +
+  facet_wrap(~ version) +
+  theme_light(base_size = 16) +
+  theme(legend.position = "none",
+        axis.text.x = element_text(angle = 50, vjust = 1, hjust=1)) +
+  scale_fill_viridis(option = "plasma", discrete = TRUE)
+```
+
 ## AUD criteria
 
 ```{r}

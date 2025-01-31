@@ -46,6 +46,8 @@ def run_trial(phase, trial_index, gamma, alpha, beta, end_state, start_state, re
         if (current_state + 1) == start_state:
 
             ###### Determine next and second next state ######
+            
+            ## 4 forced-choice trials
             if ((phase == "learning") and (trial_index == 0)):
                 # Determine the next state
                 next_move = 0 # forced left choice
@@ -74,6 +76,8 @@ def run_trial(phase, trial_index, gamma, alpha, beta, end_state, start_state, re
                 # Determine the second next state
                 second_next_move = 1  # forced right choice
                 second_next_state = transitions[next_state][second_next_move] - 1
+                
+            ## 20 free-choice trials
             else:
                 # Determine the next state
                 next_move_index = get_flattened_index(transitions, current_state,0)

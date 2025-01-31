@@ -484,8 +484,7 @@ summary %>%
 
 ## Variations
 
-Variations stand for a certain combination between condition, environment, and condition index. 
--   Some variations were more common than others, which is due to a higher a priori probability of certain variations and subjects dropping out at different rates after variation assignment.
+Variations stand for a certain combination between condition, environment, and condition index. - Some variations were more common than others, which is due to a higher a priori probability of certain variations and subjects dropping out at different rates after variation assignment.
 
 ```{r}
 # get percent correct over time
@@ -512,7 +511,7 @@ ggplot(balancing_variations_df, aes(x=variation)) +
 
 ## Condition per condition index
 
--   Every condition accoured roughly the same number of times at a certain index. 
+-   Every condition accoured roughly the same number of times at a certain index.
 
 ```{r}
 # get percent correct over time
@@ -712,7 +711,7 @@ ggplot(learning_correct_path_group_version_condition_df, aes(x=condition, y=mean
 #### LogReg: Difference from control condition
 
 -   Better learning performance in reward and policy compared to control condition
--   The effect reward>control is smaller in the alcohol than in the control version
+-   The effect reward\>control is smaller in the alcohol than in the control version
 
 ```{r}
 logreg_learning_correct_paths_group_version_condition_df <- trial_df %>%
@@ -739,8 +738,8 @@ tab_model(log_model_learning_paths_control, transform = NULL, show.est = T, show
 
 #### LogReg: Difference from goal-state condition
 
--   Better learning performance in reward and policy compared to goal-state condition. 
--   The effect reward>goal-state is smaller in the alcohol than in the control version, particularly for low-risk drinkers
+-   Better learning performance in reward and policy compared to goal-state condition.
+-   The effect reward\>goal-state is smaller in the alcohol than in the control version, particularly for low-risk drinkers
 
 ```{r}
 contrasts(logreg_learning_correct_paths_group_version_condition_df$condition) <- contr.treatment(5, base = 2)
@@ -752,7 +751,7 @@ tab_model(log_model_learning_paths_goalstate, transform = NULL, show.est = T, sh
 #### LogReg: Difference from policy condition
 
 -   Worse learning performance in goal-state, transition, and control condition compared to policy condition
--   Effect of transition<policy condition weaker in alcohol compared to control version
+-   Effect of transition\<policy condition weaker in alcohol compared to control version
 
 ```{r}
 contrasts(logreg_learning_correct_paths_group_version_condition_df$condition) <- contr.treatment(5, base = 4)
@@ -764,7 +763,7 @@ tab_model(log_model_learning_paths_policy, transform = NULL, show.est = T, show.
 #### LogReg: Difference from reward condition
 
 -   Harmful drinkers have lower learning performance in reward condition, particularly in monetary version
--   Worse learning performance in goal-state, transition, and control condition compared to reward condition, particularly in monetary version, but for harmful drinkers and contrast goal-state<reward also in alcohol version 
+-   Worse learning performance in goal-state, transition, and control condition compared to reward condition, particularly in monetary version, but for harmful drinkers and contrast goal-state\<reward also in alcohol version
 
 ```{r}
 contrasts(logreg_learning_correct_paths_group_version_condition_df$condition) <- contr.treatment(5, base = 1)

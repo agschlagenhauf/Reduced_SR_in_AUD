@@ -1,0 +1,84 @@
+---
+title: "Visualize simulation results"
+doi: "https://doi.org/10.17605/OSF.IO/9TUZE"
+author: "Milena Musial"
+date: 01/29/2025
+format: html
+editor: visual
+toc: TRUE
+code-fold: TRUE
+number-sections: TRUE
+embed-resources: true
+execute: 
+  warning: FALSE
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r}
+rm(list = ls(all = TRUE))
+
+# Load packages
+packages <- c("ggplot2", "dplyr", "tidyr", "kableExtra", "gmodels", "lme4", "sjPlot", "viridis", "forcats", "lmerTest", "car")
+#install.packages(packages)
+sapply(packages, require, character.only = TRUE)
+
+# load data
+data_path <- "~/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/PhD/04_B01/WP3/Reduced_SR_in_AUD/simulations/results"
+full_sr <- read.csv(file.path(data_path, "full_sr_nsimulations110_alpha0.9_beta1.0_gamma0.5.csv"))
+full_sr_test <- full_sr %>%
+  select(simulation_number, condition, phase, trial, state, action, reward) %>%
+  filter(phase == "relearning_test") %>%
+  mutate(correct = case_when(((condition %in% c("reward", "transition", "policy", "goal")) & (action == 1)) ~ 1,
+                             ((condition %in% c("reward", "transition", "policy", "goal")) & (action == 2)) ~ 0,
+                             ((condition %in% c("control")) & (action == 1)) ~ 0,
+                             ((condition %in% c("control")) & (action == 2)) ~ 1))
+```
+
+# Plot test phase performance
+
+```{r}
+
+full_sr_plot_df <- full_sr_test %>%
+  group_by(condition) %>%
+  summarise(mean_correct = mean(correct, na.rm = TRUE),
+            se_correct = sd(correct, na.rm = TRUE)/sqrt(n()),
+            ci_l = ci(correct, na.rm=TRUE)[2],
+            ci_u = ci(correct, na.rm=TRUE)[3],
+            n = n()
+            )
+
+full_sr_plot_df %>%
+  kable("html") %>%
+  kable_styling(font_size = 18,
+                latex_options = "scale_down")
+
+```
+
+```{r}
+
+# bar plot
+
+ggplot(full_sr_plot_df, aes(x=condition, y=mean_correct*100)) +
+
+  geom_bar(stat="identity", aes(fill = condition)) +
+
+  geom_errorbar(aes(ymin=ci_l*100, ymax=ci_u*100),
+
+                width=.2,
+
+                position=position_dodge(.9)) +
+
+  scale_y_continuous("% Correct paths", limits = c(0, 105)) +
+
+  theme_light(base_size = 16) +
+
+  theme(legend.position = "none",
+
+        axis.title.x=element_blank(),
+
+        axis.text.x = element_text(angle = 50, vjust = 1, hjust=1)) +
+
+  scale_fill_viridis(option = "viridis", discrete = TRUE)
+
+```
