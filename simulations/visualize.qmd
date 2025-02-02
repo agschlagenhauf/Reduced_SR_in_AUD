@@ -25,7 +25,7 @@ sapply(packages, require, character.only = TRUE)
 
 # load data
 data_path <- "~/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/PhD/04_B01/WP3/Reduced_SR_in_AUD/simulations/results"
-full_sr <- read.csv(file.path(data_path, "full_sr_nsimulations110_alpha0.9_beta1.0_gamma0.5.csv"))
+full_sr <- read.csv(file.path(data_path, "full_sr_nsimulations110_alpha0.9_beta0.95_gamma0.5.csv"))
 full_sr_test <- full_sr %>%
   select(simulation_number, condition, phase, trial, state, action, reward) %>%
   filter(phase == "relearning_test") %>%
