@@ -43,22 +43,22 @@ load(file.path(data_path, "demo_psych_data_included.RData"))
 ```{r}
 predictor <- "uppsp_total"
 
-if (predictor == "audit_sum_mean") {
+if (predictor == "audit_sum_pre") {
   
   trial_df <- trial_df %>%
-    mutate(predictor = audit_sum_mean,
+    mutate(predictor = audit_sum_pre,
            group_new = group)
   
   component_df <- component_df %>%
-    mutate(predictor = audit_sum_mean,
+    mutate(predictor = audit_sum_pre,
            group_new = group)
   
   rating_df <- rating_df %>%
-    mutate(predictor = audit_sum_mean,
+    mutate(predictor = audit_sum_pre,
            group_new = group)
   
   demo_psych <- demo_psych %>%
-    mutate(predictor = audit_sum_mean,
+    mutate(predictor = audit_sum_pre,
            group_new = group)
     
 } else if (predictor == "casa_gf_unaware") {

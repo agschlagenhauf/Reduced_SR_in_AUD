@@ -26,8 +26,8 @@ packages <- c("ggplot2", "dplyr", "tidyr", "kableExtra", "gmodels", "lme4", "sjP
 lapply(packages, library, character.only = TRUE)
 
 # define paths
-demo_path <- "~/work/group_folder/B01_FP2_WP3/WP3_DATA/FINAL_STUDY/RDFs"
-#demo_path <- "~/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/PhD/04_B01/WP3/WP3_DATA/FINAL_STUDY/RDFs"
+#demo_path <- "~/work/group_folder/B01_FP2_WP3/WP3_DATA/FINAL_STUDY/RDFs"
+demo_path <- "~/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/PhD/04_B01/WP3/WP3_DATA/FINAL_STUDY/RDFs"
 
 # read dfs
 load(file.path(demo_path, "demo_psych_data_included.RData"))
@@ -95,7 +95,7 @@ model_age <- lm(age ~ group*version, data=demo_psych)
 tab_model(model_age, show.stat = T, show.df = T)
 ```
 
-# Sex
+## Sex
 
 ```{r}
 table_sex <- table(demo_psych$group_version, demo_psych$sex)
@@ -183,14 +183,18 @@ psych_table <- demo_psych %>%
     sample_GER = sum(sample == "GER", na.rm = TRUE),
     sample_EU = sum(sample == "EU", na.rm = TRUE),
     sample_UK = sum(sample == "UK", na.rm = TRUE),
-    mean_audit = mean(audit_sum_mean, na.rm = TRUE),
-    sd_audit = sd(audit_sum_mean, na.rm = TRUE),
+    mean_audit = mean(audit_sum_pre, na.rm = TRUE),
+    sd_audit = sd(audit_sum_pre, na.rm = TRUE),
     mean_aud = mean(aud_sum, na.rm = TRUE),
     sd_aud = sd(aud_sum, na.rm = TRUE),
     sum_aud_group = sum(aud_group == "yes"),
     sum_noaud_group = sum(aud_group == "no"),
+    mean_drinkingdays = mean(drinking_days, na.rm = TRUE),
+    sd_drinkingdays = sd(drinking_days, na.rm = TRUE),
     mean_dailydrinks = mean(drinks_per_day, na.rm = TRUE),
     sd_dailydrinks = sd(drinks_per_day, na.rm = TRUE),
+    mean_bingedays = mean(binge_days, na.rm = TRUE),
+    sd_bingedays = sd(binge_days, na.rm = TRUE),
     nosmoker_count = sum(nicotine_past3months %in% c("never"), na.rm = TRUE),
     smoker_count = sum(nicotine_past3months %in% c("less than 1x per month", "1-3 x per month", 
                                                    "1-4 x per week", "5-7 x per week"), na.rm = TRUE),

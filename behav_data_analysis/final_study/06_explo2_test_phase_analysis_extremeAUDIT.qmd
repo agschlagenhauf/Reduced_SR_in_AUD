@@ -41,20 +41,20 @@ load(file.path(data_path, "demo_psych_data_included.RData"))
 # Filter sample
 
 ```{r}
-audit_quantile_25 <- quantile(demo_psych$audit_sum_mean, 0.25)
-audit_quantile_75 <- quantile(demo_psych$audit_sum_mean, 0.75)
+audit_quantile_25 <- quantile(demo_psych$audit_sum_pre, 0.25)
+audit_quantile_75 <- quantile(demo_psych$audit_sum_pre, 0.75)
 
 demo_psych <- demo_psych %>%
-  filter(audit_sum_mean < audit_quantile_25 | audit_sum_mean > audit_quantile_75)
+  filter(audit_sum_pre < audit_quantile_25 | audit_sum_pre > audit_quantile_75)
 
 trial_df <- trial_df %>%
-  filter(audit_sum_mean < audit_quantile_25 | audit_sum_mean > audit_quantile_75)
+  filter(audit_sum_pre < audit_quantile_25 | audit_sum_pre > audit_quantile_75)
 
 rating_df <- rating_df %>%
-  filter(audit_sum_mean < audit_quantile_25 | audit_sum_mean > audit_quantile_75)
+  filter(audit_sum_pre < audit_quantile_25 | audit_sum_pre > audit_quantile_75)
 
 component_df <- component_df %>%
-  filter(audit_sum_mean < audit_quantile_25 | audit_sum_mean > audit_quantile_75)
+  filter(audit_sum_pre < audit_quantile_25 | audit_sum_pre > audit_quantile_75)
 ```
 
 ### Further analyses based on (according to preregistered criteria)
