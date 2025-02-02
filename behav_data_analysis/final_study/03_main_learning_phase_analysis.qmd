@@ -1,0 +1,1176 @@
+---
+title: "Reduced Successor Representation in AUD"
+subtitle: "Conformatory and exploratory behavioral data analyses"
+doi: "https://doi.org/10.17605/OSF.IO/9TUZE"
+author: "Milena Musial"
+date: 09/25/2024
+format: html
+editor: visual
+toc: TRUE
+code-fold: TRUE
+number-sections: TRUE
+embed-resources: true
+execute: 
+  warning: FALSE
+editor_options: 
+  chunk_output_type: console
+---
+
+# Set up
+
+```{r}
+rm(list = ls(all = TRUE))
+
+# Load packages
+packages <- c("ggplot2", "dplyr", "tidyr", "kableExtra", "gmodels", "lme4", "sjPlot", "viridis", "forcats", "lmerTest", "car")
+#install.packages(packages)
+sapply(packages, require, character.only = TRUE)
+
+# set color scheme
+
+# define paths
+data_path <- "~/work/group_folder/B01_FP2_WP3/WP3_DATA/FINAL_STUDY/RDFs"
+#data_path <- "~/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/PhD/04_B01/WP3/WP3_DATA/FINAL_STUDY/RDFs"
+
+# read dfs
+load(file.path(data_path, "final_data_included.RData"))
+load(file.path(data_path, "demo_psych_data_included.RData"))
+
+```
+
+
+# Learning Phase
+
+## Main analysis
+
+### Plots
+
+#### Performance per group, version
+
+```{r}
+learning_paths_group_version_df <- trial_df %>%
+  filter(phase == "learning",
+         state %in% c(1)
+         ) %>%
+  group_by(group, version) %>%
+  summarise(mean_correct = mean(correct_path, na.rm = TRUE),
+            se_correct = sd(correct_path, na.rm = TRUE)/sqrt(n()),
+            ci_l = ci(correct_path, na.rm=TRUE)[2],
+            ci_u = ci(correct_path, na.rm=TRUE)[3],
+            n = n()
+            )
+
+learning_paths_group_version_df %>%
+  kable("html") %>%
+  kable_styling(font_size = 12,
+                latex_options = "scale_down")
+```
+
+#### Performance per group, version, condition
+
+```{r}
+learning_correct_path_group_version_condition_df <- trial_df %>%
+  filter(phase == "learning",
+         state %in% c(1)
+         ) %>%
+  group_by(group, version, condition) %>%
+  summarise(mean_correct = mean(correct_path, na.rm = TRUE),
+            se_correct = sd(correct_path, na.rm = TRUE)/sqrt(n()),
+            ci_l = ci(correct_path, na.rm=TRUE)[2],
+            ci_u = ci(correct_path, na.rm=TRUE)[3],
+            n = n()
+            )
+
+learning_correct_path_group_version_condition_df %>%
+  kable("html") %>%
+  kable_styling(font_size = 12,
+                latex_options = "scale_down")
+```
+
+```{r}
+# bar plot
+ggplot(learning_correct_path_group_version_condition_df, aes(x=condition, y=mean_correct*100)) +
+  geom_bar(stat="identity", aes(fill = condition)) +
+  geom_errorbar(aes(ymin=ci_l*100, ymax=ci_u*100),
+                width=.2,
+                position=position_dodge(.9)) +
+  facet_grid(vars(group), vars(version)) +
+  scale_y_continuous("% Correct paths", limits = c(0, 105)) +
+  theme_light(base_size = 16) +
+  theme(legend.position = "none",
+        axis.title.x=element_blank(),
+        axis.text.x = element_text(angle = 50, vjust = 1, hjust=1)) +
+  scale_fill_viridis(option = "viridis", discrete = TRUE)
+
+```
+
+#### Performance per environment
+
+```{r}
+learning_paths_group_version_environment_df <- trial_df %>%
+  mutate(group = as.factor(group),
+         version = as.factor(version),
+         environment = as.character(environment)) %>%
+  filter(phase == "learning",
+         state %in% c(1)
+         ) %>%
+  group_by(environment) %>%
+  summarise(mean_correct_paths = mean(correct_path, na.rm = TRUE),
+            se_correct = sd(correct_path, na.rm = TRUE)/sqrt(n()),
+            ci_l = ci(correct_path, na.rm=TRUE)[2],
+            ci_u = ci(correct_path, na.rm=TRUE)[3],
+            n = n()
+            )
+
+learning_paths_group_version_environment_df %>%
+  kable("html") %>%
+  kable_styling(font_size = 14,
+                latex_options = "scale_down")
+```
+
+```{r}
+# bar plot
+ggplot(learning_paths_group_version_environment_df, aes(x=environment, y=mean_correct_paths*100, fill=environment)) +
+  geom_bar(stat="identity", aes(fill=environment), position=position_dodge()) +
+  geom_errorbar(aes(ymin=ci_l*100, ymax=ci_u*100), width=.2, position=position_dodge(.9)) +
+  scale_y_continuous(limits = c(0, 105)) +
+  #facet_grid(vars(group), vars(version), scales = "free_x") +
+  xlab("Environment") +
+  ylab("% Correct paths") +
+  theme_light(base_size = 16) +
+  theme(legend.position = "none",,
+        axis.text.x = element_text(angle = 50, vjust = 1, hjust=1)) +
+  scale_fill_viridis(option = "turbo", discrete = TRUE)
+```
+
+#### Performance per group, version, condition, environment
+
+```{r}
+learning_paths_group_condition_environment_df <- trial_df %>%
+  mutate(group = as.factor(group),
+         version = as.factor(version),
+         environment = as.character(environment)) %>%
+  filter(phase == "learning",
+         state %in% c(1)
+         ) %>%
+  group_by(version, group, environment, condition) %>%
+  summarise(mean_correct_paths = mean(correct_path, na.rm = TRUE),
+            se_correct = sd(correct_path, na.rm = TRUE)/sqrt(n()),
+            ci_l = ci(correct_path, na.rm=TRUE)[2],
+            ci_u = ci(correct_path, na.rm=TRUE)[3],
+            n = n()
+            )
+
+learning_paths_group_version_environment_df %>%
+  kable("html") %>%
+  kable_styling(font_size = 14,
+                latex_options = "scale_down")
+```
+
+```{r}
+# bar plot
+ggplot(learning_paths_group_condition_environment_df, aes(x=environment, y=mean_correct_paths*100, fill=condition)) +
+  geom_bar(stat="identity", aes(fill=condition), position=position_dodge()) +
+  geom_errorbar(aes(ymin=ci_l*100, ymax=ci_u*100), width=.2, position=position_dodge(.9)) +
+  scale_y_continuous(limits = c(0, 105)) +
+  facet_grid(vars(group), vars(version), scales = "free_x") +
+  xlab("Environment") +
+  ylab("% Correct paths") +
+  theme_light(base_size = 16) +
+  theme(axis.text.x = element_text(angle = 50, vjust = 1, hjust=1)) +
+  scale_fill_viridis(option = "viridis", discrete = TRUE)
+```
+
+### Logistic regression
+
+#### LogReg1: Difference from control condition
+
+```{r}
+logreg_learning_correct_paths_group_version_condition_df <- trial_df %>%
+  filter(phase == "learning",
+         state == 1
+         ) %>%
+  mutate(correct_path = as.factor(correct_path),
+         condition = as.factor(condition),
+         group = as.factor(group),
+         version = as.factor(version),
+         environment = as.factor(environment)) %>%
+  select(ID,
+         correct_path,
+         condition,
+         group,
+         version,
+         environment)
+```
+
+```{r}
+contrasts(logreg_learning_correct_paths_group_version_condition_df$condition) <- contr.treatment(5, base = 5)
+
+log_model_learning_paths_control <- glmer(correct_path ~ group*version*condition + (1 | ID),
+                                          data = logreg_learning_correct_paths_group_version_condition_df,
+                                          family = "binomial",
+                                          control=glmerControl(optimizer="bobyqa", optCtrl=list(maxfun=1e6)))
+
+log_model_learning_paths_control_rs <- glmer(correct_path ~ group*version*condition + (1 + condition | ID),
+                                          data = logreg_learning_correct_paths_group_version_condition_df,
+                                          family = "binomial",
+                                          control=glmerControl(optimizer="bobyqa", optCtrl=list(maxfun=1e6)))
+
+log_model_learning_paths_control_rs_env_i <- glmer(correct_path ~ group*version*condition + (1 + condition | ID) + (1 | environment),
+                                          data = logreg_learning_correct_paths_group_version_condition_df,
+                                          family = "binomial",
+                                          control=glmerControl(optimizer="bobyqa", optCtrl=list(maxfun=1e6)))
+
+log_model_learning_paths_control_rs_env_rs <- glmer(correct_path ~ group*version*condition + (1 + condition | ID) + (1 + condition | environment),
+                                          data = logreg_learning_correct_paths_group_version_condition_df,
+                                          family = "binomial",
+                                          control=glmerControl(optimizer="bobyqa", optCtrl=list(maxfun=1e6)))
+
+anova(log_model_learning_paths_control, log_model_learning_paths_control_rs, log_model_learning_paths_control_rs_env_i, log_model_learning_paths_control_rs_env_rs)
+
+tab_model(log_model_learning_paths_control_rs, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
+tab_model(log_model_learning_paths_control_rs_env_i, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
+tab_model(log_model_learning_paths_control_rs_env_rs, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
+
+
+```
+
+#### LogReg2: Difference from goal-state condition
+
+```{r}
+contrasts(logreg_learning_correct_paths_group_version_condition_df$condition) <- contr.treatment(5, base = 2)
+
+log_model_learning_paths_goalstate <- glmer(correct_path ~ group*version*condition + (1 | ID),
+                                            data = logreg_learning_correct_paths_group_version_condition_df,
+                                            family = "binomial",
+                                            control=glmerControl(optimizer="bobyqa", optCtrl=list(maxfun=1e6)))
+
+log_model_learning_paths_goalstate_rs <- glmer(correct_path ~ group*version*condition + (1 + condition | ID),
+                                            data = logreg_learning_correct_paths_group_version_condition_df,
+                                            family = "binomial",
+                                            control=glmerControl(optimizer="bobyqa", optCtrl=list(maxfun=1e6)))
+
+log_model_learning_paths_goalstate_rs_env_i <- glmer(correct_path ~ group*version*condition + (1 + condition | ID) + (1 | environment),
+                                            data = logreg_learning_correct_paths_group_version_condition_df,
+                                            family = "binomial",
+                                            control=glmerControl(optimizer="bobyqa", optCtrl=list(maxfun=1e6)))
+
+log_model_learning_paths_goalstate_rs_env_rs <- glmer(correct_path ~ group*version*condition + (1 + condition | ID) + (1 + condition | environment),
+                                            data = logreg_learning_correct_paths_group_version_condition_df,
+                                            family = "binomial",
+                                            control=glmerControl(optimizer="bobyqa", optCtrl=list(maxfun=1e6)))
+
+anova(log_model_learning_paths_goalstate, log_model_learning_paths_goalstate_rs, log_model_learning_paths_goalstate_rs_env_i, log_model_learning_paths_goalstate_rs_env_rs)
+
+tab_model(log_model_learning_paths_goalstate_rs, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
+tab_model(log_model_learning_paths_goalstate_rs_env_i, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
+tab_model(log_model_learning_paths_goalstate_rs_env_rs, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
+```
+
+#### LogReg3: Difference from policy condition
+
+-   Worse learning performance in goal-state, transition, and control condition compared to policy condition
+
+```{r}
+contrasts(logreg_learning_correct_paths_group_version_condition_df$condition) <- contr.treatment(5, base = 4)
+
+log_model_learning_paths_policy <- glmer(correct_path ~ group*version*condition + (1 | ID),
+                                         data = logreg_learning_correct_paths_group_version_condition_df,
+                                         family = "binomial",
+                                         control=glmerControl(optimizer="bobyqa", optCtrl=list(maxfun=1e6)))
+
+log_model_learning_paths_policy_rs <- glmer(correct_path ~ group*version*condition + (1 + condition | ID),
+                                         data = logreg_learning_correct_paths_group_version_condition_df,
+                                         family = "binomial",
+                                         control=glmerControl(optimizer="bobyqa", optCtrl=list(maxfun=1e6)))
+
+log_model_learning_paths_policy_rs_env_i <- glmer(correct_path ~ group*version*condition + (1 + condition | ID) + (1 | environment),
+                                         data = logreg_learning_correct_paths_group_version_condition_df,
+                                         family = "binomial",
+                                         control=glmerControl(optimizer="bobyqa", optCtrl=list(maxfun=1e6)))
+
+log_model_learning_paths_policy_rs_env_rs <- glmer(correct_path ~ group*version*condition + (1 + condition | ID) + (1 + condition | environment),
+                                         data = logreg_learning_correct_paths_group_version_condition_df,
+                                         family = "binomial",
+                                         control=glmerControl(optimizer="bobyqa", optCtrl=list(maxfun=1e6)))
+
+anova(log_model_learning_paths_policy, log_model_learning_paths_policy_rs, log_model_learning_paths_policy_rs_env_i, log_model_learning_paths_policy_rs_env_rs)
+
+tab_model(log_model_learning_paths_policy_rs, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
+tab_model(log_model_learning_paths_policy_rs_env_i, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
+tab_model(log_model_learning_paths_policy_rs_env_rs, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
+```
+
+#### LogReg4: Difference from reward condition
+
+-   Harmful drinkers have lower learning performance in reward condition, particularly in monetary version
+-   Worse learning performance in goal-state, transition, and control condition compared to reward condition, particularly in monetary version, but for harmful drinkers and contrast goal-state\<reward also in alcohol version
+
+```{r}
+contrasts(logreg_learning_correct_paths_group_version_condition_df$condition) <- contr.treatment(5, base = 1)
+
+log_model_learning_paths_reward <- glmer(correct_path ~ group*version*condition + (1 | ID), data = logreg_learning_correct_paths_group_version_condition_df, family = "binomial", control=glmerControl(optimizer="bobyqa", optCtrl=list(maxfun=1e6)))
+
+log_model_learning_paths_reward_rs <- glmer(correct_path ~ group*version*condition + (1 + condition | ID), data = logreg_learning_correct_paths_group_version_condition_df, family = "binomial", control=glmerControl(optimizer="bobyqa", optCtrl=list(maxfun=1e6)))
+
+log_model_learning_paths_reward_rs_env_i <- glmer(correct_path ~ group*version*condition + (1 + condition | ID) + (1 | environment), data = logreg_learning_correct_paths_group_version_condition_df, family = "binomial", control=glmerControl(optimizer="bobyqa", optCtrl=list(maxfun=1e6)))
+
+log_model_learning_paths_reward_rs_env_rs <- glmer(correct_path ~ group*version*condition + (1 + condition | ID) + (1 + condition | environment), data = logreg_learning_correct_paths_group_version_condition_df, family = "binomial", control=glmerControl(optimizer="bobyqa", optCtrl=list(maxfun=1e6)))
+
+anova(log_model_learning_paths_reward, log_model_learning_paths_reward_rs, log_model_learning_paths_reward_rs_env_i, log_model_learning_paths_reward_rs_env_rs)
+
+tab_model(log_model_learning_paths_reward_rs, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
+tab_model(log_model_learning_paths_reward_rs_env_i, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
+tab_model(log_model_learning_paths_reward_rs_env_rs, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
+
+```
+
+#### LogReg5: Difference from transition condition
+
+-   Better learning performance in reward and policy compared to transition condition, particularly in monetary version
+
+```{r}
+contrasts(logreg_learning_correct_paths_group_version_condition_df$condition) <- contr.treatment(5, base = 3)
+
+log_model_learning_paths_transition <- glmer(correct_path ~ group*version*condition + (1 | ID), data = logreg_learning_correct_paths_group_version_condition_df, family = "binomial", control=glmerControl(optimizer="bobyqa", optCtrl=list(maxfun=1e6)))
+
+log_model_learning_paths_transition_rs <- glmer(correct_path ~ group*version*condition + (1 + condition | ID), data = logreg_learning_correct_paths_group_version_condition_df, family = "binomial", control=glmerControl(optimizer="bobyqa", optCtrl=list(maxfun=1e6)))
+
+log_model_learning_paths_transition_rs_env_i <- glmer(correct_path ~ group*version*condition + (1 + condition | ID) + (1 | environment), data = logreg_learning_correct_paths_group_version_condition_df, family = "binomial", control=glmerControl(optimizer="bobyqa", optCtrl=list(maxfun=1e6)))
+
+log_model_learning_paths_transition_rs_env_rs <- glmer(correct_path ~ group*version*condition + (1 + condition | ID) + (1 + condition | environment), data = logreg_learning_correct_paths_group_version_condition_df, family = "binomial", control=glmerControl(optimizer="bobyqa", optCtrl=list(maxfun=1e6)))
+
+anova(log_model_learning_paths_transition, log_model_learning_paths_transition_rs, log_model_learning_paths_transition_rs_env_i, log_model_learning_paths_transition_rs_env_rs)
+
+tab_model(log_model_learning_paths_transition, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
+```
+
+## Time effects
+
+### Condition index
+
+#### Plots
+
+##### Performance per group, version, index
+
+```{r}
+
+# get percent correct over time
+
+learning_paths_condition_index_df <- trial_df %>%
+  mutate(condition_index = as.factor(condition_index)) %>%
+  filter(phase == "learning",
+         state %in% c(1)
+         ) %>%
+  group_by(group, version, condition_index) %>%
+  summarise(mean_correct = mean(correct_path, na.rm = TRUE),
+            se_correct = sd(correct_path, na.rm = TRUE)/sqrt(n()),
+            ci_l = ci(correct_path, na.rm=TRUE)[2],
+            ci_u = ci(correct_path, na.rm=TRUE)[3],
+            n = n()
+            )
+
+learning_paths_condition_index_df %>%
+  kable("html") %>%
+  kable_styling(font_size = 14,
+                latex_options = "scale_down")
+
+```
+
+```{r}
+
+# bar plot
+
+ggplot(learning_paths_condition_index_df, aes(x=condition_index, y=mean_correct*100)) +
+  geom_bar(stat="identity", aes(fill=condition_index)) +
+  geom_errorbar(aes(ymin=ci_l*100, ymax=ci_u*100), width=.2, position=position_dodge(.9)) +
+  scale_y_continuous(limits = c(0, 105)) +
+  facet_grid(vars(group), vars(version)) +
+  xlab("Condition index") +
+  ylab("% Correct paths") +
+  theme_light(base_size = 16) +
+  theme(legend.position = "none") +
+  scale_fill_viridis(option = "plasma", discrete = TRUE)
+
+```
+
+##### Performance per group, version, condition, index
+
+```{r}
+
+# get percent correct over time
+
+learning_paths_condition_condition_index_df <- trial_df %>%
+  mutate(condition_index = as.factor(condition_index),
+         condition = as.factor(condition)) %>%
+  filter(phase == "learning",
+         state %in% c(1)
+         ) %>%
+  group_by(group, version, condition, condition_index) %>%
+  summarise(mean_correct = mean(correct_path, na.rm = TRUE),
+            se_correct = sd(correct_path, na.rm = TRUE)/sqrt(n()),
+            ci_l = ci(correct_path, na.rm=TRUE)[2],
+            ci_u = ci(correct_path, na.rm=TRUE)[3],
+            n = n()
+            )
+
+learning_paths_condition_condition_index_df %>%
+  kable("html") %>%
+  kable_styling(font_size = 14,
+                latex_options = "scale_down")
+
+```
+
+```{r}
+
+# bar plot
+
+ggplot(learning_paths_condition_condition_index_df, aes(x=condition_index, y=mean_correct*100, fill=condition)) +
+  geom_bar(stat="identity", aes(fill=condition), position=position_dodge()) +
+  geom_errorbar(aes(ymin=ci_l*100, ymax=ci_u*100), width=.2, position=position_dodge(.9)) +
+  scale_y_continuous(limits = c(0, 105)) +
+  facet_grid(vars(group), vars(version)) +
+  xlab("Condition index") +
+  ylab("% Correct paths") +
+  theme_light(base_size = 16) +
+  scale_fill_viridis(option = "viridis", discrete = TRUE)
+
+```
+
+#### Logistic regression
+
+```{r}
+
+logreg_learning_paths_group_version_condition_env_time_df <- trial_df %>%
+  filter(phase == "learning",
+         state == 1) %>%
+  group_by(ID, condition) %>%
+  mutate(accumulated_state1_visits = row_number()) %>%
+  ungroup() %>%
+  mutate(correct_path = as.factor(correct_path),
+         group = as.factor(group),
+         version = as.factor(version),
+         condition = as.factor(condition),
+         environment = as.factor(environment)) %>%
+  select(ID,
+         correct_path,
+         group,
+         version,
+         condition,
+         condition_index,
+         accumulated_state1_visits,
+         environment)
+
+```
+
+##### LogReg1: Difference from control condition
+
+```{r}
+
+contrasts(logreg_learning_paths_group_version_condition_env_time_df$condition) <- contr.treatment(5, base = 5)
+log_model_learning_paths_index_control <- glmer(correct_path ~ group*version*condition*condition_index
+                                               + (1 + condition | ID),
+                                               data = logreg_learning_paths_group_version_condition_env_time_df,
+                                               family = "binomial",
+                                               control=glmerControl(optimizer="bobyqa", optCtrl=list(maxfun=1e6)))
+log_model_learning_paths_index_control_rs <- glmer(correct_path ~ group*version*condition*condition_index
+                                               + (1 + condition + condition_index | ID),
+                                               data = logreg_learning_paths_group_version_condition_env_time_df,
+                                               family = "binomial",
+                                               control=glmerControl(optimizer="bobyqa", optCtrl=list(maxfun=1e6)))
+anova(log_model_learning_paths_index_control, log_model_learning_paths_index_control_rs)
+tab_model(log_model_learning_paths_index_control, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
+tab_model(log_model_learning_paths_index_control_rs, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
+
+```
+
+##### LogReg2: Difference from goal-state condition
+
+```{r}
+
+contrasts(logreg_learning_paths_group_version_condition_env_time_df$condition) <- contr.treatment(5, base = 2)
+log_model_learning_paths_index_goalstate <- glmer(correct_path ~ group*version*condition*condition_index
+                                               + (1 + condition | ID),
+                                               data = logreg_learning_paths_group_version_condition_env_time_df,
+                                               family = "binomial",
+                                               control=glmerControl(optimizer="bobyqa", optCtrl=list(maxfun=1e6)))
+log_model_learning_paths_index_goalstate_rs <- glmer(correct_path ~ group*version*condition*condition_index
+                                               + (1 + condition + condition_index | ID),
+                                               data = logreg_learning_paths_group_version_condition_env_time_df,
+                                               family = "binomial",
+                                               control=glmerControl(optimizer="bobyqa", optCtrl=list(maxfun=1e6)))
+
+anova(log_model_learning_paths_index_goalstate, log_model_learning_paths_index_goalstate_rs)
+
+tab_model(log_model_learning_paths_index_goalstate, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
+tab_model(log_model_learning_paths_index_goalstate_rs, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
+
+```
+
+##### LogReg3: Difference from policy condition
+
+```{r}
+
+contrasts(logreg_learning_paths_group_version_condition_env_time_df$condition) <- contr.treatment(5, base = 4)
+log_model_learning_paths_index_policy <- glmer(correct_path ~ group*version*condition*condition_index
+                                               + (1 + condition | ID),
+                                               data = logreg_learning_paths_group_version_condition_env_time_df,
+                                               family = "binomial",
+                                               control=glmerControl(optimizer="bobyqa", optCtrl=list(maxfun=1e6)))
+log_model_learning_paths_index_policy_rs <- glmer(correct_path ~ group*version*condition*condition_index
+                                               + (1 + condition + condition_index | ID),
+                                               data = logreg_learning_paths_group_version_condition_env_time_df,
+                                               family = "binomial",
+                                               control=glmerControl(optimizer="bobyqa", optCtrl=list(maxfun=1e6)))
+
+anova(log_model_learning_paths_index_policy, log_model_learning_paths_index_policy_rs)
+
+tab_model(log_model_learning_paths_index_policy, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
+tab_model(log_model_learning_paths_index_policy_rs, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
+
+```
+
+##### LogReg4: Difference from reward condition
+
+```{r}
+
+contrasts(logreg_learning_paths_group_version_condition_env_time_df$condition) <- contr.treatment(5, base = 1)
+log_model_learning_paths_index_reward <- glmer(correct_path ~ group*version*condition*condition_index
+                                               + (1 + condition | ID),
+                                               data = logreg_learning_paths_group_version_condition_env_time_df,
+                                               family = "binomial",
+                                               control=glmerControl(optimizer="bobyqa", optCtrl=list(maxfun=1e6)))
+log_model_learning_paths_index_reward_rs <- glmer(correct_path ~ group*version*condition*condition_index
+                                               + (1 + condition + condition_index | ID),
+                                               data = logreg_learning_paths_group_version_condition_env_time_df,
+                                               family = "binomial",
+                                               control=glmerControl(optimizer="bobyqa", optCtrl=list(maxfun=1e6)))
+
+anova(log_model_learning_paths_index_reward, log_model_learning_paths_index_reward_rs)
+
+tab_model(log_model_learning_paths_index_reward, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
+tab_model(log_model_learning_paths_index_reward_rs, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
+
+```
+
+##### LogReg5: Difference from transition condition
+
+```{r}
+
+contrasts(logreg_learning_paths_group_version_condition_env_time_df$condition) <- contr.treatment(5, base = 3)
+
+log_model_learning_paths_index_transition <- glmer(correct_path ~ group*version*condition*condition_index
+                                               + (1 + condition | ID),
+                                               data = logreg_learning_paths_group_version_condition_env_time_df,
+                                               family = "binomial",
+                                               control=glmerControl(optimizer="bobyqa", optCtrl=list(maxfun=1e6)))
+log_model_learning_paths_index_transition_rs <- glmer(correct_path ~ group*version*condition*condition_index
+                                               + (1 + condition + condition_index | ID),
+                                               data = logreg_learning_paths_group_version_condition_env_time_df,
+                                               family = "binomial",
+                                               control=glmerControl(optimizer="bobyqa", optCtrl=list(maxfun=1e6)))
+
+anova(log_model_learning_paths_index_transition, log_model_learning_paths_index_transition_rs)
+
+tab_model(log_model_learning_paths_index_transition, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
+tab_model(log_model_learning_paths_index_transition_rs, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
+
+```
+
+### Trial number
+
+#### Plots
+
+##### Performance per group, version, trial
+
+```{r}
+
+# get percent correct over time
+
+learning_correct_paths_group_version_time_df <- trial_df %>%
+  filter(phase == "learning",
+         state %in% c(1)
+         ) %>%
+  group_by(ID, condition) %>%
+  mutate(accumulated_state1_visits = row_number()
+         ) %>%
+  group_by(group, version, accumulated_state1_visits) %>%
+  summarise(mean_correct = mean(correct_path, na.rm = TRUE),
+            se_correct = sd(correct_path, na.rm = TRUE)/sqrt(n()),
+            ci_l = ci(correct_path, na.rm=TRUE)[2],
+            ci_u = ci(correct_path, na.rm=TRUE)[3],
+            n = n()
+            )
+
+learning_correct_paths_group_version_time_df %>%
+  kable("html") %>%
+  kable_styling(font_size = 14,
+                latex_options = "scale_down")
+
+```
+
+```{r}
+
+ggplot(learning_correct_paths_group_version_time_df, aes(x=accumulated_state1_visits+4, y=mean_correct*100)) +
+  geom_line(size=1) +
+  geom_ribbon(aes(ymin = ci_l * 100, ymax = ci_u * 100), alpha = 0.2) +
+  scale_y_continuous(limits = c(0, 110)) +
+  facet_grid(vars(group), vars(version)) +
+  theme_light(base_size = 16) +
+  xlab("Accumulated state 1 visits") +
+  ylab("% Correct paths") +
+  theme(legend.title = element_blank())
+
+```
+
+##### Performance per group, version, condition, trial
+
+```{r}
+
+# get percent correct over time
+
+learning_correct_paths_group_version_condition_time_df <- trial_df %>%
+  filter(phase == "learning",
+         state %in% c(1)
+         ) %>%
+  group_by(ID, condition) %>%
+  mutate(accumulated_state1_visits = row_number()
+         ) %>%
+  group_by(group, version, condition, accumulated_state1_visits) %>%
+  summarise(mean_correct = mean(correct_path, na.rm = TRUE),
+            se_correct = sd(correct_path, na.rm = TRUE)/sqrt(n()),
+            ci_l = ci(correct_state_1, na.rm=TRUE)[2],
+            ci_u = ci(correct_state_1, na.rm=TRUE)[3],
+            n = n()
+            )
+
+learning_correct_paths_group_version_condition_time_df %>%
+  kable("html") %>%
+  kable_styling(font_size = 14,
+                latex_options = "scale_down")
+
+```
+
+```{r}
+
+ggplot(learning_correct_paths_group_version_condition_time_df, aes(x=accumulated_state1_visits+4, y=mean_correct*100)) +
+  geom_line(aes(color=condition), size=1) +
+  geom_ribbon(aes(ymin = ci_l * 100, ymax = ci_u * 100, fill = condition), alpha = 0.2) +
+  scale_y_continuous(limits = c(0, 110)) +
+  facet_grid(vars(group), vars(version)) +
+  theme_light(base_size = 16) +
+  xlab("Accumulated state 1 visits") +
+  ylab("% Correct paths") +
+  theme(legend.title = element_blank()) +
+  scale_color_viridis(option = "viridis", discrete = TRUE) +
+  scale_fill_viridis(option = "viridis", discrete = TRUE)
+
+```
+
+#### Logistic regression
+
+##### LogReg1: Difference from control condition
+
+```{r}
+
+contrasts(logreg_learning_paths_group_version_condition_env_time_df$condition) <- contr.treatment(5, base = 5)
+
+log_model_learning_paths_trial_control <- glmer(correct_path ~ group*version*condition*accumulated_state1_visits
+                                               + (1 + condition | ID),
+                                               data = logreg_learning_paths_group_version_condition_env_time_df,
+                                               family = "binomial",
+                                               control=glmerControl(optimizer="bobyqa", optCtrl=list(maxfun=1e6)))
+log_model_learning_paths_trial_control_rs <- glmer(correct_path ~ group*version*condition*accumulated_state1_visits
+                                               + (1 + condition + accumulated_state1_visits | ID),
+                                               data = logreg_learning_paths_group_version_condition_env_time_df,
+                                               family = "binomial",
+                                               control=glmerControl(optimizer="bobyqa", optCtrl=list(maxfun=1e6)))
+
+anova(log_model_learning_paths_trial_control, log_model_learning_paths_trial_control_rs)
+
+tab_model(log_model_learning_paths_trial_control, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
+tab_model(log_model_learning_paths_trial_control_rs, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
+
+```
+
+##### LogReg2: Difference from goal-state condition
+
+```{r}
+
+contrasts(logreg_learning_paths_group_version_condition_env_time_df$condition) <- contr.treatment(5, base = 2)
+
+log_model_learning_paths_trial_goalstate <- glmer(correct_path ~ group*version*condition*accumulated_state1_visits
+                                               + (1 + condition | ID),
+                                               data = logreg_learning_paths_group_version_condition_env_time_df,
+                                               family = "binomial",
+                                               control=glmerControl(optimizer="bobyqa", optCtrl=list(maxfun=1e6)))
+log_model_learning_paths_trial_goalstate_rs <- glmer(correct_path ~ group*version*condition*accumulated_state1_visits
+                                               + (1 + condition + accumulated_state1_visits | ID),
+                                               data = logreg_learning_paths_group_version_condition_env_time_df,
+                                               family = "binomial",
+                                               control=glmerControl(optimizer="bobyqa", optCtrl=list(maxfun=1e6)))
+
+anova(log_model_learning_paths_trial_goalstate, log_model_learning_paths_trial_goalstate_rs)
+
+tab_model(log_model_learning_paths_trial_goalstate, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
+tab_model(log_model_learning_paths_trial_goalstate_rs, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
+
+```
+
+##### LogReg3: Difference from policy condition
+
+```{r}
+
+contrasts(logreg_learning_paths_group_version_condition_env_time_df$condition) <- contr.treatment(5, base = 4)
+
+log_model_learning_paths_trial_policy <- glmer(correct_path ~ group*version*condition*accumulated_state1_visits
+                                               + (1 + condition | ID),
+                                               data = logreg_learning_paths_group_version_condition_env_time_df,
+                                               family = "binomial",
+                                               control=glmerControl(optimizer="bobyqa", optCtrl=list(maxfun=1e6)))
+log_model_learning_paths_trial_policy_rs <- glmer(correct_path ~ group*version*condition*accumulated_state1_visits
+                                               + (1 + condition + accumulated_state1_visits | ID),
+                                               data = logreg_learning_paths_group_version_condition_env_time_df,
+                                               family = "binomial",
+                                               control=glmerControl(optimizer="bobyqa", optCtrl=list(maxfun=1e6)))
+
+anova(log_model_learning_paths_trial_policy, log_model_learning_paths_trial_policy_rs)
+
+tab_model(log_model_learning_paths_trial_policy, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
+tab_model(log_model_learning_paths_trial_policy_rs, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
+
+```
+
+##### LogReg4: Difference from reward condition
+
+```{r}
+
+contrasts(logreg_learning_paths_group_version_condition_env_time_df$condition) <- contr.treatment(5, base = 1)
+
+log_model_learning_paths_trial_reward <- glmer(correct_path ~ group*version*condition*accumulated_state1_visits
+                                               + (1 + condition | ID),
+                                               data = logreg_learning_paths_group_version_condition_env_time_df,
+                                               family = "binomial",
+                                               control=glmerControl(optimizer="bobyqa", optCtrl=list(maxfun=1e6)))
+log_model_learning_paths_trial_reward_rs <- glmer(correct_path ~ group*version*condition*accumulated_state1_visits
+                                               + (1 + condition + accumulated_state1_visits | ID),
+                                               data = logreg_learning_paths_group_version_condition_env_time_df,
+                                               family = "binomial",
+                                               control=glmerControl(optimizer="bobyqa", optCtrl=list(maxfun=1e6)))
+
+anova(log_model_learning_paths_trial_reward, log_model_learning_paths_trial_reward_rs)
+
+tab_model(log_model_learning_paths_trial_reward, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
+tab_model(log_model_learning_paths_trial_reward_rs, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
+
+```
+
+##### LogReg5: Difference from transition condition
+
+```{r}
+
+contrasts(logreg_learning_paths_group_version_condition_env_time_df$condition) <- contr.treatment(5, base = 3)
+
+log_model_learning_paths_trial_transition <- glmer(correct_path ~ group*version*condition*accumulated_state1_visits
+                                               + (1 + condition | ID),
+                                               data = logreg_learning_paths_group_version_condition_env_time_df,
+                                               family = "binomial",
+                                               control=glmerControl(optimizer="bobyqa", optCtrl=list(maxfun=1e6)))
+log_model_learning_paths_trial_transition_rs <- glmer(correct_path ~ group*version*condition*accumulated_state1_visits
+                                               + (1 + condition + accumulated_state1_visits | ID),
+                                               data = logreg_learning_paths_group_version_condition_env_time_df,
+                                               family = "binomial",
+                                               control=glmerControl(optimizer="bobyqa", optCtrl=list(maxfun=1e6)))
+
+anova(log_model_learning_paths_trial_transition, log_model_learning_paths_trial_transition_rs)
+
+tab_model(log_model_learning_paths_trial_transition, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
+tab_model(log_model_learning_paths_trial_transition_rs, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
+
+```
+
+## Reaction times
+
+### RT in state 1 per condition
+
+#### Plot
+
+```{r}
+
+RT_state1_condition_df <- trial_df %>%
+  filter(phase == "learning",
+         state %in% c(1)) %>%
+  group_by(group, version, condition) %>%
+  summarise(mean_RT = mean(RT),
+            se_RT = sd(RT, na.rm = TRUE)/sqrt(n()),
+            ci_l = ci(RT, na.rm=TRUE)[2],
+            ci_u = ci(RT, na.rm=TRUE)[3])
+
+RT_state1_condition_df %>%
+  kable("html") %>%
+  kable_styling(font_size = 16,
+                latex_options = "scale_down")
+
+```
+
+```{r}
+
+RT_state1_plotting_df <- trial_df %>%
+  filter(phase == "learning",
+         state %in% c(1))
+ggplot(RT_state1_plotting_df, aes(x=condition, y=RT, fill = condition)) +
+  geom_boxplot() +
+  scale_y_continuous(labels = scales::comma) +
+  facet_grid(vars(group), vars(version)) +
+  theme_light(base_size = 16) +
+  xlab("Phase") +
+  ylab("Reaction times") +
+  theme(legend.position = "none",
+        axis.title.x=element_blank(),
+        axis.text.x = element_text(angle = 50, vjust = 1, hjust=1)) +
+  scale_fill_viridis("Condition", option = "viridis", discrete = TRUE)
+
+```
+
+#### Linear regression
+
+```{r}
+
+linreg_learning_state1_rt_df <- trial_df %>%
+  filter(phase == "learning",
+         state == 1
+         ) %>%
+  mutate(condition = as.factor(condition),
+         group = as.factor(group),
+         version = as.factor(version),
+         environment = as.factor(environment)) %>%
+  select(ID,
+         RT,
+         condition,
+         group,
+         version,
+         environment)
+```
+
+```{r}
+
+rt_learning_state1_model <- lmer(data = linreg_learning_state1_rt_df,
+                                 RT ~ group*version*condition + (1 | ID),
+                                 control=lmerControl(optimizer="bobyqa", optCtrl=list(maxfun=1e6)),
+                                 REML = FALSE)
+rt_learning_state1_model_rs <- lmer(data = linreg_learning_state1_rt_df,
+                                 RT ~ group*version*condition + (1 + condition | ID),
+                                 control=lmerControl(optimizer="bobyqa", optCtrl=list(maxfun=1e6)),
+                                 REML = FALSE)
+
+# rt_learning_state1_model_rs_env_i <- lmer(linreg_learning_state1_rt_df,
+
+#                                  RT ~ group*version*condition + (1 + condition | ID) + (1 | environment),
+
+#                                  control=glmerControl(optimizer="bobyqa", optCtrl=list(maxfun=1e6)),
+
+#                                  REML = FALSE)
+
+#
+
+# rt_learning_state1_model_rs_env_rs <- lmer(linreg_learning_state1_rt_df,
+
+#                                  RT ~ group*version*condition + (1 + condition | ID) + (1 + condition | environment),
+
+#                                  control=glmerControl(optimizer="bobyqa", optCtrl=list(maxfun=1e6)),
+
+#                                  REML = FALSE)
+
+anova(rt_learning_state1_model, rt_learning_state1_model_rs)
+
+tab_model(rt_learning_state1_model_rs, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
+
+```
+
+### RT in all states per condition
+
+#### Plot
+
+```{r}
+
+RT_state1_condition_df <- trial_df %>%
+  filter(phase == "learning",
+         state %in% c(1,2,3)) %>%
+  group_by(group, version, condition) %>%
+  summarise(mean_RT = mean(RT),
+            se_RT = sd(RT, na.rm = TRUE)/sqrt(n()),
+            ci_l = ci(RT, na.rm=TRUE)[2],
+            ci_u = ci(RT, na.rm=TRUE)[3])
+
+RT_state1_condition_df %>%
+  kable("html") %>%
+  kable_styling(font_size = 16,
+                latex_options = "scale_down")
+
+```
+
+```{r}
+
+RT_state1_plotting_df <- trial_df %>%
+  filter(phase == "learning",
+         state %in% c(1,2,3))
+
+ggplot(RT_state1_plotting_df, aes(x=condition, y=RT, fill = condition)) +
+  geom_boxplot() +
+  scale_y_continuous(labels = scales::comma) +
+  facet_grid(vars(group), vars(version)) +
+  theme_light(base_size = 16) +
+  ylab("Reaction times") +
+  theme(legend.position = "none",
+        axis.title.x=element_blank(),
+        axis.text.x = element_text(angle = 50, vjust = 1, hjust=1)) +
+  scale_fill_viridis("Condition", option = "viridis", discrete = TRUE)
+
+```
+
+#### Linear regression
+
+```{r}
+
+linreg_learning_state123_rt_df <- trial_df %>%
+  filter(phase == "learning",
+         state %in% c(1,2,3)
+         ) %>%
+
+  mutate(condition = as.factor(condition),
+         group = as.factor(group),
+         version = as.factor(version),
+         environment = as.factor(environment)) %>%
+  select(ID,
+         RT,
+         condition,
+         group,
+         version,
+         environment)
+
+```
+
+```{r}
+
+rt_learning_state123_model <- lmer(data = linreg_learning_state123_rt_df,
+                                 RT ~ group*version*condition + (1 | ID),
+                                 control=lmerControl(optimizer="bobyqa", optCtrl=list(maxfun=1e6)),
+                                 REML = FALSE)
+rt_learning_state123_model_rs <- lmer(data = linreg_learning_state123_rt_df,
+                                 RT ~ group*version*condition + (1 + condition | ID),
+                                 control=lmerControl(optimizer="bobyqa", optCtrl=list(maxfun=1e6)),
+                                 REML = FALSE)
+
+# rt_learning_state123_model_rs_env_i <- lmer(linreg_learning_state123_rt_df,
+
+#                                  RT ~ group*version*condition + (1 + condition | ID) + (1 | environment),
+
+#                                  control=glmerControl(optimizer="bobyqa", optCtrl=list(maxfun=1e6)),
+
+#                                  REML = FALSE)
+
+#
+
+# rt_learning_state123_model_rs_env_rs <- lmer(linreg_learning_state123_rt_df,
+
+#                                  RT ~ group*version*condition + (1 + condition | ID) + (1 + condition | environment),
+
+#                                  control=glmerControl(optimizer="bobyqa", optCtrl=list(maxfun=1e6)),
+
+#                                  REML = FALSE)
+
+anova(rt_learning_state123_model, rt_learning_state123_model_rs)
+
+tab_model(rt_learning_state123_model_rs, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
+
+```
+
+### RT in state 1 - correct choice
+
+#### Plot
+
+```{r}
+
+RT_state1_condition_phase_correct_df <- trial_df %>%
+  filter(phase == "learning",
+         state %in% c(1)) %>%
+  group_by(group, version, condition, phase, correct) %>%
+  summarise(mean_RT = mean(RT),
+            se_RT = sd(RT, na.rm = TRUE)/sqrt(n()),
+            ci_l = ci(RT, na.rm=TRUE)[2],
+            ci_u = ci(RT, na.rm=TRUE)[3],
+            n = n())
+
+RT_state1_condition_phase_correct_df %>%
+  kable("html") %>%
+  kable_styling(font_size = 16,
+                latex_options = "scale_down")
+
+```
+
+```{r}
+
+RT_state1_correct_df <- trial_df %>%
+  mutate(correct = as.factor(correct)) %>%
+  filter(phase == "learning",
+         state %in% c(1))
+
+ggplot(RT_state1_correct_df, aes(x=condition, y=RT, fill = correct)) +
+  geom_boxplot() +
+  scale_y_continuous(labels = scales::comma) +
+  facet_grid(vars(group), vars(version)) +
+  theme_light(base_size = 16) +
+  ylab("Reaction times") +
+  theme(axis.title.x=element_blank(),
+        axis.text.x = element_text(angle = 50, vjust = 1, hjust=1)) +
+  scale_fill_viridis("Correct", option = "magma", discrete = TRUE)
+
+```
+
+#### Linear regression
+
+```{r}
+
+linreg_learning_state1_rt_correct_df <- trial_df %>%
+  filter(phase == "learning",
+         state == 1
+         ) %>%
+
+  mutate(condition = as.factor(condition),
+         group = as.factor(group),
+         version = as.factor(version),
+         environment = as.factor(environment),
+         correct = as.factor(correct)) %>%
+  select(ID,
+         RT,
+         condition,
+         group,
+         version,
+         environment,
+         correct)
+
+```
+
+```{r}
+
+rt_correct_learning_state1_model <- lmer(data = linreg_learning_state1_rt_correct_df,
+                                 RT ~ group*version*condition*correct + (1 | ID),
+                                 control=lmerControl(optimizer="bobyqa", optCtrl=list(maxfun=1e6)),
+                                 REML = FALSE)
+rt_correct_learning_state1_model_rs <- lmer(data = linreg_learning_state1_rt_correct_df,
+                                 RT ~ group*version*condition*correct + (1 + condition | ID),
+                                 control=lmerControl(optimizer="bobyqa", optCtrl=list(maxfun=1e6)),
+                                 REML = FALSE)
+rt_correct_learning_state1_model_rs2 <- lmer(data = linreg_learning_state1_rt_correct_df,
+                                 RT ~ group*version*condition*correct + (1 + condition + correct | ID),
+                                 control=lmerControl(optimizer="bobyqa", optCtrl=list(maxfun=1e6)),
+                                 REML = FALSE)
+
+anova(rt_correct_learning_state1_model, rt_correct_learning_state1_model_rs, rt_correct_learning_state1_model_rs2)
+
+tab_model(rt_correct_learning_state1_model_rs2, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
+
+```
+
+### RT in all states - correct choice
+
+#### Plot
+
+```{r}
+
+RT_state1_condition_phase_correct_df <- trial_df %>%
+  filter(phase == "learning",
+         state %in% c(1,2,3)) %>%
+  group_by(group, version, condition, phase, correct) %>%
+  summarise(mean_RT = mean(RT),
+            se_RT = sd(RT, na.rm = TRUE)/sqrt(n()),
+            ci_l = ci(RT, na.rm=TRUE)[2],
+            ci_u = ci(RT, na.rm=TRUE)[3],
+            n = n())
+
+RT_state1_condition_phase_correct_df %>%
+  kable("html") %>%
+  kable_styling(font_size = 16,
+                latex_options = "scale_down")
+
+```
+
+```{r}
+
+RT_state1_correct_df <- trial_df %>%
+  mutate(correct = as.factor(correct)) %>%
+  filter(phase == "learning",
+         state %in% c(1,2,3))
+ggplot(RT_state1_correct_df, aes(x=condition, y=RT, fill = correct)) +
+  geom_boxplot() +
+  scale_y_continuous(labels = scales::comma) +
+  facet_grid(vars(group), vars(version)) +
+  theme_light(base_size = 16) +
+  ylab("Reaction times") +
+  theme(axis.title.x=element_blank(),
+        axis.text.x = element_text(angle = 50, vjust = 1, hjust=1)) +
+  scale_fill_viridis("Correct", option = "magma", discrete = TRUE)
+
+```
+
+#### Linear regression
+
+```{r}
+
+linreg_learning_state123_rt_correct_df <- trial_df %>%
+  filter(phase == "learning",
+         state%in% c(1,2,3)
+         ) %>%
+  mutate(condition = as.factor(condition),
+         group = as.factor(group),
+         version = as.factor(version),
+         environment = as.factor(environment),
+         correct = as.factor(correct)) %>%
+  select(ID,
+         RT,
+         condition,
+         group,
+         version,
+         environment,
+         correct)
+
+```
+
+```{r}
+
+rt_correct_learning_state123_model <- lmer(data = linreg_learning_state123_rt_correct_df,
+                                 RT ~ group*version*condition*correct + (1 | ID),
+                                 control=lmerControl(optimizer="bobyqa", optCtrl=list(maxfun=1e6)),
+                                 REML = FALSE)
+rt_correct_learning_state123_model_rs <- lmer(data = linreg_learning_state123_rt_correct_df,
+                                 RT ~ group*version*condition*correct + (1 + condition | ID),
+                                 control=lmerControl(optimizer="bobyqa", optCtrl=list(maxfun=1e6)),
+                                 REML = FALSE)
+rt_correct_learning_state123_model_rs2 <- lmer(data = linreg_learning_state123_rt_correct_df,
+                                 RT ~ group*version*condition*correct + (1 + condition + correct | ID),
+                                 control=lmerControl(optimizer="bobyqa", optCtrl=list(maxfun=1e6)),
+                                 REML = FALSE)
+
+# rt_learning_state1_model_rs_env_i <- lmer(linreg_learning_state1_rt_df,
+
+#                                  RT ~ group*version*condition + (1 + condition | ID) + (1 | environment),
+
+#                                  control=glmerControl(optimizer="bobyqa", optCtrl=list(maxfun=1e6)),
+
+#                                  REML = FALSE)
+
+#
+
+# rt_learning_state1_model_rs_env_rs <- lmer(linreg_learning_state1_rt_df,
+
+#                                  RT ~ group*version*condition + (1 + condition | ID) + (1 + condition | environment),
+
+#                                  control=glmerControl(optimizer="bobyqa", optCtrl=list(maxfun=1e6)),
+
+#                                  REML = FALSE)
+
+anova(rt_correct_learning_state123_model, rt_correct_learning_state123_model_rs, rt_correct_learning_state123_model_rs2)
+
+tab_model(rt_correct_learning_state123_model_rs2, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
+
+```

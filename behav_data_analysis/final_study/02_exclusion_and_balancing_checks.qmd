@@ -22,21 +22,22 @@ editor_options:
 rm(list = ls(all = TRUE))
 
 # Load packages
-packages <- c("ggplot2", "dplyr", "tidyr", "kableExtra", "gmodels", "lme4", "sjPlot", "viridis", "forcats")
+packages <- c("ggplot2", "dplyr", "tidyr", "kableExtra", "gmodels", "lme4", "sjPlot", "viridis", "forcats", "lmerTest", "car")
 #install.packages(packages)
 sapply(packages, require, character.only = TRUE)
 
 # set color scheme
 
 # define paths
-data_path <- "/Users/milenamusial/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/PhD/04_B01/WP3/WP3_DATA/FINAL_STUDY/RDFs"
+data_path <- "~/work/group_folder/B01_FP2_WP3/WP3_DATA/FINAL_STUDY/RDFs"
+#data_path <- "~/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/PhD/04_B01/WP3/WP3_DATA/FINAL_STUDY/RDFs"
 
 # read dfs
 load(file.path(data_path, "final_data_complete.RData"))
 load(file.path(data_path, "demo_psych_data.RData"))
 
 # format demo_psych df factors
-# rename & reorder 
+# rename & reorder
 demo_psych <- demo_psych %>%
   mutate(version = case_when(
     version == "alcohol" ~ "Alcohol version",
@@ -55,13 +56,15 @@ demo_psych <- demo_psych %>%
 
 ```
 
- Complete sample
+# Exclusion
+
+## Complete sample
 
 ```{r}
 summary <- trial_df %>%
   select(ID, group, version)
 
-summary <- unique(summary) 
+summary <- unique(summary)
 
 summary <- summary %>%
   group_by(group, version) %>%
@@ -73,7 +76,7 @@ summary %>%
                 latex_options = "scale_down")
 ```
 
-# Preregistered exclusion criterion 1: Inconsistent AUDIT scores
+## Preregistered exclusion criterion 1: Inconsistent AUDIT scores
 
 ```{r}
 audit_inconsistent_df <- demo_psych %>%
@@ -83,14 +86,14 @@ audit_inconsistent_df <- demo_psych %>%
   arrange(group, version)
 ```
 
-## Percent excluded
+### Percent excluded
 
 ```{r}
 percent_IDs_excluded <- length(unique(audit_inconsistent_df$prolific_ID))/length(demo_psych$prolific_ID)
 percent_IDs_excluded*100
 ```
 
-## Excluded subjects per group and version
+### Excluded subjects per group and version
 
 ```{r}
 audit_inconsistent_df_summary <- audit_inconsistent_df %>%
@@ -103,7 +106,7 @@ audit_inconsistent_df_summary %>%
                 latex_options = "scale_down")
 ```
 
-## Apply exclusion
+### Apply exclusion
 
 ```{r}
 trial_df <- trial_df %>%
@@ -123,7 +126,7 @@ demo_psych <- demo_psych %>%
          preserve = TRUE)
 ```
 
-# Preregistered exclusion criterion 2: Correct path taken in less than 3 out of the last 5 learning phase trials in any of the 5 conditions
+## Preregistered exclusion criterion 2: Correct path taken in less than 3 out of the last 5 learning phase trials in any of the 5 conditions
 
 ```{r}
 # get last paths
@@ -138,7 +141,7 @@ learning_paths_last4_correct_component_df <- learning_paths_last4_df %>%
   group_by(ID, group, version, component, condition_index, condition, environment) %>%
   summarise(sum_correct = sum(correct_path))
 
-learning_paths_last4_correct_component_df_excl <- learning_paths_last4_correct_component_df %>% 
+learning_paths_last4_correct_component_df_excl <- learning_paths_last4_correct_component_df %>%
   filter(sum_correct < 3) %>%
   mutate(ID_condition_combo = paste(ID, "-", condition, sep=""))
 
@@ -157,7 +160,7 @@ excluded_IDs <- unique(learning_paths_last4_correct_component_df_excl$ID)
 percent_IDs_excluded <- length(excluded_IDs)/length(unique(trial_df$ID))
 ```
 
-## Percent excluded
+### Percent excluded
 
 -   \% excluded IDs
 
@@ -165,7 +168,7 @@ percent_IDs_excluded <- length(excluded_IDs)/length(unique(trial_df$ID))
 percent_IDs_excluded*100
 ```
 
-## Excluded participants per group and version
+### Excluded participants per group and version
 
 ```{r}
 learning_paths_last4_correct_subject_df_excl_summary <- learning_paths_last4_correct_component_df_excl %>%
@@ -181,56 +184,56 @@ learning_paths_last4_correct_subject_df_excl_summary %>%
                 latex_options = "scale_down")
 ```
 
-## Excluded components per group and version
+### Excluded components per group and version
 
 ```{r}
 learning_correct_group_version_df_excl <- learning_paths_last4_correct_component_df_excl %>%
   group_by(group, version) %>%
   summarise(n = n()
             )
-  
+
 learning_correct_group_version_df_excl %>%
   kable("html") %>%
   kable_styling(font_size = 18,
                 latex_options = "scale_down")
 ```
 
-## Excluded components per condition
+### Excluded components per condition
 
 ```{r}
 learning_correct_condition_df_excl <- learning_paths_last4_correct_component_df_excl %>%
   group_by(condition) %>%
   summarise(n = n()
             )
-  
+
 learning_correct_condition_df_excl %>%
   kable("html") %>%
   kable_styling(font_size = 18,
                 latex_options = "scale_down")
 ```
 
-## Excluded components per component index
+### Excluded components per component index
 
 ```{r}
 learning_correct_component_index_df_excl <- learning_paths_last4_correct_component_df_excl %>%
   group_by(condition_index) %>%
   summarise(n = n()
             )
-  
+
 learning_correct_component_index_df_excl %>%
   kable("html") %>%
   kable_styling(font_size = 18,
                 latex_options = "scale_down")
 ```
 
-## Excluded components per environment
+### Excluded components per environment
 
 ```{r}
 learning_correct_component_environment_df_excl <- learning_paths_last4_correct_component_df_excl %>%
   group_by(environment) %>%
   summarise(n = n()
             )
-  
+
 learning_correct_component_environment_df_excl %>%
   kable("html") %>%
   kable_styling(font_size = 18,
@@ -243,7 +246,7 @@ learning_correct_component_environment_df_excl %>%
 trial_df <- trial_df %>%
   filter(! ID %in% excluded_IDs,
          preserve = TRUE) %>%
-  arrange(ID, 
+  arrange(ID,
           condition_index,
           phase,
           trial,
@@ -260,12 +263,15 @@ rating_df <- rating_df %>%
 demo_psych <- demo_psych %>%
   filter(! prolific_ID %in% excluded_IDs,
          preserve = TRUE)
+
+save(demo_psych, file = file.path(data_path, "demo_psych_data_included.RData"))
+save(trial_df, component_df, rating_df, file = file.path(data_path, "final_data_included.RData"))
 ```
 
-# Further analyses based on (according to preregistered criteria)
+### Further analyses based on (according to preregistered criteria)
 
 ```{r}
-summary <- component_df %>%
+summary <- trial_df %>%
   select(ID, group, version)
 
 summary <- unique(summary)
@@ -280,9 +286,9 @@ summary %>%
                 latex_options = "scale_down")
 ```
 
-# Balancing checks
+## Balancing checks
 
-## Condition index per condition
+### Condition index per condition
 
 ```{r}
 # get percent correct over time
@@ -325,7 +331,7 @@ index_table <- balancing_df %>%
 chisq.test(table(index_table$condition, index_table$condition_index))
 ```
 
-## Environment per condition
+### Environment per condition
 
 ```{r}
 # get percent correct over time
@@ -361,169 +367,20 @@ env_table <- balancing_df %>%
 chisq.test(table(env_table$condition, env_table$environment), simulate.p.value = F)
 ```
 
-## Overview of current AUDIT scores
+# Payment criterion
 
 ```{r}
-# calculate 
-demo_psych <- demo_psych %>%
-  mutate(audit_pre = as.numeric(audit_sum_pre),
-         audit_post = as.numeric(audit_sum_post),
-         audit_mean = as.numeric(audit_sum_mean))
 
-audit_df <- demo_psych %>%
-  select(prolific_ID, group, version, audit_mean)
+payment_df <- trial_df %>%
+  group_by(group, version, ID) %>%
+  summarise(mean_correct = mean(correct, na.rm = TRUE))
 
-audit_df_summary <- audit_df %>%
-  group_by(group, version) %>%
-  summarise(mean_audit = mean(audit_mean, na.rm = TRUE),
-            se_audit = sd(audit_mean, na.rm = TRUE)/sqrt(n()),
-            ci_l = ci(audit_mean, na.rm=TRUE)[2],
-            ci_u = ci(audit_mean, na.rm=TRUE)[3],
-            n = n()
-            ) 
+payment_df[payment_df$mean_correct==max(payment_df$mean_correct[payment_df$version=="alcohol version" & payment_df$group=="low-risk drinkers"]),]
 
-audit_df_summary %>%
-  kable("html") %>%
-  kable_styling(font_size = 12,
-                latex_options = "scale_down")
+payment_df[payment_df$mean_correct==max(payment_df$mean_correct[payment_df$version=="alcohol version" & payment_df$group=="harmful drinkers"]),]
+
+payment_df[payment_df$mean_correct==max(payment_df$mean_correct[payment_df$version=="monetary version" & payment_df$group=="low-risk drinkers"]),]
+
+payment_df[payment_df$mean_correct==max(payment_df$mean_correct[payment_df$version=="monetary version" & payment_df$group=="harmful drinkers"]),]
+
 ```
-
-```{r}
-ggplot(audit_df, aes(x=group, y=audit_mean)) +
-  geom_boxplot(aes(fill = group)) +
-  scale_y_continuous(labels = scales::comma) +
-  xlab("") +
-  ylab("AUDIT score") +
-  facet_wrap(~ version) +
-  theme_light(base_size = 16) +
-  theme(legend.position = "none",
-        axis.text.x = element_text(angle = 50, vjust = 1, hjust=1)) +
-  scale_fill_viridis(option = "plasma", discrete = TRUE)
-```
-
--   The difference in AUDIT scores between harmful and low-risk drinkers is significantly smaller for the alcohol version.
-
-```{r}
-lm_audit <- lm(audit_mean ~ group*version,
-               data = audit_df)
-
-tab_model(lm_audit, transform = NULL, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
-```
-
-## What combinations are missing?
-
-```{r}
-# create basic df
-to_recruit_df <- data.frame(
-  group = c(rep("harmful", times=260-sum(summary$n[summary$group=="harmful"])),
-            rep("low-risk", times=260-sum(summary$n[summary$group=="low-risk"]))),
-  version = c(rep("alcohol", times=130-summary$n[summary$group=="harmful" & summary$version=="alcohol"]),
-            rep("control", times=130-summary$n[summary$group=="harmful" & summary$version=="control"]),
-            rep("alcohol", times=130-summary$n[summary$group=="low-risk" & summary$version=="alcohol"]),
-            rep("control", times=130-summary$n[summary$group=="low-risk" & summary$version=="control"]))
-)
-
-to_recruit_df <- to_recruit_df %>%
-  #mutate(ID = row_number()) %>%
-  slice(rep(1:n(), each = 5)) %>%
-  mutate(condition = as.character(rep(c("control", "goal-state", "policy", "reward", "transition"), times = 66))) %>%
-  arrange(group, version, condition)
-
-# fill in index
-index <- index_summary %>%
-  arrange(group, version, condition, condition_index) %>%
-  uncount(26-n)
-to_recruit_index_df <- to_recruit_df
-to_recruit_index_df$condition_index <- index$condition_index
-
-to_recruit_df_filtered <- to_recruit_index_df %>%
-  filter(group == "harmful" & version == "control")
-```
-
-```{r}
-env_table <- balancing_df %>%
-  filter(group == "harmful" & version == "control") %>%
-  droplevels()
-
-table(env_table$condition, env_table$environment)
-```
-
-## Include missing combinations an check if now balanced
-
-```{r}
-generated_subs <- read.csv(file.path(data_path, "to_recruit_26percell/all.csv"), sep=";") %>%
-  mutate(ID = as.factor(ID)) %>%
-  drop_na()
-
-fake_df <- rbind(balancing_df, generated_subs) 
-```
-
-### Condition per condition index
-
-```{r}
-# get percent correct over time
-fake_balancing_df <- fake_df %>%
-  mutate(condition_index = as.factor(condition_index),
-         condition = as.factor(condition)) %>%
-  filter(! condition == "other") %>%
-  unique() %>%
-  select(ID, group, version, condition, condition_index, environment)
-
-index_summary <- fake_balancing_df %>%
-  group_by(group, version, condition, condition_index) %>%
-  summarise(n = n()
-            ) 
-index_summary %>%
-  kable("html") %>%
-  kable_styling(font_size = 14,
-                latex_options = "scale_down")
-```
-
-```{r}
-ggplot(fake_df, aes(x=condition, fill=condition_index)) +
-  geom_bar() +
-  geom_text(stat = "count", aes(label = ..count..), 
-            position = position_stack(vjust = 0.5), size = 4) +
-  facet_grid(vars(group), vars(version)) +
-  theme_light(base_size = 16) +
-  theme(axis.text.x = element_text(angle = 50, vjust = 1, hjust=1)) +
-  scale_fill_viridis(option = "plasma", discrete = TRUE)
-```
-
-### Condition per environment
-
-```{r}
-# get percent correct over time
-environment_summary <- fake_balancing_df %>%
-  group_by(group, version, condition, environment) %>%
-  summarise(n = n()
-            ) 
-
-environment_summary %>%
-  kable("html") %>%
-  kable_styling(font_size = 14,
-                latex_options = "scale_down")
-```
-
-```{r}
-fake_balancing_df %>%
-  ggplot(aes(x=condition, fill=environment)) +
-  geom_bar() +
-  geom_text(stat = "count", aes(label = ..count..), 
-            position = position_stack(vjust = 0.5), size = 4) +
-  facet_grid(vars(group), vars(version), scales = "free_x") +
-  theme_light(base_size = 16) +
-  theme(axis.text.x = element_text(angle = 50, vjust = 1, hjust=1)) +
-  scale_fill_viridis(option = "turbo", discrete = TRUE)
-```
-
-```{r}
-# Chi-square test
-env_table <- fake_balancing_df %>%
-  filter(group == "low-risk" & version == "alcohol") %>%
-  droplevels()
-
-chisq.test(table(env_table$condition, env_table$environment), simulate.p.value = F)
-```
-
-We recruited 66 additional subjects to fully balance condition order and to favorably influence the balancing between condition and environment.
