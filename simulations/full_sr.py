@@ -14,7 +14,7 @@ from utilities import *
 #
 # Run Trial
 #
-def run_trial(phase, trial_index, gamma, alpha, beta, end_state, start_state, rewards, transitions, num_pairs, v_state, feat, weight):
+def run_trial(phase, trial_index, gamma_td, gamma_m, alpha_td, alpha_m, beta, end_state, start_state, forced_choice_trial_order, rewards, transitions, num_pairs, v_state, feat, weight):
     '''
     Simulates a single trial, from the given start state until the end state is reached.
 
@@ -37,6 +37,9 @@ def run_trial(phase, trial_index, gamma, alpha, beta, end_state, start_state, re
         - transition_log_lines: [str]
     )
     '''
+    
+    print(forced_choice_trial_order)
+    
     current_state = start_state - 1
     transition_log_lines = []
 
@@ -48,28 +51,28 @@ def run_trial(phase, trial_index, gamma, alpha, beta, end_state, start_state, re
             ###### Determine next and second next state ######
             
             ## 4 forced-choice trials
-            if ((phase == "learning") and (trial_index == 0)):
+            if ((phase == "learning") and (trial_index == forced_choice_trial_order[0])):
                 # Determine the next state
                 next_move = 0 # forced left choice
                 next_state = transitions[current_state][next_move] - 1
                 # Determine the second next state
                 second_next_move = 0 # forced left choice
                 second_next_state = transitions[next_state][second_next_move] - 1
-            elif ((phase == "learning") and (trial_index == 1)):
+            elif ((phase == "learning") and (trial_index == forced_choice_trial_order[1])):
                 # Determine the next state
                 next_move = 0  # forced left choice
                 next_state = transitions[current_state][next_move] - 1
                 # Determine the second next state
                 second_next_move = 1  # forced right choice
                 second_next_state = transitions[next_state][second_next_move] - 1
-            elif ((phase == "learning") and (trial_index == 2)):
+            elif ((phase == "learning") and (trial_index == forced_choice_trial_order[2])):
                 # Determine the next state
                 next_move = 1  # forced right choice
                 next_state = transitions[current_state][next_move] - 1
                 # Determine the second next state
                 second_next_move = 0  # forced left choice
                 second_next_state = transitions[next_state][second_next_move] - 1
-            elif ((phase == "learning") and (trial_index == 3)):
+            elif ((phase == "learning") and (trial_index == forced_choice_trial_order[3])):
                 # Determine the next state
                 next_move = 1  # forced right choice
                 next_state = transitions[current_state][next_move] - 1
@@ -80,7 +83,7 @@ def run_trial(phase, trial_index, gamma, alpha, beta, end_state, start_state, re
             ## 20 free-choice trials
             else:
                 # Determine the next state
-                next_move_index = get_flattened_index(transitions, current_state,0)
+                next_move_index = get_flattened_index(transitions, current_state, 0)
                 next_values = v_state[next_move_index:(next_move_index + len(transitions[current_state]))]
                 if len(next_values) == 1:
                     next_move = 0
@@ -103,14 +106,14 @@ def run_trial(phase, trial_index, gamma, alpha, beta, end_state, start_state, re
 
             ###### Update weights with TD learning ######
             reward = rewards[current_state][next_move]
-            weight_delta = reward + gamma * v_state[get_flattened_index(transitions, next_state, second_next_move)] - \
+            weight_delta = reward + gamma_td * v_state[get_flattened_index(transitions, next_state, second_next_move)] - \
                            v_state[get_flattened_index(transitions, current_state, next_move)]
             # scale feature according to Russek et al. 2017
             feat_scaled = (feat[get_flattened_index(transitions, current_state, next_move)] / np.matmul(
                 feat[get_flattened_index(transitions, current_state, next_move)],
                 np.transpose(feat[get_flattened_index(transitions, current_state, next_move)])
             ))
-            weight += alpha * weight_delta * feat_scaled
+            weight += alpha_td * weight_delta * feat_scaled
 
             ###### Update values of all state-action pairs ######
             for k in range(num_pairs):
@@ -146,21 +149,21 @@ def run_trial(phase, trial_index, gamma, alpha, beta, end_state, start_state, re
             ###### Update the successor matrix row correpsonding to last state ######
             one_hot = np.zeros(num_pairs)
             one_hot[get_flattened_index(transitions, last_state, last_move)] = 1
-            feat_delta = one_hot + gamma * feat[get_flattened_index(transitions, current_state, next_move)] - feat[
+            feat_delta = one_hot + gamma_m * feat[get_flattened_index(transitions, current_state, next_move)] - feat[
                 get_flattened_index(transitions, last_state, last_move)]
             feat[get_flattened_index(transitions, last_state,
-                                     last_move)] += alpha * feat_delta
+                                     last_move)] += alpha_m * feat_delta
 
             ###### Update weights with TD learning ######
             reward = rewards[current_state][next_move]
-            weight_delta = reward + gamma * v_state[get_flattened_index(transitions, next_state, second_next_move)] - \
+            weight_delta = reward + gamma_td * v_state[get_flattened_index(transitions, next_state, second_next_move)] - \
                            v_state[get_flattened_index(transitions, current_state, next_move)]
             # scale feature according to Russek et al. 2017
             feat_scaled = feat[get_flattened_index(transitions, current_state, next_move)] / np.matmul(
                 feat[get_flattened_index(transitions, current_state, next_move)],
                 np.transpose(feat[get_flattened_index(transitions, current_state, next_move)])
             )
-            weight += alpha * weight_delta * feat_scaled
+            weight += alpha_td * weight_delta * feat_scaled
 
             ###### Update values of all state-action pairs ######
             for k in range(num_pairs):
@@ -184,9 +187,9 @@ def run_trial(phase, trial_index, gamma, alpha, beta, end_state, start_state, re
             ###### Update the successor matrix row correpsonding to last state ######
             one_hot = np.zeros(num_pairs)
             one_hot[get_flattened_index(transitions, last_state, last_move)] = 1
-            feat_delta = one_hot + gamma * feat[get_flattened_index(transitions, current_state, next_move)] - feat[
+            feat_delta = one_hot + gamma_m * feat[get_flattened_index(transitions, current_state, next_move)] - feat[
                 get_flattened_index(transitions, last_state, last_move)]
-            feat[get_flattened_index(transitions, last_state, last_move)] += alpha * feat_delta
+            feat[get_flattened_index(transitions, last_state, last_move)] += alpha_m * feat_delta
             #print(f"feat delta: {feat_delta}")
 
             ###### Update weights with TD learning ######
@@ -200,7 +203,7 @@ def run_trial(phase, trial_index, gamma, alpha, beta, end_state, start_state, re
             )
             #print(f"weight before update: {weight}")
             #print(f"scaled feature in state 10: {feat_scaled}")
-            weight += alpha * weight_delta * feat_scaled
+            weight += alpha_td * weight_delta * feat_scaled
             #print(f"weight update in state 10: {alpha * weight_delta * feat_scaled}")
             #print(f"weight after update: {weight}")
 
@@ -227,7 +230,7 @@ def run_trial(phase, trial_index, gamma, alpha, beta, end_state, start_state, re
 #
 # Learning
 #
-def learning(gamma, alpha, beta, end_state, rewards, transitions, model_parameters):
+def learning(gamma_td, gamma_m, alpha_td, alpha_m, beta, end_state, rewards, transitions, model_parameters):
     '''
     Simulates the learning phase, where the agent has access to the starting state.
 
@@ -258,20 +261,26 @@ def learning(gamma, alpha, beta, end_state, rewards, transitions, model_paramete
 
     # Create start states
     start_states = np.ones(24, dtype=np.int8)
+    
+    # create random forced choice trials order
+    forced_choice_trial_order = [0,1,2,3]
+    rd.shuffle(forced_choice_trial_order)
 
     # Run trials
     transition_log = []
 
-    # run free trials
     for trial_index, start_state in enumerate(start_states):
         v_state, feat, weight, transition_log_lines = run_trial(
             phase,
             trial_index,
-            gamma,
-            alpha,
+            gamma_td,
+            gamma_m,
+            alpha_td,
+            alpha_m,
             beta,
             end_state,
             start_state,
+            forced_choice_trial_order,
             rewards,
             transitions,
             num_pairs,
@@ -292,20 +301,20 @@ def learning(gamma, alpha, beta, end_state, rewards, transitions, model_paramete
 #
 def update_parameters(condition, rewards, transitions):
     if condition == "reward":
-        rewards = [[0, 0], [0, 0], [0, 0], [0], [0], [0], [45], [0], [30], [0]]
+        rewards = [[0, 0], [0, 0], [0, 0], [0], [0], [0], [200], [0], [30], [0]]
     elif condition == "transition":
         transitions = [[2, 3], [4, 5], [5, 6], [9], [7], [8], [10], [10], [10], [11]]
     elif condition == "policy":
-        rewards = [[0, 0], [0, 0], [0, 0], [0], [0], [0], [45], [15], [30], [0]]
+        rewards = [[0, 0], [0, 0], [0, 0], [0], [0], [0], [200], [15], [30], [0]]
     elif condition == "goal":
-        rewards = [[0, 0], [0, 0], [0, 0], [45], [0], [0], [15], [0], [30], [0]]
+        rewards = [[0, 0], [0, 0], [0, 0], [200], [0], [0], [15], [0], [30], [0]]
     else:
-        rewards = [[0, 0], [0, 0], [0, 0], [0], [0], [0], [15], [0], [45], [0]]
+        rewards = [[0, 0], [0, 0], [0, 0], [0], [0], [0], [15], [0], [200], [0]]
 
     return rewards, transitions
 
 
-def relearning(condition, gamma, alpha, beta, end_state, rewards, transitions, model_parameters):
+def relearning(condition, gamma_td, gamma_m, alpha_td, alpha_m, beta, end_state, rewards, transitions, model_parameters):
     '''
     Simulates the relearning phase, where the agent does not directly experience the starting state.
 
@@ -338,6 +347,9 @@ def relearning(condition, gamma, alpha, beta, end_state, rewards, transitions, m
     # Create start states
     start_states = np.array([4, 4, 4, 5, 5, 5, 6, 6, 6])
     np.random.shuffle(start_states)
+    
+    # create random forced choice trials order
+    forced_choice_trial_order = []
 
     # Run trials
     transition_log = []
@@ -345,11 +357,14 @@ def relearning(condition, gamma, alpha, beta, end_state, rewards, transitions, m
         v_state, feat, weight, transition_log_lines = run_trial(
             phase,
             trial_index,
-            gamma,
-            alpha,
+            gamma_td,
+            gamma_m,
+            alpha_td,
+            alpha_m,
             beta,
             end_state,
             start_state,
+            forced_choice_trial_order,
             rewards,
             transitions,
             num_pairs,

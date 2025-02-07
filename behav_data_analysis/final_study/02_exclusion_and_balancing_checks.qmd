@@ -29,8 +29,8 @@ sapply(packages, require, character.only = TRUE)
 # set color scheme
 
 # define paths
-data_path <- "~/work/group_folder/B01_FP2_WP3/WP3_DATA/FINAL_STUDY/RDFs"
-#data_path <- "~/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/PhD/04_B01/WP3/WP3_DATA/FINAL_STUDY/RDFs"
+#data_path <- "~/work/group_folder/B01_FP2_WP3/WP3_DATA/FINAL_STUDY/RDFs"
+data_path <- "~/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/PhD/04_B01/WP3/WP3_DATA/FINAL_STUDY/RDFs"
 
 # read dfs
 load(file.path(data_path, "final_data_complete.RData"))
@@ -326,7 +326,7 @@ ggplot(balancing_df, aes(x=condition, fill=condition_index)) +
 ```{r}
 # Chi-square test
 index_table <- balancing_df %>%
-  filter(group == "harmful" & version == "alcohol")
+  filter(group == "low-risk" & version == "alcohol")
 
 chisq.test(table(index_table$condition, index_table$condition_index))
 ```
@@ -373,14 +373,22 @@ chisq.test(table(env_table$condition, env_table$environment), simulate.p.value =
 
 payment_df <- trial_df %>%
   group_by(group, version, ID) %>%
-  summarise(mean_correct = mean(correct, na.rm = TRUE))
+  summarise(mean_correct = mean(correct_path, na.rm = TRUE))
 
-payment_df[payment_df$mean_correct==max(payment_df$mean_correct[payment_df$version=="alcohol version" & payment_df$group=="low-risk drinkers"]),]
+payment_df[payment_df$version=="Alcohol version" & 
+             payment_df$group=="Low-risk drinkers" &
+             payment_df$mean_correct==max(payment_df$mean_correct[payment_df$version=="Alcohol version" & payment_df$group=="Low-risk drinkers"]),]
 
-payment_df[payment_df$mean_correct==max(payment_df$mean_correct[payment_df$version=="alcohol version" & payment_df$group=="harmful drinkers"]),]
+payment_df[payment_df$version=="Alcohol version" & 
+             payment_df$group=="Harmful drinkers" &
+             payment_df$mean_correct==max(payment_df$mean_correct[payment_df$version=="Alcohol version" & payment_df$group=="Harmful drinkers"]),]
 
-payment_df[payment_df$mean_correct==max(payment_df$mean_correct[payment_df$version=="monetary version" & payment_df$group=="low-risk drinkers"]),]
+payment_df[payment_df$version=="Monetary version" & 
+             payment_df$group=="Low-risk drinkers" &
+             payment_df$mean_correct==max(payment_df$mean_correct[payment_df$version=="Monetary version" & payment_df$group=="Low-risk drinkers"]),]
 
-payment_df[payment_df$mean_correct==max(payment_df$mean_correct[payment_df$version=="monetary version" & payment_df$group=="harmful drinkers"]),]
+payment_df[payment_df$version=="Monetary version" & 
+             payment_df$group=="Harmful drinkers" &
+             payment_df$mean_correct==max(payment_df$mean_correct[payment_df$version=="Monetary version" & payment_df$group=="Harmful drinkers"]),]
 
 ```

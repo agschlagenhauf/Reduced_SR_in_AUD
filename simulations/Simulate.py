@@ -52,8 +52,10 @@ def run_simulations(model, condition, num_simulations):
     #
     # Initialize default parameters
     #
-    alpha = 0.9
-    gamma = 0.5
+    alpha_td = 0.9
+    alpha_m = 0.9
+    gamma_td = 0.5
+    gamma_m = 0.5
     beta = 0.9
     end_state = 10
     num_pairs = 13 # (state, action) pairs
@@ -76,6 +78,13 @@ def run_simulations(model, condition, num_simulations):
         #
         transitions = [[2, 3], [4, 5], [5, 6], [7], [8], [9], [10], [10], [10], [11]]
 
+# =============================================================================
+#         if condition == "policy" or condition == "transition":
+#             rewards = [[0, 0], [0, 0], [0, 0], [0], [0], [0], [0], [15], [30], [0]]
+#         else:
+#             rewards = [[0, 0], [0, 0], [0, 0], [0], [0], [0], [15], [0], [30], [0]]
+# =============================================================================
+            
         if condition == "policy" or condition == "transition":
             rewards = [[0, 0], [0, 0], [0, 0], [0], [0], [0], [0], [15], [30], [0]]
         else:
@@ -136,8 +145,10 @@ def run_simulations(model, condition, num_simulations):
         # Learning Phase
         #
         learned_parameters, learning_transition_log = model_package.learning(
-            gamma,
-            alpha,
+            gamma_td,
+            gamma_m,
+            alpha_td,
+            alpha_m,
             beta,
             end_state,
             rewards,
@@ -154,8 +165,10 @@ def run_simulations(model, condition, num_simulations):
 
         relearned_parameters, relearning_transition_log = model_package.relearning(
             condition,
-            gamma,
-            alpha,
+            gamma_td,
+            gamma_m,
+            alpha_td,
+            alpha_m,
             beta,
             end_state,
             new_rewards,
@@ -202,4 +215,4 @@ def run_simulations(model, condition, num_simulations):
     print(f"  > Done\n")
 
     # return results for one model, one condition with all phases, all simulations
-    return simulation_results, alpha, beta, gamma
+    return simulation_results, alpha_td, alpha_m, beta, gamma_td, gamma_m
