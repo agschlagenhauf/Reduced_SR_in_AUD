@@ -269,7 +269,9 @@ audit_df_summary %>%
 
 ```{r}
 ggplot(audit_df, aes(x=group, y=audit_pre)) +
-  geom_boxplot(aes(fill = group)) +
+  geom_violin(aes(fill = group)) +
+  geom_boxplot(width=0.1, position=position_dodge(width = 0.9),
+               size=0.8) +
   scale_y_continuous(labels = scales::comma) +
   xlab("") +
   ylab("AUDIT score") +

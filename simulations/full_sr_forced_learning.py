@@ -3,7 +3,7 @@
 #
 
 '''
-IMPLEMENTATION OF A SUCCESSOR REPRESENTATION AGENT USING TEMPORAL-DIFFERENCE LEARNING TO UPDATE WEIGHT VECTOR AND
+IMPLEMENTATION OF A RANDOM-POLICY SUCCESSOR REPRESENTATION AGENT USING TEMPORAL-DIFFERENCE LEARNING TO UPDATE WEIGHT VECTOR AND
 SUCCESSOR MATRIX
 '''
 
@@ -174,15 +174,14 @@ def run_trial(phase, trial_index, gamma, alpha_td, alpha_m, beta, end_state, sta
                 second_next_move = rng.choice([0, 1], p=second_next_choice_probs)
             second_next_state = transitions[next_state][second_next_move] - 1
 
-            ###### Update the successor matrix row correpsonding to last state ######
-            one_hot = np.zeros(num_pairs)
-            one_hot[get_flattened_index(transitions, last_state, last_move)] = 1
-            #print(f"one_hot:{one_hot}")
-            #print(f"feat:{feat[get_flattened_index(transitions, last_state, last_move)]}")
-            feat_delta = one_hot + gamma * feat[get_flattened_index(transitions, current_state, next_move)] - feat[
-                get_flattened_index(transitions, last_state, last_move)]
-            feat[get_flattened_index(transitions, last_state,
-                                     last_move)] += alpha_m * feat_delta
+            ###### Only during forced choice trials: Update the successor matrix row correpsonding to last state ######
+            if phase == "learning" and trial_index in [0,1,2,3]:
+                one_hot = np.zeros(num_pairs)
+                one_hot[get_flattened_index(transitions, last_state, last_move)] = 1
+                feat_delta = one_hot + gamma * feat[get_flattened_index(transitions, current_state, next_move)] - feat[
+                    get_flattened_index(transitions, last_state, last_move)]
+                feat[get_flattened_index(transitions, last_state,
+                                         last_move)] += alpha_m * feat_delta
 
             ###### Update weights with TD learning ######
             reward = rewards[current_state][next_move]
@@ -215,12 +214,12 @@ def run_trial(phase, trial_index, gamma, alpha_td, alpha_m, beta, end_state, sta
         elif (current_state + 1) == end_state:
 
             ###### Update the successor matrix row correpsonding to last state ######
-            one_hot = np.zeros(num_pairs)
-            one_hot[get_flattened_index(transitions, last_state, last_move)] = 1
-            feat_delta = one_hot + gamma * feat[get_flattened_index(transitions, current_state, next_move)] - feat[
-                get_flattened_index(transitions, last_state, last_move)]
-            feat[get_flattened_index(transitions, last_state, last_move)] += alpha_m * feat_delta
-            #print(f"feat delta: {feat_delta}")
+            if phase == "learning" and trial_index in [0,1,2,3]:
+                one_hot = np.zeros(num_pairs)
+                one_hot[get_flattened_index(transitions, last_state, last_move)] = 1
+                feat_delta = one_hot + gamma * feat[get_flattened_index(transitions, current_state, next_move)] - feat[
+                    get_flattened_index(transitions, last_state, last_move)]
+                feat[get_flattened_index(transitions, last_state, last_move)] += alpha_m * feat_delta
 
             ###### Update weights with TD learning ######
             reward = rewards[current_state][next_move]

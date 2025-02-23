@@ -54,9 +54,11 @@ def run_simulations(model, condition, num_simulations):
     #
     alpha_td = 0.9
     alpha_m = 0.9
-    gamma_td = 0.5
-    gamma_m = 0.5
+    gamma = 0.9
     beta = 0.9
+    
+    forced_choice_switch = True
+    
     end_state = 10
     num_pairs = 13 # (state, action) pairs
     num_states = 10
@@ -78,12 +80,6 @@ def run_simulations(model, condition, num_simulations):
         #
         transitions = [[2, 3], [4, 5], [5, 6], [7], [8], [9], [10], [10], [10], [11]]
 
-# =============================================================================
-#         if condition == "policy" or condition == "transition":
-#             rewards = [[0, 0], [0, 0], [0, 0], [0], [0], [0], [0], [15], [30], [0]]
-#         else:
-#             rewards = [[0, 0], [0, 0], [0, 0], [0], [0], [0], [15], [0], [30], [0]]
-# =============================================================================
             
         if condition == "policy" or condition == "transition":
             rewards = [[0, 0], [0, 0], [0, 0], [0], [0], [0], [0], [15], [30], [0]]
@@ -122,13 +118,27 @@ def run_simulations(model, condition, num_simulations):
             init_t_counts = np.zeros((num_pairs, num_states))
             init_t_matrix = init_t_counts # normalized transition matrix
             model_parameters = [v_state, init_t_counts, init_t_matrix, init_weight]
+            
+        elif model == "model_based_learnt":
+            v_state = []
+            init_weight = []
+
+            for j in range(len(rewards)):
+                row = []
+                for k in range(len(rewards[j])):
+                    row.append(0)
+                v_state.append(row)
+                init_weight.append(row.copy())
+
+            init_t_matrix = np.ones((num_pairs, num_states))*(1/num_states) # normalized transition matrix with small non-zero prior
+            model_parameters = [num_states, v_state, init_t_matrix, init_weight]
 
 
         ###### full & reduced SR ######
-        elif model == "full_sr":
+        elif model in ["full_sr", "full_sr_forced_learning"]:
             v_state = np.zeros(num_pairs)
             init_weight = np.zeros(num_pairs)
-            init_sr = np.identity(num_pairs)  # init M with identity matrix as in Russek et al. 2017
+            init_sr = np.identity(num_pairs)  # init M with ‚identity matrix as in Russek et al. 2017
 
             model_parameters = [num_pairs, v_state, init_sr, init_weight]
 
@@ -145,15 +155,15 @@ def run_simulations(model, condition, num_simulations):
         # Learning Phase
         #
         learned_parameters, learning_transition_log = model_package.learning(
-            gamma_td,
-            gamma_m,
+            gamma,
             alpha_td,
             alpha_m,
             beta,
             end_state,
             rewards,
             transitions,
-            model_parameters
+            model_parameters,
+            forced_choice_switch
         )
 
         learning_test_action, learning_test_transition_log = model_package.test(learned_parameters)
@@ -165,8 +175,7 @@ def run_simulations(model, condition, num_simulations):
 
         relearned_parameters, relearning_transition_log = model_package.relearning(
             condition,
-            gamma_td,
-            gamma_m,
+            gamma,
             alpha_td,
             alpha_m,
             beta,
@@ -215,4 +224,6 @@ def run_simulations(model, condition, num_simulations):
     print(f"  > Done\n")
 
     # return results for one model, one condition with all phases, all simulations
-    return simulation_results, alpha_td, alpha_m, beta, gamma_td, gamma_m
+    return simulation_results, alpha_td, alpha_m, beta, gamma
+
+

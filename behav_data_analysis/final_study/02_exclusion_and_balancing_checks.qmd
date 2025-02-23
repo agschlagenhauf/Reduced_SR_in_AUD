@@ -130,34 +130,30 @@ demo_psych <- demo_psych %>%
 
 ```{r}
 # get last paths
-learning_paths_last4_df <- trial_df %>%
+learning_paths_last5_df <- trial_df %>%
   filter(phase == "learning",
          state == 1) %>%
   group_by(ID, component) %>%
   slice_tail(n=5)
 
 # who does not pass criterion
-learning_paths_last4_correct_component_df <- learning_paths_last4_df %>%
+learning_paths_last5_correct_component_df <- learning_paths_last5_df %>%
   group_by(ID, group, version, component, condition_index, condition, environment) %>%
   summarise(sum_correct = sum(correct_path))
 
-learning_paths_last4_correct_component_df_excl <- learning_paths_last4_correct_component_df %>%
+learning_paths_last5_correct_component_df_excl <- learning_paths_last5_correct_component_df %>%
   filter(sum_correct < 3) %>%
-  mutate(ID_condition_combo = paste(ID, "-", condition, sep=""))
-
-# excluded components
-learning_paths_last4_correct_component_df_excl <- learning_paths_last4_correct_component_df_excl %>%
-  select(! sum_correct) %>%
+  mutate(ID_condition_combo = paste(ID, "-", condition, sep="")) %>%
   distinct()
 
-excluded_components <- learning_paths_last4_correct_component_df_excl$ID_condition_combo
+excluded_components <- learning_paths_last5_correct_component_df_excl$ID_condition_combo
 
-percent_component_excluded <- length(excluded_components)/nrow(learning_paths_last4_correct_component_df)
+percent_component_excluded <- length(excluded_components)/nrow(learning_paths_last5_correct_component_df)
 
 # excluded subjects
-excluded_IDs <- unique(learning_paths_last4_correct_component_df_excl$ID)
+excluded_IDs <- unique(learning_paths_last5_correct_component_df_excl$ID)
 
-percent_IDs_excluded <- length(excluded_IDs)/length(unique(trial_df$ID))
+percent_IDs_excluded <- length(excluded_IDs)/length(unique(learning_paths_last5_correct_component_df$ID))
 ```
 
 ### Percent excluded
@@ -171,14 +167,14 @@ percent_IDs_excluded*100
 ### Excluded participants per group and version
 
 ```{r}
-learning_paths_last4_correct_subject_df_excl_summary <- learning_paths_last4_correct_component_df_excl %>%
+learning_paths_last5_correct_subject_df_excl_summary <- learning_paths_last5_correct_component_df_excl %>%
   ungroup() %>%
   select(ID, group, version) %>%
   distinct() %>%
   group_by(group, version) %>%
   summarise(n = n())
 
-learning_paths_last4_correct_subject_df_excl_summary %>%
+learning_paths_last5_correct_subject_df_excl_summary %>%
   kable("html") %>%
   kable_styling(font_size = 18,
                 latex_options = "scale_down")
@@ -187,7 +183,7 @@ learning_paths_last4_correct_subject_df_excl_summary %>%
 ### Excluded components per group and version
 
 ```{r}
-learning_correct_group_version_df_excl <- learning_paths_last4_correct_component_df_excl %>%
+learning_correct_group_version_df_excl <- learning_paths_last5_correct_component_df_excl %>%
   group_by(group, version) %>%
   summarise(n = n()
             )
@@ -201,7 +197,7 @@ learning_correct_group_version_df_excl %>%
 ### Excluded components per condition
 
 ```{r}
-learning_correct_condition_df_excl <- learning_paths_last4_correct_component_df_excl %>%
+learning_correct_condition_df_excl <- learning_paths_last5_correct_component_df_excl %>%
   group_by(condition) %>%
   summarise(n = n()
             )
@@ -215,7 +211,7 @@ learning_correct_condition_df_excl %>%
 ### Excluded components per component index
 
 ```{r}
-learning_correct_component_index_df_excl <- learning_paths_last4_correct_component_df_excl %>%
+learning_correct_component_index_df_excl <- learning_paths_last5_correct_component_df_excl %>%
   group_by(condition_index) %>%
   summarise(n = n()
             )
@@ -229,7 +225,7 @@ learning_correct_component_index_df_excl %>%
 ### Excluded components per environment
 
 ```{r}
-learning_correct_component_environment_df_excl <- learning_paths_last4_correct_component_df_excl %>%
+learning_correct_component_environment_df_excl <- learning_paths_last5_correct_component_df_excl %>%
   group_by(environment) %>%
   summarise(n = n()
             )
@@ -271,7 +267,7 @@ save(trial_df, component_df, rating_df, file = file.path(data_path, "final_data_
 ### Further analyses based on (according to preregistered criteria)
 
 ```{r}
-summary <- trial_df %>%
+summary <- component_df %>%
   select(ID, group, version)
 
 summary <- unique(summary)
@@ -323,14 +319,6 @@ ggplot(balancing_df, aes(x=condition, fill=condition_index)) +
   scale_fill_viridis(option = "plasma", discrete = TRUE)
 ```
 
-```{r}
-# Chi-square test
-index_table <- balancing_df %>%
-  filter(group == "low-risk" & version == "alcohol")
-
-chisq.test(table(index_table$condition, index_table$condition_index))
-```
-
 ### Environment per condition
 
 ```{r}
@@ -359,11 +347,25 @@ balancing_df %>%
 ```
 
 ```{r}
-# Chi-square test
+# Chi-square tests
+env_table <- balancing_df %>%
+  filter(group == "harmful" & version == "alcohol") %>%
+  droplevels()
+chisq.test(table(env_table$condition, env_table$environment), simulate.p.value = F)
+
+env_table <- balancing_df %>%
+  filter(group == "harmful" & version == "control") %>%
+  droplevels()
+chisq.test(table(env_table$condition, env_table$environment), simulate.p.value = F)
+
 env_table <- balancing_df %>%
   filter(group == "low-risk" & version == "alcohol") %>%
   droplevels()
+chisq.test(table(env_table$condition, env_table$environment), simulate.p.value = F)
 
+env_table <- balancing_df %>%
+  filter(group == "low-risk" & version == "control") %>%
+  droplevels()
 chisq.test(table(env_table$condition, env_table$environment), simulate.p.value = F)
 ```
 
@@ -376,19 +378,19 @@ payment_df <- trial_df %>%
   summarise(mean_correct = mean(correct_path, na.rm = TRUE))
 
 payment_df[payment_df$version=="Alcohol version" & 
-             payment_df$group=="Low-risk drinkers" &
-             payment_df$mean_correct==max(payment_df$mean_correct[payment_df$version=="Alcohol version" & payment_df$group=="Low-risk drinkers"]),]
+             payment_df$group=="Low-risk drinkers",] %>%
+  arrange(-mean_correct)
 
 payment_df[payment_df$version=="Alcohol version" & 
-             payment_df$group=="Harmful drinkers" &
-             payment_df$mean_correct==max(payment_df$mean_correct[payment_df$version=="Alcohol version" & payment_df$group=="Harmful drinkers"]),]
+             payment_df$group=="Harmful drinkers",] %>%
+  arrange(-mean_correct)
 
 payment_df[payment_df$version=="Monetary version" & 
-             payment_df$group=="Low-risk drinkers" &
-             payment_df$mean_correct==max(payment_df$mean_correct[payment_df$version=="Monetary version" & payment_df$group=="Low-risk drinkers"]),]
+             payment_df$group=="Low-risk drinkers",] %>%
+  arrange(-mean_correct)
 
 payment_df[payment_df$version=="Monetary version" & 
-             payment_df$group=="Harmful drinkers" &
-             payment_df$mean_correct==max(payment_df$mean_correct[payment_df$version=="Monetary version" & payment_df$group=="Harmful drinkers"]),]
+             payment_df$group=="Harmful drinkers",] %>%
+  arrange(-mean_correct)
 
 ```

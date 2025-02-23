@@ -18,7 +18,7 @@ SUCCESS_COUNT_FILENAME = "success_counts.txt"
 #
 
 NUM_SIMULATIONS = 110 # number of participants to simulate
-MODELS = ["full_sr"] # "full_sr", "reduced_sr", "model_based", "model_free"
+MODELS = ["model_based_learnt"] # "full_sr", "reduced_sr", "model_based", "model_free"
 CONDITIONS = ["control", "reward", "transition", "policy", "goal"] # "control", "reward", "transition", "policy", "goal"
 
 #
@@ -84,8 +84,10 @@ def get_transition_log_headers():
     transition_strings_joined = ",".join(transition_strings)
 
     transition_log_headers["full_sr"] = f"{TRANSITION_LOG_HEADER_PREFIX},weight_delta,{value_strings_joined},{weight_strings_joined},{occupancy_strings_joined}\n"
+    transition_log_headers["full_sr_forced_learning"] = f"{TRANSITION_LOG_HEADER_PREFIX},weight_delta,{value_strings_joined},{weight_strings_joined},{occupancy_strings_joined}\n"
     transition_log_headers["reduced_sr"] = f"{TRANSITION_LOG_HEADER_PREFIX},weight_delta,{value_strings_joined},{weight_strings_joined},{occupancy_strings_joined}\n"
     transition_log_headers["model_based"] = f"{TRANSITION_LOG_HEADER_PREFIX},weight_delta,{value_strings_joined},{weight_strings_joined},{transition_strings_joined}\n"
+    transition_log_headers["model_based_learnt"] = f"{TRANSITION_LOG_HEADER_PREFIX},weight_delta,{value_strings_joined},{weight_strings_joined},{transition_strings_joined}\n"
     transition_log_headers["model_free"] = f"{TRANSITION_LOG_HEADER_PREFIX},{value_strings_joined}\n"
 
     return transition_log_headers
@@ -113,7 +115,7 @@ def main(num_simulations, models, conditions):
             print(f"> Simulating model {GREEN}{format_model(model)}{RESET} for condition {GREEN}{format_condition(condition)}{RESET} ...")
             
             # Simulation results per model and condition: [SimulationResult]
-            simulation_results, alpha_td, alpha_m, beta, gamma_td, gamma_m = run_simulations(model, condition, num_simulations)
+            simulation_results, alpha_td, alpha_m, beta, gamma = run_simulations(model, condition, num_simulations)
 
             successful_learning_results = [result for result in simulation_results if result.learning_test_result == True]
 
@@ -138,7 +140,7 @@ def main(num_simulations, models, conditions):
             model_simulation_results.extend(simulation_results)
 
         # Write model simulation results to .csv file
-        model_simulation_results_filepath = join(OUTPUT_DIR, f"{model}_nsimulations{num_simulations}_alpha_td{alpha_td}_alpha_m{alpha_m}_beta{beta}_gamma_td{gamma_td}_gamma_m{gamma_m}.csv")
+        model_simulation_results_filepath = join(OUTPUT_DIR, f"{model}_nsimulations{num_simulations}_alpha_td{alpha_td}_alpha_m{alpha_m}_beta{beta}_gamma{gamma}.csv")
 
         print(f"> Writing transition log to {GREEN}{model_simulation_results_filepath}{RESET} ...")
         with open(model_simulation_results_filepath, "w") as model_simulation_results_file:
@@ -155,7 +157,6 @@ def main(num_simulations, models, conditions):
 
     # Write success counts to .txt file
     success_count_filepath = join(OUTPUT_DIR, SUCCESS_COUNT_FILENAME)
-    print(success_counts)
 
     print(f"> Writing success counts to {GREEN}{success_count_filepath}{RESET} ...")
     with open(success_count_filepath, "w") as success_count_file:

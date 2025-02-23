@@ -1,46 +1,47 @@
 #
-# full_sr.py
+# model_based.py
 #
 
 '''
-IMPLEMENTATION OF A SUCCESSOR REPRESENTATION AGENT USING TEMPORAL-DIFFERENCE LEARNING TO UPDATE WEIGHT VECTOR AND
-SUCCESSOR MATRIX
+IMPLEMENTATION OF A MODEL-BASED VALUE ITERATION AGENT
 '''
 
 import numpy as np
 import random as rd
 from utilities import *
 
+from utilities import *
+
 #
 # Run Trial
 #
-def run_trial(phase, trial_index, gamma, alpha_td, alpha_m, beta, end_state, start_state, forced_choice_switch, forced_choice_trial_order, rewards, transitions, num_pairs, v_state, feat, weight):
+def run_trial(phase, trial_index, gamma, alpha_td, alpha_m, beta, end_state, start_state, forced_choice_switch, forced_choice_trial_order, rewards, transitions, num_states, v_state, t_matrix, weight):
     '''
     Simulates a single trial, from the given start state until the end state is reached.
 
     Arguments:
         gamma: the time discounting constant
-        alpha_m: the learning rate constant used to learn the SR matrix M
-        alpha_td: the learning rate constant used to learn the weight vector
-        beta: softmax inverse temperature
+        alpha_td: the learning rate constant
+        alpha_m_ irrelevant parameter for MB
+        beta: softmax inverse temperature        
         end_state: terminal state
         start_state: state that the agent starts in
         forced_choice_switch: include forced choice trials during learning or not
         forced_choice_trial_order: random order of forced choice trials in the beginning
         rewards: list of rewards corresponding to each action
         transitions: list of valid transitions from each state
-        num_pairs: the number of state-action pairs
-        v_state: value of all state-action pairs
-        feat: the successor matrix
+        v_state: the values of state-action pairs
+        t_counts: the transition matrix (counts)
+        t_matrix: the normalized transition matrix (0-1)
         weight: the weight vector
 
     Returns: (
-        - feat: successor matrix updated after the current trial
-        - weight: weight vector updated after the current trial
-        - transition_log_lines: [str]
+        - v_state: the values of state-action pairs updated after the current trial
+        - t_counts: the transition matrix (counts) updated after the current trial
+        - t_matrix: the normalized transition matrix (0-1) updated after the current trial
+        - weight: the weight vector updated after the current trial
     )
     '''
-
     current_state = start_state - 1
     transition_log_lines = []
 
@@ -87,69 +88,63 @@ def run_trial(phase, trial_index, gamma, alpha_td, alpha_m, beta, end_state, sta
                 ## free-choice trials of other index than 0-3
                 else:
                     # Determine the next state
-                    next_move_index = get_flattened_index(transitions, current_state, 0)
-                    next_values = v_state[next_move_index:(next_move_index + len(transitions[current_state]))]
+                    next_values = v_state[current_state]
                     if len(next_values) == 1:
                         next_move = 0
                     else:
                         next_choice_probs = softmax(beta, next_values)
                         next_move = rng.choice([0, 1], p=next_choice_probs)
-                    next_state = transitions[current_state][next_move] - 1
+                    next_state = transitions[current_state][next_move] - 1 
     
                     # Determine the second next state
-                    second_next_move_index = get_flattened_index(transitions, next_state, 0)
-                    second_next_values = v_state[second_next_move_index:(second_next_move_index + len(transitions[next_state]))]
+                    second_next_values = v_state[next_state]
                     if len(second_next_values) == 1:
                         second_next_move = 0
                     else:
                         second_next_choice_probs = softmax(beta, second_next_values)
                         second_next_move = rng.choice([0, 1], p=second_next_choice_probs)
-                    second_next_state = transitions[next_state][second_next_move] - 1
+                    second_next_state = transitions[next_state][second_next_move] - 1  # get second next state
             
             # if no forced choice trials during learning
             else:
                 ## free-choice trials for all indices
                 # Determine the next state
-                next_move_index = get_flattened_index(transitions, current_state, 0)
-                next_values = v_state[next_move_index:(next_move_index + len(transitions[current_state]))]
+                next_values = v_state[current_state]
                 if len(next_values) == 1:
                     next_move = 0
                 else:
                     next_choice_probs = softmax(beta, next_values)
                     next_move = rng.choice([0, 1], p=next_choice_probs)
-                next_state = transitions[current_state][next_move] - 1
+                next_state = transitions[current_state][next_move] - 1 
 
                 # Determine the second next state
-                second_next_move_index = get_flattened_index(transitions, next_state, 0)
-                second_next_values = v_state[second_next_move_index:(second_next_move_index + len(transitions[next_state]))]
+                second_next_values = v_state[next_state]
                 if len(second_next_values) == 1:
                     second_next_move = 0
                 else:
                     second_next_choice_probs = softmax(beta, second_next_values)
                     second_next_move = rng.choice([0, 1], p=second_next_choice_probs)
-                second_next_state = transitions[next_state][second_next_move] - 1
-                    
+                second_next_state = transitions[next_state][second_next_move] - 1  # get second next state
 
-            ###### No update of successor matrix in first state, as we did not transition from anywhere ######
+            ###### No update of transition matrix in first state, as we did not transition from anywhere ######
 
             ###### Update weights with TD learning ######
             reward = rewards[current_state][next_move]
-            weight_delta = reward + gamma * v_state[get_flattened_index(transitions, next_state, second_next_move)] - \
-                           v_state[get_flattened_index(transitions, current_state, next_move)]
-            # scale feature according to Russek et al. 2017
-            feat_scaled = (feat[get_flattened_index(transitions, current_state, next_move)] / np.matmul(
-                feat[get_flattened_index(transitions, current_state, next_move)],
-                np.transpose(feat[get_flattened_index(transitions, current_state, next_move)])
-            ))
-            weight += alpha_td * weight_delta * feat_scaled
+            weight_delta = reward + gamma * v_state[next_state][second_next_move] - \
+                           v_state[current_state][next_move]  # get weight prediction error
+            weight[current_state][next_move] += alpha_td * weight_delta  # update weight
 
-            ###### Update values of all state-action pairs ######
-            for k in range(num_pairs):
-                v_state[k] = np.sum(weight * feat[k])
+            ###### Update values of all state-action pairs (Bellman Equation) ######
+            # vector of values per state under a given softmax policy (multiplies value of each action available from a state with its probability of being chosen and sums over all actions per state)
+            next_state_values = [np.sum(v_state[state] * softmax(beta, v_state[state])) for state in range(len(rewards))]
+            for i in range(len(rewards)):
+                for j in range(len(rewards[i])):
+                    # multiply transition probability from s to s' (all other = 0) by value of s'
+                    v_state[i][j] = weight[i][j] + gamma * np.sum(t_matrix[get_flattened_index(rewards, i, j)] * next_state_values)
 
             ###### Fill in transition log line ######
             transition_log_lines.append(
-                f"{current_state + 1},{next_move + 1},{reward},{weight_delta},{comma_separate(v_state)},{comma_separate(weight)},{comma_separate(flatten(feat))}"
+                f"{current_state + 1},{next_move + 1},{reward},{weight_delta},{comma_separate(flatten(v_state))},{comma_separate(flatten(weight))},{comma_separate(flatten(t_matrix))}"
             )
 
             ###### Move to the next state ######
@@ -162,11 +157,10 @@ def run_trial(phase, trial_index, gamma, alpha_td, alpha_m, beta, end_state, sta
         ###### Middle states ######
         elif (current_state + 1) != end_state:
 
-            ###### Determine next and second next state ######
-            # Next state determined in last state
+            ###### Determine second next state ######
+            # Next state determined in last state visit
             # Determine second next state
-            second_next_move_index = get_flattened_index(transitions, next_state, 0)
-            second_next_values = v_state[second_next_move_index:(second_next_move_index + len(transitions[next_state]))]
+            second_next_values = v_state[next_state]
             if len(second_next_values) == 1:
                 second_next_move = 0
             else:
@@ -174,34 +168,27 @@ def run_trial(phase, trial_index, gamma, alpha_td, alpha_m, beta, end_state, sta
                 second_next_move = rng.choice([0, 1], p=second_next_choice_probs)
             second_next_state = transitions[next_state][second_next_move] - 1
 
-            ###### Update the successor matrix row correpsonding to last state ######
-            one_hot = np.zeros(num_pairs)
-            one_hot[get_flattened_index(transitions, last_state, last_move)] = 1
-            #print(f"one_hot:{one_hot}")
-            #print(f"feat:{feat[get_flattened_index(transitions, last_state, last_move)]}")
-            feat_delta = one_hot + gamma * feat[get_flattened_index(transitions, current_state, next_move)] - feat[
-                get_flattened_index(transitions, last_state, last_move)]
-            feat[get_flattened_index(transitions, last_state,
-                                     last_move)] += alpha_m * feat_delta
+            ###### Update the transition counts entry correpsonding to last state, last action, current state, and re-normalize transition matrix ######
+            one_hot = np.zeros(num_states)
+            one_hot[current_state] = 1
+            t_delta = one_hot - t_matrix[get_flattened_index(transitions, last_state, last_move)]
+            t_matrix[get_flattened_index(transitions, last_state, last_move)] += alpha_m * t_delta
 
             ###### Update weights with TD learning ######
             reward = rewards[current_state][next_move]
-            weight_delta = reward + gamma * v_state[get_flattened_index(transitions, next_state, second_next_move)] - \
-                           v_state[get_flattened_index(transitions, current_state, next_move)]
-            # scale feature according to Russek et al. 2017
-            feat_scaled = feat[get_flattened_index(transitions, current_state, next_move)] / np.matmul(
-                feat[get_flattened_index(transitions, current_state, next_move)],
-                np.transpose(feat[get_flattened_index(transitions, current_state, next_move)])
-            )
-            weight += alpha_td * weight_delta * feat_scaled
-
-            ###### Update values of all state-action pairs ######
-            for k in range(num_pairs):
-                v_state[k] = np.sum(weight * feat[k])
+            weight_delta = reward + gamma * v_state[next_state][second_next_move] - \
+                           v_state[current_state][next_move] # get weight prediction error
+            weight[current_state][next_move] += alpha_td * weight_delta # update weight
+            
+            ###### Update values of all state-action pairs (Bellman Equation) ######
+            next_state_values = [np.sum(v_state[state] * softmax(beta, v_state[state])) for state in range(len(rewards))]
+            for i in range(len(v_state)):
+                for j in range(len(v_state[i])):
+                    v_state[i][j] = weight[i][j] + gamma * np.sum(t_matrix[get_flattened_index(v_state, i, j)] * next_state_values)
 
             ###### Fill in transition log line ######
             transition_log_lines.append(
-                f"{current_state + 1},{next_move + 1},{reward},{weight_delta},{comma_separate(v_state)},{comma_separate(weight)},{comma_separate(flatten(feat))}"
+                f"{current_state + 1},{next_move + 1},{reward},{weight_delta},{comma_separate(flatten(v_state))},{comma_separate(flatten(weight))},{comma_separate(flatten(t_matrix))}"
             )
 
             ###### Move to the next state ######
@@ -214,38 +201,27 @@ def run_trial(phase, trial_index, gamma, alpha_td, alpha_m, beta, end_state, sta
         ###### Last state ######
         elif (current_state + 1) == end_state:
 
-            ###### Update the successor matrix row correpsonding to last state ######
-            one_hot = np.zeros(num_pairs)
-            one_hot[get_flattened_index(transitions, last_state, last_move)] = 1
-            feat_delta = one_hot + gamma * feat[get_flattened_index(transitions, current_state, next_move)] - feat[
-                get_flattened_index(transitions, last_state, last_move)]
-            feat[get_flattened_index(transitions, last_state, last_move)] += alpha_m * feat_delta
-            #print(f"feat delta: {feat_delta}")
+            ###### Update the transition counts row correpsonding to last state and re-normalize transition matrix ######
+            one_hot = np.zeros(num_states)
+            one_hot[current_state] = 1
+            t_delta = one_hot - t_matrix[get_flattened_index(transitions, last_state, last_move)]
+            t_matrix[get_flattened_index(transitions, last_state, last_move)] = t_matrix[get_flattened_index(transitions, last_state, last_move)] + alpha_m * t_delta
 
             ###### Update weights with TD learning ######
             reward = rewards[current_state][next_move]
-            weight_delta = reward - v_state[get_flattened_index(transitions, current_state, next_move)]
-            #print(f"weight delta in state 10: {weight_delta}")
-            # scale feature according to Russek et al. 2017
-            feat_scaled = feat[get_flattened_index(transitions, current_state, next_move)] / np.matmul(
-                feat[get_flattened_index(transitions, current_state, next_move)],
-                np.transpose(feat[get_flattened_index(transitions, current_state, next_move)])
-            )
-            #print(f"weight before update: {weight}")
-            #print(f"scaled feature in state 10: {feat_scaled}")
-            weight += alpha_td * weight_delta * feat_scaled
-            #print(f"weight update in state 10: {alpha * weight_delta * feat_scaled}")
-            #print(f"weight after update: {weight}")
+            weight_delta = reward - v_state[current_state][next_move]  # get weight prediction error
+            weight[current_state][next_move] += alpha_td * weight_delta  # update weight
 
-            ###### Update values of all state-action pairs ######
-            #print(f"weight: {weight} \n"
-            #      f"feature: {feat[k]}")
-            for k in range(num_pairs):
-                v_state[k] = np.sum(weight * feat[k])
+            ###### Update values of all state-action pairs (Bellman Equation) ######
+            next_state_values = [np.sum(v_state[state] * softmax(beta, v_state[state])) for state in range(len(rewards))]
+            for i in range(len(v_state)):
+                for j in range(len(v_state[i])):
+                    v_state[i][j] = weight[i][j] + gamma * np.sum(t_matrix[get_flattened_index(v_state, i, j)] * next_state_values)
+
 
             ###### Fill in transition log line ######
             transition_log_lines.append(
-                f"{current_state + 1},{next_move + 1},{reward},{weight_delta},{comma_separate(v_state)},{comma_separate(weight)},{comma_separate(flatten(feat))}"
+                f"{current_state + 1},{next_move + 1},{reward},{weight_delta},{comma_separate(flatten(v_state))},{comma_separate(flatten(weight))},{comma_separate(flatten(t_matrix))}"
             )
 
             ###### End loop ######
@@ -254,44 +230,45 @@ def run_trial(phase, trial_index, gamma, alpha_td, alpha_m, beta, end_state, sta
         else:
             assert False
 
-    return v_state, feat, weight, transition_log_lines
+    return v_state, t_matrix, weight, transition_log_lines
 
 
-#
-# Learning
-#
+
 def learning(gamma, alpha_td, alpha_m, beta, end_state, rewards, transitions, model_parameters, forced_choice_switch):
     '''
     Simulates the learning phase, where the agent has access to the starting state.
 
     Arguments:
         - gamma: the time discounting constant
-        - alpha_m: the learning rate constant used to learn the SR matrix M
-        - alpha_td: the learning rate constant used to learn the weight vector
+        - alpha_td: the learning rate constant
+        - alpha_m: irrelevant parameter for MB
         - beta: softmax inverse temperature
         - end_state: terminal state
         - rewards: list of rewards corresponding to each action
         - transitions: list of valid transitions from each state
         - model_parameters: [
-            - num_pairs: the number of state-action pairs
-            - feat: the successor matrix (should generally be initialized with zeros)
+            - v_state: the value of state-action pairs
+            - t_counts: the transition matrix (should generally be initialized with zeros)
+            - t_matrix: the normalized transition matrix (0-1, should generally be initialized with zeros)
             - weight: the weight vector (also generally initialized with zeros)
         - forced_choice_switch: include forced choice trials during learning or not
         ]
 
     Returns: (
         - model_parameters: [
-            - num_pairs: the number of state-action pairs
-            - feat: the successor matrix
-            - weight: the weight vector
+            - v_state: the value of state-action pairs
+            - t_counts: the transition matrix (should generally be initialized with zeros)
+            - t_matrix: the normalized transition matrix (0-1, should generally be initialized with zeros)
+            - weight: the weight vector (also generally initialized with zeros)
         ]
         - transition_log: [str]
     )
     '''
-    num_pairs, v_state, feat, weight = model_parameters
+    ##### initialize model parameters #####
+    num_states, v_state, t_matrix, weight = model_parameters
     phase = "learning"
 
-    # Create start states
+    ##### Create start states #####
     start_states = np.ones(24, dtype=np.int8)
     
     # Create random forced choice trials order
@@ -300,9 +277,8 @@ def learning(gamma, alpha_td, alpha_m, beta, end_state, rewards, transitions, mo
 
     # Run trials
     transition_log = []
-
     for trial_index, start_state in enumerate(start_states):
-        v_state, feat, weight, transition_log_lines = run_trial(
+        v_state, t_matrix, weight, transition_log_lines = run_trial(
             phase,
             trial_index,
             gamma,
@@ -315,35 +291,34 @@ def learning(gamma, alpha_td, alpha_m, beta, end_state, rewards, transitions, mo
             forced_choice_trial_order,
             rewards,
             transitions,
-            num_pairs,
+            num_states,
             v_state,
-            feat,
+            t_matrix,
             weight
         )
 
         transition_log_lines = prefix_all(f"{trial_index + 1},", transition_log_lines)
         transition_log.extend(transition_log_lines)
 
-    new_params = [num_pairs, v_state, feat, weight]
-
+    new_params = [num_states, v_state, t_matrix, weight]
+        
     return new_params, transition_log
 
-#
-# Relearning
-#
+
 def update_parameters(condition, rewards, transitions):
     if condition == "reward":
-        rewards = [[0, 0], [0, 0], [0, 0], [0], [0], [0], [200], [0], [30], [0]]
+        rewards = [[0, 0], [0, 0], [0, 0], [0], [0], [0], [45], [0], [30], [0]]
     elif condition == "transition":
         transitions = [[2, 3], [4, 5], [5, 6], [9], [7], [8], [10], [10], [10], [11]]
     elif condition == "policy":
-        rewards = [[0, 0], [0, 0], [0, 0], [0], [0], [0], [200], [15], [30], [0]]
+        rewards = [[0, 0], [0, 0], [0, 0], [0], [0], [0], [45], [15], [30], [0]]
     elif condition == "goal":
-        rewards = [[0, 0], [0, 0], [0, 0], [200], [0], [0], [15], [0], [30], [0]]
+        rewards = [[0, 0], [0, 0], [0, 0], [45], [0], [0], [15], [0], [30], [0]]
     else:
-        rewards = [[0, 0], [0, 0], [0, 0], [0], [0], [0], [15], [0], [200], [0]]
+        rewards = [[0, 0], [0, 0], [0, 0], [0], [0], [0], [15], [0], [45], [0]]
 
     return rewards, transitions
+
 
 
 def relearning(condition, gamma, alpha_td, alpha_m, beta, end_state, rewards, transitions, model_parameters):
@@ -353,28 +328,31 @@ def relearning(condition, gamma, alpha_td, alpha_m, beta, end_state, rewards, tr
     Arguments:
         - condition: string representing the relearning condition
         - gamma: the time discounting constant
-        - alpha_m: the learning rate constant used to learn the SR matrix M
-        - alpha_td: the learning rate constant used to learn the weight vector
+        - alpha_td: the learning rate constant
+        - alpha_m: irrelevant parameter for MB
         - beta: softmax inverse temperature
         - end_state: terminal state
         - rewards: list of rewards corresponding to each action
         - transitions: list of valid transitions from each state
         - model parameters: [
-            - num_pairs: the number of state-action pairs
-            - feat: the successor matrix, held over from learning
+            - v_state: the value of state-action pairs
+            - t_counts: the transition matrix, held over from learning
+            - t_matrix: the normalized transition matrix, held over from learning
             - weight: the weight vector, held over from learning
         ]
 
     Returns: (
         - model_parameters: [
-            - num_pairs: the number of state-action pairs
-            - feat: the successor matrix
-            - weight: the weight vector
+            - v_state: the value of state-action pairs
+            - t_counts: the transition matrix (should generally be initialized with zeros)
+            - t_matrix: the normalized transition matrix (0-1, should generally be initialized with zeros)
+            - weight: the weight vector (also generally initialized with zeros)
         ]
         - transition_log: [str]
     )
     '''
-    num_pairs, v_state, feat, weight = model_parameters
+    # Unpack logging_lists and model parameters into component variables
+    num_states, v_state, t_matrix, weight = model_parameters
     phase = "relearning"
 
     # Create start states
@@ -386,10 +364,9 @@ def relearning(condition, gamma, alpha_td, alpha_m, beta, end_state, rewards, tr
     # Create empty forced choice trials order to fulfill input of run_trials
     forced_choice_trial_order = []
 
-    # Run trials
     transition_log = []
     for trial_index, start_state in enumerate(start_states):
-        v_state, feat, weight, transition_log_lines = run_trial(
+        v_state, t_matrix, weight, transition_log_lines = run_trial(
             phase,
             trial_index,
             gamma,
@@ -402,23 +379,20 @@ def relearning(condition, gamma, alpha_td, alpha_m, beta, end_state, rewards, tr
             forced_choice_trial_order,
             rewards,
             transitions,
-            num_pairs,
+            num_states,
             v_state,
-            feat,
+            t_matrix,
             weight
         )
 
         transition_log_lines = prefix_all(f"{trial_index + 1},", transition_log_lines)
         transition_log.extend(transition_log_lines)
 
-    new_params = [num_pairs, v_state, feat, weight]
-
+    new_params = [num_states, v_state, t_matrix, weight]
+        
     return new_params, transition_log
 
 
-#
-# Test
-#
 def test(model_parameters):
     '''
     Simulates the test phase by comparing the action values of the two possible starting-state actions. The test state action is assumed to always be
@@ -436,9 +410,9 @@ def test(model_parameters):
         - transition_log: [str]
     )
     '''
-    num_pairs, v_state, feat, weight = model_parameters
+    num_states, v_state, t_matrix, weight = model_parameters
 
-    action_index = np.argmax(v_state[0:2])
+    action_index = np.argmax(v_state[0][0:2])
 
     if action_index == 0:
         action = ACTION_LEFT
