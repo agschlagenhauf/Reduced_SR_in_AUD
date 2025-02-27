@@ -335,11 +335,11 @@ model1 <- glmer(correct_path ~ condition + (1 | ID), data = logreg_test_path_con
 
 model1_rs <- glmer(correct_path ~ condition + (1 + condition | ID), data = logreg_test_path_condition_df_lowscores_control, family = "binomial", glmerControl(optimizer = "bobyqa", optCtrl=list(maxfun=1e6)))
 
-model1_rs_env_i <- glmer(correct_path ~ condition + (1 + condition | ID) + (1 | environment), data = logreg_test_path_condition_df_lowscores_control, family = "binomial", glmerControl(optimizer = "bobyqa", optCtrl=list(maxfun=1e6)))
+# model1_rs_env_i <- glmer(correct_path ~ condition + (1 + condition | ID) + (1 | environment), data = logreg_test_path_condition_df_lowscores_control, family = "binomial", glmerControl(optimizer = "bobyqa", optCtrl=list(maxfun=1e6)))
+# 
+# model1_rs_env_rs <- glmer(correct_path ~ condition + (1 + condition | ID) + (1 + condition | environment), data = logreg_test_path_condition_df_lowscores_control, family = "binomial", glmerControl(optimizer = "bobyqa", optCtrl=list(maxfun=1e6)))
 
-model1_rs_env_rs <- glmer(correct_path ~ condition + (1 + condition | ID) + (1 + condition | environment), data = logreg_test_path_condition_df_lowscores_control, family = "binomial", glmerControl(optimizer = "bobyqa", optCtrl=list(maxfun=1e6)))
-
-anova(model1, model1_rs, model1_rs_env_i, model1_rs_env_rs)
+anova(model1, model1_rs)
 
 tab_model(model1_rs, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
 #tab_model(model1_rs_env_i, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
@@ -363,11 +363,11 @@ model2 <- glmer(correct_path ~ condition + (1 | ID), data = logreg_test_path_con
 
 model2_rs <- glmer(correct_path ~ condition + (1 + condition | ID), data = logreg_test_path_condition_df_lowscores_control, family = "binomial", glmerControl(optimizer = "bobyqa", optCtrl=list(maxfun=1e6)))
 
-model2_rs_env_i <- glmer(correct_path ~ condition + (1 + condition | ID) + (1 | environment), data = logreg_test_path_condition_df_lowscores_control, family = "binomial", glmerControl(optimizer = "bobyqa", optCtrl=list(maxfun=1e6)))
+# model2_rs_env_i <- glmer(correct_path ~ condition + (1 + condition | ID) + (1 | environment), data = logreg_test_path_condition_df_lowscores_control, family = "binomial", glmerControl(optimizer = "bobyqa", optCtrl=list(maxfun=1e6)))
+# 
+# model2_rs_env_rs <- glmer(correct_path ~ condition + (1 + condition | ID) + (1 + condition | environment), data = logreg_test_path_condition_df_lowscores_control, family = "binomial", glmerControl(optimizer = "bobyqa", optCtrl=list(maxfun=1e6)))
 
-model2_rs_env_rs <- glmer(correct_path ~ condition + (1 + condition | ID) + (1 + condition | environment), data = logreg_test_path_condition_df_lowscores_control, family = "binomial", glmerControl(optimizer = "bobyqa", optCtrl=list(maxfun=1e6)))
-
-anova(model2, model2_rs, model2_rs_env_i, model2_rs_env_rs)
+anova(model2, model2_rs)
 
 tab_model(model2_rs, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
 #tab_model(model2_rs_env_i, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
@@ -474,30 +474,30 @@ model3_rs <- glmer(correct_path ~
                 family = "binomial",
                 glmerControl(optimizer = "bobyqa", optCtrl=list(maxfun=1e6)))
 
-model3_rs_env_i <- glmer(correct_path ~
-                  condition_control + condition_goalstate + condition_policy + condition_reward + predictor +
-                  condition_control:predictor + condition_goalstate:predictor +
-                  condition_policy:predictor + condition_reward:predictor +
-                  condition_control:predictor:version_alc + condition_goalstate:predictor:version_alc +
-                  condition_policy:predictor:version_alc + condition_reward:predictor:version_alc +
-                  (1 + condition_control + condition_goalstate + condition_policy + condition_reward | ID) + (1 | environment),
-                data = logreg_test_path_predictor_version_condition_df_full,
-                family = "binomial",
-                glmerControl(optimizer = "bobyqa", optCtrl=list(maxfun=1e6)))
+# model3_rs_env_i <- glmer(correct_path ~
+#                   condition_control + condition_goalstate + condition_policy + condition_reward + predictor +
+#                   condition_control:predictor + condition_goalstate:predictor +
+#                   condition_policy:predictor + condition_reward:predictor +
+#                   condition_control:predictor:version_alc + condition_goalstate:predictor:version_alc +
+#                   condition_policy:predictor:version_alc + condition_reward:predictor:version_alc +
+#                   (1 + condition_control + condition_goalstate + condition_policy + condition_reward | ID) + (1 | environment),
+#                 data = logreg_test_path_predictor_version_condition_df_full,
+#                 family = "binomial",
+#                 glmerControl(optimizer = "bobyqa", optCtrl=list(maxfun=1e6)))
+# 
+# model3_rs_env_rs <- glmer(correct_path ~
+#                   condition_control + condition_goalstate + condition_policy + condition_reward + predictor +
+#                   condition_control:predictor + condition_goalstate:predictor +
+#                   condition_policy:predictor + condition_reward:predictor +
+#                   condition_control:predictor:version_alc + condition_goalstate:predictor:version_alc +
+#                   condition_policy:predictor:version_alc + condition_reward:predictor:version_alc
+#                   + (1 + condition_control + condition_goalstate + condition_policy + condition_reward | ID)
+#                   + (1 + condition_control + condition_goalstate + condition_policy + condition_reward | environment),
+#                 data = logreg_test_path_predictor_version_condition_df_full,
+#                 family = "binomial",
+#                 glmerControl(optimizer = "bobyqa", optCtrl=list(maxfun=1e6)))
 
-model3_rs_env_rs <- glmer(correct_path ~
-                  condition_control + condition_goalstate + condition_policy + condition_reward + predictor +
-                  condition_control:predictor + condition_goalstate:predictor +
-                  condition_policy:predictor + condition_reward:predictor +
-                  condition_control:predictor:version_alc + condition_goalstate:predictor:version_alc +
-                  condition_policy:predictor:version_alc + condition_reward:predictor:version_alc
-                  + (1 + condition_control + condition_goalstate + condition_policy + condition_reward | ID)
-                  + (1 + condition_control + condition_goalstate + condition_policy + condition_reward | environment),
-                data = logreg_test_path_predictor_version_condition_df_full,
-                family = "binomial",
-                glmerControl(optimizer = "bobyqa", optCtrl=list(maxfun=1e6)))
-
-anova(model3, model3_rs, model3_rs_env_i, model3_rs_env_rs)
+anova(model3, model3_rs)
 
 tab_model(model3_rs, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
 #tab_model(model3_rs_env_i, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
@@ -534,11 +534,11 @@ model4 <- glmer(correct_path ~ condition*predictor + (1 | ID), data = logreg_tes
 
 model4_rs <- glmer(correct_path ~ condition*predictor + (1 + condition | ID), data = logreg_test_path_predictor_condition_df_alcohol, family = "binomial", glmerControl(optimizer = "bobyqa", optCtrl=list(maxfun=1e6)))
 
-model4_rs_env_i <- glmer(correct_path ~ condition*predictor + (1 + condition | ID) + (1 | environment), data = logreg_test_path_predictor_condition_df_alcohol, family = "binomial", glmerControl(optimizer = "bobyqa", optCtrl=list(maxfun=1e6)))
+# model4_rs_env_i <- glmer(correct_path ~ condition*predictor + (1 + condition | ID) + (1 | environment), data = logreg_test_path_predictor_condition_df_alcohol, family = "binomial", glmerControl(optimizer = "bobyqa", optCtrl=list(maxfun=1e6)))
+# 
+# model4_rs_env_rs <- glmer(correct_path ~ condition*predictor + (1 + condition | ID) + (1 + condition | environment), data = logreg_test_path_predictor_condition_df_alcohol, family = "binomial", glmerControl(optimizer = "bobyqa", optCtrl=list(maxfun=1e6)))
 
-model4_rs_env_rs <- glmer(correct_path ~ condition*predictor + (1 + condition | ID) + (1 + condition | environment), data = logreg_test_path_predictor_condition_df_alcohol, family = "binomial", glmerControl(optimizer = "bobyqa", optCtrl=list(maxfun=1e6)))
-
-anova(model4, model4_rs, model4_rs_env_i, model4_rs_env_rs)
+anova(model4, model4_rs)
 
 tab_model(model4_rs, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
 #tab_model(model4_rs_env_i, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
@@ -592,33 +592,33 @@ model5_rs <- glmer(correct_path ~
                 glmerControl(optCtrl=list(maxfun=1e6),
                              optimizer = "bobyqa"))
 
-model5_rs_env_i <- glmer(correct_path ~
-                  condition_control + condition_goalstate + condition_policy + condition_transition + predictor +
-                  condition_control:predictor + condition_goalstate:predictor +
-                  condition_policy:predictor + condition_transition:predictor +
-                  condition_control:predictor:version_alc + condition_goalstate:predictor:version_alc +
-                  condition_policy:predictor:version_alc + condition_transition:predictor:version_alc +
-                  (1 + condition_control + condition_goalstate + condition_policy + condition_transition | ID)
-                  + (1 | environment),
-                data = logreg_test_path_predictor_version_condition_df_full,
-                family = "binomial",
-                glmerControl(optCtrl=list(maxfun=1e6),
-                             optimizer = "bobyqa"))
+# model5_rs_env_i <- glmer(correct_path ~
+#                   condition_control + condition_goalstate + condition_policy + condition_transition + predictor +
+#                   condition_control:predictor + condition_goalstate:predictor +
+#                   condition_policy:predictor + condition_transition:predictor +
+#                   condition_control:predictor:version_alc + condition_goalstate:predictor:version_alc +
+#                   condition_policy:predictor:version_alc + condition_transition:predictor:version_alc +
+#                   (1 + condition_control + condition_goalstate + condition_policy + condition_transition | ID)
+#                   + (1 | environment),
+#                 data = logreg_test_path_predictor_version_condition_df_full,
+#                 family = "binomial",
+#                 glmerControl(optCtrl=list(maxfun=1e6),
+#                              optimizer = "bobyqa"))
+# 
+# model5_rs_env_rs <- glmer(correct_path ~
+#                   condition_control + condition_goalstate + condition_policy + condition_transition + predictor +
+#                   condition_control:predictor + condition_goalstate:predictor +
+#                   condition_policy:predictor + condition_transition:predictor +
+#                   condition_control:predictor:version_alc + condition_goalstate:predictor:version_alc +
+#                   condition_policy:predictor:version_alc + condition_transition:predictor:version_alc +
+#                   (1 + condition_control + condition_goalstate + condition_policy + condition_transition | ID)
+#                   + (1 + condition_control + condition_goalstate + condition_policy + condition_transition | environment),
+#                 data = logreg_test_path_predictor_version_condition_df_full,
+#                 family = "binomial",
+#                 glmerControl(optCtrl=list(maxfun=1e6),
+#                              optimizer = "bobyqa"))
 
-model5_rs_env_rs <- glmer(correct_path ~
-                  condition_control + condition_goalstate + condition_policy + condition_transition + predictor +
-                  condition_control:predictor + condition_goalstate:predictor +
-                  condition_policy:predictor + condition_transition:predictor +
-                  condition_control:predictor:version_alc + condition_goalstate:predictor:version_alc +
-                  condition_policy:predictor:version_alc + condition_transition:predictor:version_alc +
-                  (1 + condition_control + condition_goalstate + condition_policy + condition_transition | ID)
-                  + (1 + condition_control + condition_goalstate + condition_policy + condition_transition | environment),
-                data = logreg_test_path_predictor_version_condition_df_full,
-                family = "binomial",
-                glmerControl(optCtrl=list(maxfun=1e6),
-                             optimizer = "bobyqa"))
-
-anova(model5, model5_rs, model5_rs_env_i, model5_rs_env_rs)
+anova(model5, model5_rs)
 
 tab_model(model5_rs, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
 #tab_model(model5_rs_env_i, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
@@ -651,11 +651,11 @@ model1_control <- glmer(correct_path ~ condition + (1 | ID), data = logreg_test_
 
 model1_control_rs <- glmer(correct_path ~ condition + (1 + condition | ID), data = logreg_test_path_condition_df_lowscores_control, family = "binomial", glmerControl(optimizer = "bobyqa", optCtrl=list(maxfun=1e6)))
 
-model1_control_rs_env_i <- glmer(correct_path ~ condition + (1 + condition | ID) + (1 | environment), data = logreg_test_path_condition_df_lowscores_control, family = "binomial", glmerControl(optimizer = "bobyqa", optCtrl=list(maxfun=1e6)))
+# model1_control_rs_env_i <- glmer(correct_path ~ condition + (1 + condition | ID) + (1 | environment), data = logreg_test_path_condition_df_lowscores_control, family = "binomial", glmerControl(optimizer = "bobyqa", optCtrl=list(maxfun=1e6)))
+# 
+# model1_control_rs_env_rs <- glmer(correct_path ~ condition + (1 + condition | ID) + (1 + condition | environment), data = logreg_test_path_condition_df_lowscores_control, family = "binomial", glmerControl(optimizer = "bobyqa", optCtrl=list(maxfun=1e6)))
 
-model1_control_rs_env_rs <- glmer(correct_path ~ condition + (1 + condition | ID) + (1 + condition | environment), data = logreg_test_path_condition_df_lowscores_control, family = "binomial", glmerControl(optimizer = "bobyqa", optCtrl=list(maxfun=1e6)))
-
-anova(model1_control, model1_control_rs, model1_control_rs_env_i, model1_control_rs_env_rs)
+anova(model1_control, model1_control_rs)
 
 tab_model(model1_control_rs, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
 #tab_model(model1_control_rs_env_i, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
@@ -705,33 +705,33 @@ model3_control_rs <- glmer(correct_path ~
                 glmerControl(optimizer = "bobyqa",
                              optCtrl=list(maxfun=1e6)))
 
-model3_control_rs_env_i <- glmer(correct_path ~
-                  condition_transition + condition_goalstate + condition_policy + condition_reward + predictor +
-                  condition_transition:predictor + condition_goalstate:predictor +
-                  condition_policy:predictor + condition_reward:predictor +
-                  condition_transition:predictor:version_alc + condition_goalstate:predictor:version_alc +
-                  condition_policy:predictor:version_alc + condition_reward:predictor:version_alc +
-                  (1 + condition_transition + condition_goalstate + condition_policy + condition_reward | ID)
-                  + (1 | environment),
-                data = logreg_test_path_predictor_version_condition_df_full,
-                family = "binomial",
-                glmerControl(optimizer = "bobyqa",
-                             optCtrl=list(maxfun=1e6)))
+# model3_control_rs_env_i <- glmer(correct_path ~
+#                   condition_transition + condition_goalstate + condition_policy + condition_reward + predictor +
+#                   condition_transition:predictor + condition_goalstate:predictor +
+#                   condition_policy:predictor + condition_reward:predictor +
+#                   condition_transition:predictor:version_alc + condition_goalstate:predictor:version_alc +
+#                   condition_policy:predictor:version_alc + condition_reward:predictor:version_alc +
+#                   (1 + condition_transition + condition_goalstate + condition_policy + condition_reward | ID)
+#                   + (1 | environment),
+#                 data = logreg_test_path_predictor_version_condition_df_full,
+#                 family = "binomial",
+#                 glmerControl(optimizer = "bobyqa",
+#                              optCtrl=list(maxfun=1e6)))
+# 
+# model3_control_rs_env_rs <- glmer(correct_path ~
+#                   condition_transition + condition_goalstate + condition_policy + condition_reward + predictor +
+#                   condition_transition:predictor + condition_goalstate:predictor +
+#                   condition_policy:predictor + condition_reward:predictor +
+#                   condition_transition:predictor:version_alc + condition_goalstate:predictor:version_alc +
+#                   condition_policy:predictor:version_alc + condition_reward:predictor:version_alc +
+#                   (1 + condition_transition + condition_goalstate + condition_policy + condition_reward | ID)
+#                   + (1 + condition_transition + condition_goalstate + condition_policy + condition_reward | environment),
+#                 data = logreg_test_path_predictor_version_condition_df_full,
+#                 family = "binomial",
+#                 glmerControl(optimizer = "bobyqa",
+#                              optCtrl=list(maxfun=1e6)))
 
-model3_control_rs_env_rs <- glmer(correct_path ~
-                  condition_transition + condition_goalstate + condition_policy + condition_reward + predictor +
-                  condition_transition:predictor + condition_goalstate:predictor +
-                  condition_policy:predictor + condition_reward:predictor +
-                  condition_transition:predictor:version_alc + condition_goalstate:predictor:version_alc +
-                  condition_policy:predictor:version_alc + condition_reward:predictor:version_alc +
-                  (1 + condition_transition + condition_goalstate + condition_policy + condition_reward | ID)
-                  + (1 + condition_transition + condition_goalstate + condition_policy + condition_reward | environment),
-                data = logreg_test_path_predictor_version_condition_df_full,
-                family = "binomial",
-                glmerControl(optimizer = "bobyqa",
-                             optCtrl=list(maxfun=1e6)))
-
-anova(model3_control, model3_control_rs, model3_control_rs_env_i, model3_control_rs_env_rs)
+anova(model3_control, model3_control_rs)
 
 tab_model(model3_control_rs, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
 #tab_model(model3_control_rs_env_i, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
@@ -761,11 +761,11 @@ model4_control <- glmer(correct_path ~ condition*predictor + (1 | ID), data = lo
 
 model4_control_rs <- glmer(correct_path ~ condition*predictor + (1 + condition | ID), data = logreg_test_path_predictor_condition_df_alcohol, family = "binomial", glmerControl(optimizer = "bobyqa", optCtrl=list(maxfun=1e6)))
 
-model4_control_rs_env_i <- glmer(correct_path ~ condition*predictor + (1 + condition | ID) + (1 | environment), data = logreg_test_path_predictor_condition_df_alcohol, family = "binomial", glmerControl(optimizer = "bobyqa", optCtrl=list(maxfun=1e6)))
+# model4_control_rs_env_i <- glmer(correct_path ~ condition*predictor + (1 + condition | ID) + (1 | environment), data = logreg_test_path_predictor_condition_df_alcohol, family = "binomial", glmerControl(optimizer = "bobyqa", optCtrl=list(maxfun=1e6)))
+# 
+# model4_control_rs_env_rs <- glmer(correct_path ~ condition*predictor + (1 + condition | ID) + (1 + condition | environment), data = logreg_test_path_predictor_condition_df_alcohol, family = "binomial", glmerControl(optimizer = "bobyqa", optCtrl=list(maxfun=1e6)))
 
-model4_control_rs_env_rs <- glmer(correct_path ~ condition*predictor + (1 + condition | ID) + (1 + condition | environment), data = logreg_test_path_predictor_condition_df_alcohol, family = "binomial", glmerControl(optimizer = "bobyqa", optCtrl=list(maxfun=1e6)))
-
-anova(model4_control, model4_control_rs, model4_control_rs_env_i, model4_control_rs_env_rs)
+anova(model4_control, model4_control_rs)
 
 tab_model(model4_control_rs, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
 #tab_model(model4_control_rs_env_i, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
