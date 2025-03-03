@@ -36,7 +36,7 @@ for beta in betas:
     df_red_sr = pd.read_csv(f"/Users/milenamusial/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/PhD/04_B01/WP3/Reduced_SR_in_AUD/simulations/results/reduced_sr_nsimulations1_alpha0.9_beta0.7_gamma0.5.csv")
     df_red_sr = df_red_sr.loc[df_red_sr['condition'] == condition].reset_index(drop=True)
     
-    df_mb = pd.read_csv(f"/Users/milenamusial/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/PhD/04_B01/WP3/Reduced_SR_in_AUD/simulations/results/model_based_nsimulations1_alpha0.9_beta0.7_gamma0.5.csv")
+    df_mb = pd.read_csv(f"/Users/milenamusial/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/PhD/04_B01/WP3/Reduced_SR_in_AUD/simulations/results/model_based_nsimulations100_alpha_td0.9_alpha_m0.9_beta0.9_gamma0.9.csv")
     df_mb = df_mb.loc[df_mb['condition'] == condition].reset_index(drop=True)
 
     if timepoint == 'pre':

@@ -75,7 +75,7 @@ def run_trial(phase, trial_index, gamma, alpha_td, alpha_m, beta, end_state, sta
 
             ###### Determine next and second next state ######
             
-            # if forced choice trials included in learning phase
+            # if forced choice trials included
             if forced_choice_switch == True:
             
                 ## 4 forced-choice trials
@@ -130,7 +130,7 @@ def run_trial(phase, trial_index, gamma, alpha_td, alpha_m, beta, end_state, sta
                         second_next_move = rng.choice([0, 1], p=second_next_choice_probs)
                     second_next_state = transitions[next_state][second_next_move] - 1
             
-            # if no forced choice trials during learning
+            # if no forced choice trials
             else:
                 ## free-choice trials for all indices
                 # Determine the next state

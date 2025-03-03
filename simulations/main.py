@@ -18,7 +18,7 @@ SUCCESS_COUNT_FILENAME = "success_counts.txt"
 #
 
 NUM_SIMULATIONS = 110 # number of participants to simulate
-MODELS = ["model_based_learnt"] # "full_sr", "reduced_sr", "model_based", "model_free"
+MODELS = ["full_sr_forcedonly"] # "full_sr", "reduced_sr", "model_based", "model_free"
 CONDITIONS = ["control", "reward", "transition", "policy", "goal"] # "control", "reward", "transition", "policy", "goal"
 
 #
@@ -84,7 +84,12 @@ def get_transition_log_headers():
     transition_strings_joined = ",".join(transition_strings)
 
     transition_log_headers["full_sr"] = f"{TRANSITION_LOG_HEADER_PREFIX},weight_delta,{value_strings_joined},{weight_strings_joined},{occupancy_strings_joined}\n"
-    transition_log_headers["full_sr_forced_learning"] = f"{TRANSITION_LOG_HEADER_PREFIX},weight_delta,{value_strings_joined},{weight_strings_joined},{occupancy_strings_joined}\n"
+    transition_log_headers["full_sr_forcedonly"] = f"{TRANSITION_LOG_HEADER_PREFIX},weight_delta,{value_strings_joined},{weight_strings_joined},{occupancy_strings_joined}\n"
+    transition_log_headers["random_sr_from_mb_wtoR_wnoupdate"] = f"{TRANSITION_LOG_HEADER_PREFIX},weight_delta,{value_strings_joined},{weight_strings_joined},{occupancy_strings_joined}\n"
+    transition_log_headers["random_sr_from_mb_wTD_wnoupdate"] = f"{TRANSITION_LOG_HEADER_PREFIX},weight_delta,{value_strings_joined},{weight_strings_joined},{occupancy_strings_joined}\n"
+    transition_log_headers["random_sr_from_mb_wtoR_wfeat"] = f"{TRANSITION_LOG_HEADER_PREFIX},weight_delta,{value_strings_joined},{weight_strings_joined},{occupancy_strings_joined}\n"
+    transition_log_headers["random_sr_from_mb_wTD_wfeat"] = f"{TRANSITION_LOG_HEADER_PREFIX},weight_delta,{value_strings_joined},{weight_strings_joined},{occupancy_strings_joined}\n"
+    transition_log_headers["random_sr_from_mb_wTD_wfeatMfeat"] = f"{TRANSITION_LOG_HEADER_PREFIX},weight_delta,{value_strings_joined},{weight_strings_joined},{occupancy_strings_joined}\n"
     transition_log_headers["reduced_sr"] = f"{TRANSITION_LOG_HEADER_PREFIX},weight_delta,{value_strings_joined},{weight_strings_joined},{occupancy_strings_joined}\n"
     transition_log_headers["model_based"] = f"{TRANSITION_LOG_HEADER_PREFIX},weight_delta,{value_strings_joined},{weight_strings_joined},{transition_strings_joined}\n"
     transition_log_headers["model_based_learnt"] = f"{TRANSITION_LOG_HEADER_PREFIX},weight_delta,{value_strings_joined},{weight_strings_joined},{transition_strings_joined}\n"

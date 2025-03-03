@@ -104,7 +104,7 @@ def run_simulations(model, condition, num_simulations):
             model_parameters = [v_state]
 
         ###### model-based ######
-        elif model == "model_based":
+        elif model in ["model_based"]:
             v_state = []
             init_weight = []
 
@@ -135,12 +135,29 @@ def run_simulations(model, condition, num_simulations):
 
 
         ###### full & reduced SR ######
-        elif model in ["full_sr", "full_sr_forced_learning"]:
+        elif model in ["full_sr", "full_sr_forcedonly"]:
             v_state = np.zeros(num_pairs)
             init_weight = np.zeros(num_pairs)
             init_sr = np.identity(num_pairs)  # init M with ‚identity matrix as in Russek et al. 2017
 
             model_parameters = [num_pairs, v_state, init_sr, init_weight]
+
+        elif model in ["random_sr_from_mb_wtoR_wnoupdate", "random_sr_from_mb_wtoR_wfeat", "random_sr_from_mb_wTD_wnoupdate", "random_sr_from_mb_wTD_wfeat", "random_sr_from_mb_wTD_wfeatMfeat"]:
+            v_state = []
+            init_weight = []
+        
+            for j in range(len(rewards)):
+                row = []
+                for k in range(len(rewards[j])):
+                    row.append(0)
+                v_state.append(row)
+                init_weight.append(row.copy())
+        
+            init_t_counts = np.zeros((num_pairs, num_states))
+            init_t_matrix = init_t_counts # normalized transition matrix
+            model_parameters = [num_pairs, v_state, init_t_counts, init_t_matrix, init_weight]  
+            
+            print(v_state)
 
         elif model == "reduced_sr":
             v_state = np.zeros(num_pairs)

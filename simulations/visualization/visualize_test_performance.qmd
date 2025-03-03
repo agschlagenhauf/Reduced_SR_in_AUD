@@ -33,9 +33,9 @@ data_path <- "~/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBer
 # SR with different inverse temperature parameters
 
 ```{r}
-full_sr_beta01 <- read.csv(file.path(data_path, "full_sr_forced_learning_nsimulations110_alpha_td0.95_alpha_m0.95_beta0.1_gamma0.9.csv"))
-full_sr_beta05 <- read.csv(file.path(data_path, "full_sr_forced_learning_nsimulations110_alpha_td0.95_alpha_m0.95_beta0.5_gamma0.9.csv"))
-full_sr_beta09 <- read.csv(file.path(data_path, "full_sr_forced_learning_nsimulations110_alpha_td0.95_alpha_m0.95_beta0.9_gamma0.9.csv"))
+full_sr_beta01 <- read.csv(file.path(data_path, "random_sr_from_mb_wtoR_wfeat_nsimulations110_alpha_td0.9_alpha_m0.9_beta0.1_gamma0.9.csv"))
+full_sr_beta05 <- read.csv(file.path(data_path, "random_sr_from_mb_wtoR_wfeat_nsimulations110_alpha_td0.9_alpha_m0.9_beta0.5_gamma0.9.csv"))
+full_sr_beta09 <- read.csv(file.path(data_path, "random_sr_from_mb_wtoR_wfeat_nsimulations110_alpha_td0.9_alpha_m0.9_beta0.9_gamma0.9.csv"))
 ```
 
 ```{r}
@@ -154,7 +154,7 @@ plot_sr01 <- ggplot(full_sr_beta01_plot_df, aes(x=condition, y=mean_correct*100)
     geom_errorbar(aes(ymin=ci_l*100, ymax=ci_u*100),
                   width=.2,
                   position=position_dodge(.9)) +
-    scale_y_continuous("% Correct", limits = c(0, 105)) +
+    scale_y_continuous("% Correct", limits = c(-10, 105)) +
     theme_light(base_size = 16) +
     theme(legend.position = "none",
           axis.title.x=element_blank(),
@@ -168,7 +168,7 @@ plot_sr05 <- ggplot(full_sr_beta05_plot_df, aes(x=condition, y=mean_correct*100)
     geom_errorbar(aes(ymin=ci_l*100, ymax=ci_u*100),
                   width=.2,
                   position=position_dodge(.9)) +
-    scale_y_continuous("% Correct", limits = c(0, 105)) +
+    scale_y_continuous("% Correct", limits = c(-10, 105)) +
     theme_light(base_size = 16) +
     theme(legend.position = "none",
           axis.title.x=element_blank(),
@@ -182,7 +182,7 @@ plot_sr09 <- ggplot(full_sr_beta09_plot_df, aes(x=condition, y=mean_correct*100)
     geom_errorbar(aes(ymin=ci_l*100, ymax=ci_u*100),
                   width=.2,
                   position=position_dodge(.9)) +
-    scale_y_continuous("% Correct", limits = c(0, 105)) +
+    scale_y_continuous("% Correct", limits = c(-10, 105)) +
     theme_light(base_size = 16) +
     theme(legend.position = "none",
           axis.title.x=element_blank(),
@@ -216,7 +216,7 @@ examine_successful <- full_sr_beta09 %>%
          action,
          reward,
          VS1A1, VS1A2, VS2A1, VS2A2, VS3A1, VS3A2,
-         WS1A1, WS1A2,
+         WS1A1, WS1A2, WS7A1, WS9A1,
          OS1A1.S2A1, OS1A1.S2A2, OS1A1.S7A1,
          OS1A2.S3A1, OS1A2.S3A2, OS1A2.S9A1)
 
@@ -229,7 +229,7 @@ examine_non_successful <- full_sr_beta09 %>%
          action,
          reward,
          VS1A1, VS1A2, VS2A1, VS2A2, VS3A1, VS3A2,
-         WS1A1, WS1A2,
+         WS1A1, WS1A2, WS7A1, WS9A1,
          OS1A1.S2A1, OS1A1.S2A2, OS1A1.S7A1,
          OS1A2.S3A1, OS1A2.S3A2, OS1A2.S9A1)
 
@@ -400,5 +400,3 @@ plot_mb_3
 plot <- ggarrange(plot_mb_1, plot_mb_2, plot_mb_3, nrow=1)
 plot
 ```
-
-
