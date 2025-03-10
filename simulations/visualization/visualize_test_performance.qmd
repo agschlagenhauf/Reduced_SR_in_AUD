@@ -33,9 +33,9 @@ data_path <- "~/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBer
 # SR with different inverse temperature parameters
 
 ```{r}
-full_sr_beta01 <- read.csv(file.path(data_path, "random_sr_from_mb_wtoR_wfeat_nsimulations110_alpha_td0.9_alpha_m0.9_beta0.1_gamma0.9.csv"))
-full_sr_beta05 <- read.csv(file.path(data_path, "random_sr_from_mb_wtoR_wfeat_nsimulations110_alpha_td0.9_alpha_m0.9_beta0.5_gamma0.9.csv"))
-full_sr_beta09 <- read.csv(file.path(data_path, "random_sr_from_mb_wtoR_wfeat_nsimulations110_alpha_td0.9_alpha_m0.9_beta0.9_gamma0.9.csv"))
+full_sr_beta01 <- read.csv(file.path(data_path, "random_sr_from_mb_wTD_wfeat_nsimulations110_alpha_td0.9_alpha_m0.9_beta0.1_gamma0.9.csv"))
+full_sr_beta05 <- read.csv(file.path(data_path, "random_sr_from_mb_wTD_wfeat_nsimulations110_alpha_td0.9_alpha_m0.9_beta0.5_gamma0.9.csv"))
+full_sr_beta09 <- read.csv(file.path(data_path, "random_sr_from_mb_wTD_wfeat_nsimulations110_alpha_td0.9_alpha_m0.9_beta0.9_gamma0.9.csv"))
 ```
 
 ```{r}
@@ -200,15 +200,15 @@ plot
 
 ```{r}
 successful <- full_sr_beta09_test %>%
-  filter(condition == "Policy revaluation",
+  filter(condition == "Reward revaluation",
          action == 1)
 
 non_successful <- full_sr_beta09_test %>%
-  filter(condition == "Policy revaluation",
+  filter(condition == "Reward revaluation",
          action == 2)
 
 examine_successful <- full_sr_beta09 %>%
-  filter(condition == "policy",
+  filter(condition == "reward",
          simulation_number %in% successful$simulation_number) %>%
   select(simulation_number,
          trial,
@@ -221,7 +221,7 @@ examine_successful <- full_sr_beta09 %>%
          OS1A2.S3A1, OS1A2.S3A2, OS1A2.S9A1)
 
 examine_non_successful <- full_sr_beta09 %>%
-  filter(condition == "policy",
+  filter(condition == "reward",
          simulation_number %in% non_successful$simulation_number) %>%
   select(simulation_number,
          trial,
@@ -238,14 +238,12 @@ examine_non_successful <- full_sr_beta09 %>%
 # MB with learned T and different learning rates for w and T
 
 ```{r}
-mb_1 <- read.csv(file.path(data_path, "model_based_learnt_nsimulations110_alpha_td0.9_alpha_m0.1_beta0.9_gamma0.9.csv"))
-mb_2 <- read.csv(file.path(data_path, "model_based_learnt_nsimulations110_alpha_td0.9_alpha_m0.5_beta0.9_gamma0.9.csv"))
-mb_3 <- read.csv(file.path(data_path, "model_based_learnt_nsimulations110_alpha_td0.9_alpha_m0.9_beta0.9_gamma0.9.csv"))
+mb_1 <- read.csv(file.path(data_path, "reduced_sr_nsimulations110_alpha_td0.9_alpha_m0.9_beta0.1_gamma0.9.csv"))
+mb_2 <- read.csv(file.path(data_path, "reduced_sr_nsimulations110_alpha_td0.9_alpha_m0.9_beta0.5_gamma0.9.csv"))
+mb_3 <- read.csv(file.path(data_path, "reduced_sr_nsimulations110_alpha_td0.9_alpha_m0.9_beta0.9_gamma0.9.csv"))
 ```
 
 ```{r}
-# SR
-
 mb_1_test <- mb_1 %>%
   select(simulation_number, condition, phase, trial, state, action, reward) %>%
   filter(phase %in% c("learning_test", "relearning_test")) %>%
@@ -399,4 +397,24 @@ plot_mb_3
 
 plot <- ggarrange(plot_mb_1, plot_mb_2, plot_mb_3, nrow=1)
 plot
+```
+
+## Inspect value development
+
+```{r}
+successful <- mb_3_test %>%
+  filter(condition == "Reward revaluation",
+         action == 1)
+
+non_successful <- mb_3_test %>%
+  filter(condition == "Reward revaluation",
+         action == 2)
+
+examine_successful <- mb_3 %>%
+  filter(condition == "reward",
+         simulation_number %in% successful$simulation_number) 
+
+examine_nonsuccessful <- mb_3 %>%
+  filter(condition == "reward",
+         simulation_number %in% non_successful$simulation_number) 
 ```

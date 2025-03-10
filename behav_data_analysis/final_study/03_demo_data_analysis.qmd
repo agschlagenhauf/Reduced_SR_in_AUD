@@ -26,8 +26,8 @@ packages <- c("ggplot2", "dplyr", "tidyr", "kableExtra", "gmodels", "lme4", "sjP
 lapply(packages, library, character.only = TRUE)
 
 # define paths
-demo_path <- "~/work/group_folder/B01_FP2_WP3/WP3_DATA/FINAL_STUDY/RDFs"
-#demo_path <- "~/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/PhD/04_B01/WP3/WP3_DATA/FINAL_STUDY/RDFs"
+#demo_path <- "~/work/group_folder/B01_FP2_WP3/WP3_DATA/FINAL_STUDY/RDFs"
+demo_path <- "~/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/PhD/04_B01/WP3/WP3_DATA/FINAL_STUDY/RDFs"
 
 # read dfs
 load(file.path(demo_path, "demo_psych_data_included.RData"))
@@ -80,6 +80,7 @@ demo_table <- demo_psych %>%
     employed_count = sum(employment %in% c("Full-Time", "Part-Time"), na.rm = TRUE),
     jobseeking_count = sum(employment %in% c("Unemployed (and job seeking)", "Due to start a new job within the next month"), na.rm = TRUE),
     non_working_count = sum(employment %in% c("Not in paid work (e.g. homemaker', 'retired or disabled)"), na.rm = TRUE),
+    other_working_count = sum(employment %in% c("Other"), na.rm = TRUE),
     .groups = "drop"
   ) 
 
@@ -124,8 +125,21 @@ chisq.test(table_sample_version)
 
 ```{r}
 lang_df <- demo_psych %>%
-  filter(native_language %in% c("English", "German")) %>%
-  droplevels()
+  mutate(native_language = as.character(native_language)) %>%
+  mutate(native_language = ifelse(native_language %in% c("Arabic", "Bengali", "Cantonese", 
+                                                       "Chinese", "Dutch", "Greek",
+                                                       "Hindi", "Hungarian", "Italian",
+                                                       "Korean", "Polish", "Portuguese",
+                                                       "Romanian", "Russian", "Serbian",
+                                                       "Spanish", "Tagalog-Filipino", "Tamil",
+                                                       "Turkish", "Ukrainian", "Urdu",
+                                                       "Vietnamese", "Welsh", "Afrikaans",
+                                                       "Albanian", "Bulgarian", "Croatian",
+                                                       "French", "Indonesian", "Latvian",
+                                                       "Lithuanian", "Mandarin", "Slovak",
+                                                       "Slovenian", "Thai"), 
+                                  "other", native_language)) %>%
+  mutate(native_language = as.factor(native_language))
 
 table_lang <- table(lang_df$group_version, lang_df$native_language)
 table_lang_group <- table(lang_df$group, lang_df$native_language)
@@ -163,13 +177,21 @@ chisq.test(table_student_version)
 ## Employment status
 
 ```{r}
-table_employ <- table(demo_psych$group_version, demo_psych$employment)
-table_employ_group <- table(demo_psych$group, demo_psych$employment)
-table_employ_version <- table(demo_psych$version, demo_psych$employment)
+employ_df <- demo_psych %>%
+  mutate(employment = as.character(employment)) %>%
+  mutate(employment = ifelse(employment %in% c("Full-Time", "Part-Time"), "employed", 
+                             ifelse(employment %in% c("Unemployed (and job seeking)", "Due to start a new job within the next month"), "unemployed",
+                                    ifelse(employment %in% c("Not in paid work (e.g. homemaker', 'retired or disabled)"), "not in paid work", 
+                                           ifelse(employment %in% c("Other"), "other", NA))))) %>%
+  mutate(employment = as.factor(employment))
 
-chisq.test(table_employ, simulate.p.value = T)
-chisq.test(table_employ_group, simulate.p.value = T)
-chisq.test(table_employ_version, simulate.p.value = T)
+table_employ <- table(employ_df$group_version, employ_df$employment)
+table_employ_group <- table(employ_df$group, employ_df$employment)
+table_employ_version <- table(employ_df$version, employ_df$employment)
+
+chisq.test(table_employ, simulate.p.value = F)
+chisq.test(table_employ_group, simulate.p.value = F)
+chisq.test(table_employ_version, simulate.p.value = F)
 ```
 
 # Psychometric data
@@ -180,10 +202,6 @@ chisq.test(table_employ_version, simulate.p.value = T)
 psych_table <- demo_psych %>%
   group_by(group, version) %>%
   summarise(
-    n = dplyr::n(),
-    sample_GER = sum(sample == "GER", na.rm = TRUE),
-    sample_EU = sum(sample == "EU", na.rm = TRUE),
-    sample_UK = sum(sample == "UK", na.rm = TRUE),
     mean_audit = mean(audit_sum_pre, na.rm = TRUE),
     sd_audit = sd(audit_sum_pre, na.rm = TRUE),
     mean_aud = mean(aud_sum, na.rm = TRUE),
@@ -196,9 +214,9 @@ psych_table <- demo_psych %>%
     sd_dailydrinks = sd(drinks_per_day, na.rm = TRUE),
     mean_bingedays = mean(binge_days, na.rm = TRUE),
     sd_bingedays = sd(binge_days, na.rm = TRUE),
-    nosmoker_count = sum(nicotine_past3months %in% c("never", 
-                                                     "less than 1x per month"), na.rm = TRUE),
-    smoker_count = sum(nicotine_past3months %in% c("1-3 x per month", 
+    nosmoker_count = sum(nicotine_past3months %in% c("never"), na.rm = TRUE),
+    smoker_count = sum(nicotine_past3months %in% c("less than 1x per month",
+                                                   "1-3 x per month", 
                                                    "1-4 x per week", 
                                                    "5-7 x per week"), na.rm = TRUE),
     nocannabis_user_count = sum(cannabis_past3months %in% c("never"), na.rm = TRUE),
@@ -289,6 +307,18 @@ model_aud <- lm(aud_sum ~ group*version, data=demo_psych)
 tab_model(model_aud, show.stat = T, show.df = T)
 ```
 
+## AUD diagnosis
+
+```{r}
+table_aud <- table(demo_psych$group_version, demo_psych$aud_group)
+table_aud_group <- table(demo_psych$group, demo_psych$aud_group)
+table_aud_version <- table(demo_psych$version, demo_psych$aud_group)
+
+chisq.test(table_aud)
+chisq.test(table_aud_group)
+chisq.test(table_aud_version)
+```
+
 ## Drinking days past 3 months
 
 ```{r}
@@ -313,9 +343,16 @@ tab_model(model_binge_days, show.stat = T, show.df = T)
 ## Nicotine past 3 months
 
 ```{r}
-table_nicotine <- table(demo_psych$group_version, demo_psych$nicotine_past3months)
-table_nicotine_group <- table(demo_psych$group, demo_psych$nicotine_past3months)
-table_nicotine_version <- table(demo_psych$version, demo_psych$nicotine_past3months)
+nicotine_df <- demo_psych %>%
+  mutate(nicotine_past3months = ifelse(nicotine_past3months %in% c("less than 1x per month",
+                                                   "1-3 x per month", 
+                                                   "1-4 x per week", 
+                                                   "5-7 x per week"), "smoker", 
+                                       ifelse(nicotine_past3months == "never", "non-smoker", nicotine_past3months)))
+  
+table_nicotine <- table(nicotine_df$group_version, nicotine_df$nicotine_past3months)
+table_nicotine_group <- table(nicotine_df$group, nicotine_df$nicotine_past3months)
+table_nicotine_version <- table(nicotine_df$version, nicotine_df$nicotine_past3months)
 
 chisq.test(table_nicotine)
 chisq.test(table_nicotine_group)
@@ -325,25 +362,39 @@ chisq.test(table_nicotine_version)
 ## Cannabis past 3 months
 
 ```{r}
-table_cannabis <- table(demo_psych$group_version, demo_psych$cannabis_past3months)
-table_cannabis_group <- table(demo_psych$group, demo_psych$cannabis_past3months)
-table_cannabis_version <- table(demo_psych$version, demo_psych$cannabis_past3months)
+cannabis_df <- demo_psych %>%
+  mutate(cannabis_past3months = ifelse(cannabis_past3months %in% c("less than 1x per month",
+                                                   "1-3 x per month", 
+                                                   "1-4 x per week", 
+                                                   "5-7 x per week"), "smoker", 
+                                       ifelse(cannabis_past3months == "never", "non-smoker", cannabis_past3months)))
 
-chisq.test(table_cannabis, simulate.p.value = T)
-chisq.test(table_cannabis_group, simulate.p.value = T)
-chisq.test(table_cannabis_version, simulate.p.value = T)
+table_cannabis <- table(cannabis_df$group_version, cannabis_df$cannabis_past3months)
+table_cannabis_group <- table(cannabis_df$group, cannabis_df$cannabis_past3months)
+table_cannabis_version <- table(cannabis_df$version, cannabis_df$cannabis_past3months)
+
+chisq.test(table_cannabis, simulate.p.value = F)
+chisq.test(table_cannabis_group, simulate.p.value = F)
+chisq.test(table_cannabis_version, simulate.p.value = F)
 ```
 
 ## Other drugs past 3 months
 
 ```{r}
-table_drugs <- table(demo_psych$group_version, demo_psych$drugs_past3months)
-table_drugs_group <- table(demo_psych$group, demo_psych$drugs_past3months)
-table_drugs_version <- table(demo_psych$version, demo_psych$drugs_past3months)
+drugs_df <- demo_psych %>%
+  mutate(drugs_past3months = ifelse(drugs_past3months %in% c("less than 1x per month",
+                                                   "1-3 x per month", 
+                                                   "1-4 x per week", 
+                                                   "5-7 x per week"), "smoker", 
+                                       ifelse(drugs_past3months == "never", "non-smoker", drugs_past3months)))
 
-chisq.test(table_drugs, simulate.p.value = T)
-chisq.test(table_drugs_group, simulate.p.value = T)
-chisq.test(table_drugs_version, simulate.p.value = T)
+table_drugs <- table(drugs_df$group_version, drugs_df$drugs_past3months)
+table_drugs_group <- table(drugs_df$group, drugs_df$drugs_past3months)
+table_drugs_version <- table(drugs_df$version, drugs_df$drugs_past3months)
+
+chisq.test(table_drugs, simulate.p.value = F)
+chisq.test(table_drugs_group, simulate.p.value = F)
+chisq.test(table_drugs_version, simulate.p.value = F)
 ```
 
 ## CASA
@@ -393,3 +444,18 @@ tab_model(model_dmq_coping, show.stat = T, show.df = T)
 model_dmq_conformity <- lm(dmq_conformity ~ group*version, data=demo_psych)
 tab_model(model_dmq_conformity, show.stat = T, show.df = T)
 ```
+
+# Get NAs
+
+```{r}
+# how can age be NA?
+colSums(is.na(demo_psych[(demo_psych$group=="Low-risk drinkers"&demo_psych$version=="Monetary version"),])) 
+
+colSums(is.na(demo_psych[(demo_psych$group=="Low-risk drinkers"&demo_psych$version=="Alcohol version"),]))
+
+colSums(is.na(demo_psych[(demo_psych$group=="Harmful drinkers"&demo_psych$version=="Monetary version"),]))
+
+colSums(is.na(demo_psych[(demo_psych$group=="Harmful drinkers"&demo_psych$version=="Alcohol version"),]))
+
+```
+
