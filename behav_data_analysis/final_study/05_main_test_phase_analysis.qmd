@@ -29,8 +29,9 @@ sapply(packages, require, character.only = TRUE)
 # set color scheme
 
 # define paths
-data_path <- "~/work/group_folder/B01_FP2_WP3/WP3_DATA/FINAL_STUDY/RDFs"
-#data_path <- "~/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/PhD/04_B01/WP3/WP3_DATA/FINAL_STUDY/RDFs"
+#data_path <- "~/work/group_folder/B01_FP2_WP3/WP3_DATA/FINAL_STUDY/RDFs"
+data_path <- "~/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/PhD/04_B01/WP3/WP3_DATA/FINAL_STUDY/RDFs"
+model_path <- "/Users/milenamusial/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/PhD/04_B01/WP3/WP3_DATA/FINAL_STUDY/model_objects"
 
 # read dfs
 load(file.path(data_path, "final_data_included.RData"))
@@ -125,57 +126,6 @@ logreg_test_path_group_condition_df_alcohol <- trial_df %>%
          correct_path,
          condition,
          environment)
-
-# post-hoc dfs
-logreg_test_path_group_condition_df_control <- trial_df %>%
-  filter(phase == "test",
-         state == 1,
-         version == "Monetary version") %>%
-  mutate(condition = as.factor(condition),
-         group = as.factor(group),
-         environment = as.factor(environment)) %>%
-  select(group,
-         ID,
-         correct_path,
-         condition,
-         environment)
-
-logreg_test_path_condition_df_lowrisk_alcohol <- trial_df %>%
-  filter(phase == "test",
-         state == 1,
-         group == "Low-risk drinkers",
-         version == "Alcohol version") %>%
-  mutate(condition = as.factor(condition),
-         environment = as.factor(environment)) %>%
-  select(ID,
-         correct_path,
-         condition,
-         environment)
-
-logreg_test_path_condition_df_harmful_control <- trial_df %>%
-  filter(phase == "test",
-         state == 1,
-         group == "Harmful drinkers",
-         version == "Monetary version") %>%
-  mutate(condition = as.factor(condition),
-         environment = as.factor(environment)) %>%
-  select(ID,
-         correct_path,
-         condition,
-         environment)
-
-logreg_test_path_condition_df_harmful_alcohol <- trial_df %>%
-  filter(phase == "test",
-         state == 1,
-         group == "Harmful drinkers",
-         version == "Alcohol version") %>%
-  mutate(condition = as.factor(condition),
-         environment = as.factor(environment)) %>%
-  select(ID,
-         correct_path,
-         condition,
-         environment)
-
 ```
 
 ### Model 1: Low-risk drinkers, control version, compare against transition revaluation
@@ -193,15 +143,10 @@ model1 <- glmer(correct_path ~ condition + (1 | ID), data = logreg_test_path_con
 
 model1_rs <- glmer(correct_path ~ condition + (1 + condition | ID), data = logreg_test_path_condition_df_lowrisk_control, family = "binomial", glmerControl(optimizer = "bobyqa", optCtrl=list(maxfun=1e6)))
 
-# model1_rs_env_i <- glmer(correct_path ~ condition + (1 + condition | ID) + (1 | environment), data = logreg_test_path_condition_df_lowrisk_control, family = "binomial", glmerControl(optimizer = "bobyqa", optCtrl=list(maxfun=1e6)))
-# 
-# model1_rs_env_rs <- glmer(correct_path ~ condition + (1 + condition | ID) + (1 + condition | environment), data = logreg_test_path_condition_df_lowrisk_control, family = "binomial", glmerControl(optimizer = "bobyqa", optCtrl=list(maxfun=1e6)))
-
 anova(model1, model1_rs)
 
 tab_model(model1_rs, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
-#tab_model(model1_rs_env_i, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
-#tab_model(model1_rs_env_rs, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
+saveRDS(model1_rs, file=file.path(model_path, "model1_rs.rds"))
 
 check_model(model1_rs, check=c("pp_check", "reqq", "qq"))
 ```
@@ -221,15 +166,10 @@ model2 <- glmer(correct_path ~ condition + (1 | ID), data = logreg_test_path_con
 
 model2_rs <- glmer(correct_path ~ condition + (1 + condition | ID), data = logreg_test_path_condition_df_lowrisk_control, family = "binomial", glmerControl(optimizer = "bobyqa", optCtrl=list(maxfun=1e6)))
 
-# model2_rs_env_i <- glmer(correct_path ~ condition + (1 + condition | ID) + (1 | environment), data = logreg_test_path_condition_df_lowrisk_control, family = "binomial", glmerControl(optimizer = "bobyqa", optCtrl=list(maxfun=1e6)))
-# 
-# model2_rs_env_rs <- glmer(correct_path ~ condition + (1 + condition | ID) + (1 + condition | environment), data = logreg_test_path_condition_df_lowrisk_control, family = "binomial", glmerControl(optimizer = "bobyqa", optCtrl=list(maxfun=1e6)))
-
 anova(model2, model2_rs)
 
 tab_model(model2_rs, show.est = T, show.stat = T, df.method = "wald", auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
-# tab_model(model2_rs_env_i, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
-# tab_model(model2_rs_env_rs, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
+saveRDS(model2_rs, file=file.path(model_path, "model2_rs.rds"))
 
 check_model(model2_rs, check=c("pp_check", "reqq", "qq"))
 ```
@@ -339,8 +279,10 @@ model3_rs <- glmer(correct_path ~
 anova(model3, model3_rs)
 
 tab_model(model3_rs, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
+saveRDS(model3_rs, file=file.path(model_path, "model3_rs.rds"))
 
 check_model(model3_rs, check=c("pp_check", "reqq", "qq"))
+
 ```
 
 #### Compare to model including all version effects
@@ -358,6 +300,7 @@ model3_rs_vers <- glmer(correct_path ~
 anova(model3_rs, model3_rs_vers)
 
 tab_model(model3_rs_vers, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
+saveRDS(model3_rs_vers, file=file.path(model_path, "model3_rs_vers.rds"))
 
 check_model(model3_rs_vers, check=c("pp_check", "reqq", "qq"))
 ```
@@ -373,46 +316,26 @@ plot_model(model3_rs_vers, type = "pred", terms = c("condition", "group", "versi
 mmeans <- emmeans(model3_rs_vers, specs = ~ condition|group*version, ref="Transition revaluation", type="response")
 mmeans
 
+# get differences in transition revaluation performance between groups and versions
+contrast(mmeans, list(#lowriskcon_harmfulcon = c(0,0,-1,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0),
+                      lowriskcon_harmfulalc = c(0,0,-1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0),
+                      harmfulcon_lowriskalc = c(0,0,0,0,0,0,0,-1,0,0,0,0,1,0,0,0,0,0,0,0),
+                      harmfulcon_harmfulalc = c(0,0,0,0,0,0,0,-1,0,0,0,0,0,0,0,0,0,1,0,0),
+                      lowriskalc_harmfulalc = c(0,0,0,0,0,0,0,0,0,0,0,0,-1,0,0,0,0,1,0,0)), 
+         ref=3, adjust = "Bonferroni", by=NULL)
+
 # contrasts between marginal means per group and version
 contrasts <- contrast(mmeans, "trt.vs.ctrl", ref=3, adjust = NULL)
 contrasts
 
 # contrast between contrasts per group and version
-contrast(contrasts, list(lowriskcon_harmfulcon = c(-1,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0),
-                         lowriskcon_lowriskalc = c(-1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0),
+contrast(contrasts, list(#lowriskcon_harmfulcon = c(-1,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0),
+                         #lowriskcon_lowriskalc = c(-1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0),
                          lowriskcon_harmfulalc = c(-1,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0),
                          harmfulcon_lowriskalc = c(0,0,0,0,-1,0,0,0,1,0,0,0,0,0,0,0),
                          harmfulcon_harmfulalc = c(0,0,0,0,-1,0,0,0,0,0,0,0,1,0,0,0),
-                         lowriskalc_harmfulalc = c(0,0,0,0,0,0,0,0,-1,0,0,0,1,0,0,0)), by=NULL, adjust = "Bonferroni")
-# just to check if contrasts correct
-contrast(contrasts, "pairwise", by=NULL, adjust = NULL)
-```
-
-```{r}
-#### per version ####
-contrasts(logreg_test_path_group_condition_df_control$condition) <- contr.treatment(5, base = 3)
-contrasts(logreg_test_path_group_condition_df_alcohol$condition) <- contr.treatment(5, base = 3)
-
-model3_control <- glmer(correct_path ~ condition*group + (1 + condition | ID), data = logreg_test_path_group_condition_df_control, family = "binomial", glmerControl(optimizer = "bobyqa", optCtrl=list(maxfun=1e6)))
-tab_model(model3_control, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
-
-model3_alcohol <- glmer(correct_path ~ condition*group + (1 + condition | ID), data = logreg_test_path_group_condition_df_alcohol, family = "binomial", glmerControl(optimizer = "bobyqa", optCtrl=list(maxfun=1e6)))
-tab_model(model3_alcohol, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
-
-#### per group and version ####
-contrasts(logreg_test_path_condition_df_harmful_control$condition) <- contr.treatment(5, base = 3)
-contrasts(logreg_test_path_condition_df_lowrisk_alcohol$condition) <- contr.treatment(5, base = 3)
-contrasts(logreg_test_path_condition_df_harmful_alcohol$condition) <- contr.treatment(5, base = 3)
-
-# control lowrisk = model1
-model3_con_harmful <- glmer(correct_path ~ condition + (1 + condition | ID), data = logreg_test_path_condition_df_harmful_control, family = "binomial", glmerControl(optimizer = "bobyqa", optCtrl=list(maxfun=1e6)))
-tab_model(model3_con_harmful, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
-
-model3_alc_lowrisk <- glmer(correct_path ~ condition + (1 + condition | ID), data = logreg_test_path_condition_df_lowrisk_alcohol, family = "binomial", glmerControl(optimizer = "bobyqa", optCtrl=list(maxfun=1e6)))
-tab_model(model3_alc_lowrisk, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
-
-model3_alc_harmful <- glmer(correct_path ~ condition + (1 + condition | ID), data = logreg_test_path_condition_df_lowrisk_alcohol, family = "binomial", glmerControl(optimizer = "bobyqa", optCtrl=list(maxfun=1e6)))
-tab_model(model3_alc_harmful, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
+                         lowriskalc_harmfulalc = c(0,0,0,0,0,0,0,0,-1,0,0,0,1,0,0,0)), 
+         by=NULL, adjust = "Bonferroni")
 ```
 
 ### Model 4: Alcohol context, compare against reward revaluation
@@ -433,6 +356,9 @@ model4_rs <- glmer(correct_path ~ condition*group + (1 + condition | ID), data =
 anova(model4, model4_rs)
 
 tab_model(model4_rs, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
+saveRDS(model4_rs, file=file.path(model_path, "model4_rs.rds"))
+
+check_model(model4_rs, check=c("pp_check", "reqq", "qq"))
 ```
 
 #### Inspect effects per group (n.s.)
@@ -510,6 +436,7 @@ model5_rs <- glmer(correct_path ~
 anova(model5, model5_rs)
 
 tab_model(model5_rs, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
+saveRDS(model5_rs, file=file.path(model_path, "model5_rs.rds"))
 
 check_model(model5_rs, check=c("pp_check", "reqq", "qq"))
 ```
@@ -517,6 +444,8 @@ check_model(model5_rs, check=c("pp_check", "reqq", "qq"))
 #### Compare to model including all version effects
 
 ```{r}
+contrasts(logreg_test_path_group_version_condition_df_full$condition) <- contr.treatment(5, base = 1)
+
 model5_rs_vers <- glmer(correct_path ~
                   group*version*condition +
                   (1 + condition | ID),
@@ -528,6 +457,7 @@ model5_rs_vers <- glmer(correct_path ~
 anova(model5_rs, model5_rs_vers)
 
 tab_model(model5_rs_vers, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
+saveRDS(model5_rs_vers, file=file.path(model_path, "model5_rs_vers.rds"))
 
 check_model(model5_rs_vers, check=c("pp_check", "reqq", "qq"))
 ```
@@ -548,8 +478,8 @@ contrasts <- contrast(mmeans, "trt.vs.ctrl", ref=1, adjust = NULL)
 contrasts
 
 # contrast between contrasts per group and version
-contrast(contrasts, list(lowriskcon_harmfulcon = c(-1,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0),
-                         lowriskcon_lowriskalc = c(-1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0),
+contrast(contrasts, list(#lowriskcon_harmfulcon = c(-1,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0),
+                         #lowriskcon_lowriskalc = c(-1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0),
                          lowriskcon_harmfulalc = c(-1,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0),
                          harmfulcon_lowriskalc = c(0,0,0,0,-1,0,0,0,1,0,0,0,0,0,0,0),
                          harmfulcon_harmfulalc = c(0,0,0,0,-1,0,0,0,0,0,0,0,1,0,0,0),
@@ -873,6 +803,9 @@ joint_tests(model1_index_rs, cov.keep = 0, cov.reduce = make.symmint(ctr = 0, de
 
 # tab_model(model1_index, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
 tab_model(model1_index_rs, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
+saveRDS(model1_index_rs, file=file.path(model_path, "model1_index_rs.rds"))
+
+check_model(model1_index_rs, check=c("pp_check", "reqq", "qq"))
 ```
 
 ##### Inspect interactions
@@ -921,8 +854,10 @@ anova(model2_index, model2_index_rs)
 # test overall effects of condition index
 joint_tests(model2_index_rs, cov.keep = 0, cov.reduce = make.symmint(ctr = 0, delta = 1))
 
-# tab_model(model2_index, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
 tab_model(model2_index_rs, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
+saveRDS(model2_index_rs, file=file.path(model_path, "model2_index_rs.rds"))
+
+check_model(model1_index_rs, check=c("pp_check", "reqq", "qq"))
 ```
 
 ##### Inspect interactions
@@ -976,9 +911,9 @@ model3_index_rs <- glmer(correct_path ~ group*version*condition*condition_index 
 
 anova(model3_index, model3_index_rs)
 
-tab_model(model3_index, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
+#tab_model(model3_index, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
 tab_model(model3_index_rs, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
-
+saveRDS(model3_index_rs, file=file.path(model_path, "model3_index_rs.rds"))
 ```
 
 #### Model 4_index: Alcohol context, compare against reward revaluation
@@ -993,8 +928,9 @@ model4_index_rs <- glmer(correct_path ~ condition*group*condition_index + (1 + c
 
 anova(model4_index, model4_index_rs)
 
-tab_model(model4_index, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
+#tab_model(model4_index, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
 tab_model(model4_index_rs, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
+saveRDS(model4_index_rs, file=file.path(model_path, "model4_index_rs.rds"))
 
 ```
 
@@ -1018,9 +954,9 @@ model5_index_rs <- glmer(correct_path ~ group*version*condition*condition_index 
 
 anova(model5_index, model5_index_rs)
 
-tab_model(model5_index, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
+#tab_model(model5_index, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
 tab_model(model5_index_rs, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
-
+saveRDS(model5_index_rs, file=file.path(model_path, "model5_index_rs.rds"))
 ```
 
 ## Trial number (within condition) effects
@@ -1080,7 +1016,7 @@ model1_trial_rs <- glmer(correct_path ~ condition*accumulated_state1_visits + (1
 
 anova(model1_trial, model1_trial_rs)
 
-tab_model(model1_trial, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
+#tab_model(model1_trial, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
 tab_model(model1_trial_rs, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
 
 ```
@@ -1097,7 +1033,7 @@ model2_trial_rs <- glmer(correct_path ~ condition*accumulated_state1_visits + (1
 
 anova(model2_trial, model2_trial_rs)
 
-tab_model(model2_trial, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
+#tab_model(model2_trial, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
 tab_model(model2_trial_rs, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
 
 ```
@@ -1122,7 +1058,7 @@ model3_trial_rs <- glmer(correct_path ~ group*version*condition*accumulated_stat
 
 anova(model3_trial, model3_trial_rs)
 
-tab_model(model3_trial, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
+#tab_model(model3_trial, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
 tab_model(model3_trial_rs, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
 
 ```
@@ -1139,7 +1075,7 @@ model4_trial_rs <- glmer(correct_path ~ condition*group*accumulated_state1_visit
 
 anova(model4_trial, model4_trial_rs)
 
-tab_model(model4_trial, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
+#tab_model(model4_trial, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
 tab_model(model4_trial_rs, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
 
 ```
@@ -1164,7 +1100,7 @@ model5_trial_rs <- glmer(correct_path ~ group*version*condition*accumulated_stat
 
 anova(model5_trial, model5_trial_rs)
 
-tab_model(model5_trial, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
+#tab_model(model5_trial, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
 tab_model(model5_trial_rs, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
 
 ```

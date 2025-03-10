@@ -458,4 +458,3 @@ colSums(is.na(demo_psych[(demo_psych$group=="Harmful drinkers"&demo_psych$versio
 colSums(is.na(demo_psych[(demo_psych$group=="Harmful drinkers"&demo_psych$version=="Alcohol version"),]))
 
 ```
-
