@@ -523,8 +523,8 @@ ggplot(learning_rt_group_version_condition_time_df, aes(x=trial, y=mean_rt)) +
   scale_y_continuous(limits = c(0, 1500)) +
   facet_grid(vars(group), vars(version)) +
   theme_light(base_size = 16) +
-  xlab("Accumulated state 1 visits") +
-  ylab("% Correct paths") +
+  xlab("State 1 visits") +
+  ylab("Reaction time (ms)") +
   theme(legend.title = element_blank()) +
   scale_color_viridis(option = "viridis", discrete = TRUE) +
   scale_fill_viridis(option = "viridis", discrete = TRUE)
@@ -567,3 +567,82 @@ tab_model(rt_learning_state1_model_rs, show.est = T, show.stat = T, auto.label =
 
 ```
 
+# Re-learning time effects on reaction times in states 4, 5, 6
+
+## Plot
+
+```{r}
+
+# get percent correct over time
+
+relearning_rt_group_version_condition_time_df <- trial_df %>%
+  filter(phase == "relearning",
+         state %in% c(4,5,6)
+         ) %>%
+  group_by(group, version, condition, trial) %>%
+  summarise(mean_rt = mean(RT, na.rm = TRUE),
+            se_rt = sd(RT, na.rm = TRUE)/sqrt(n()),
+            ci_l = ci(RT, na.rm=TRUE)[2],
+            ci_u = ci(RT, na.rm=TRUE)[3],
+            n = n()
+            )
+
+relearning_rt_group_version_condition_time_df %>%
+  kable("html") %>%
+  kable_styling(font_size = 14,
+                latex_options = "scale_down")
+
+```
+
+```{r}
+
+ggplot(relearning_rt_group_version_condition_time_df, aes(x=trial, y=mean_rt)) +
+  geom_line(aes(color=condition), size=1) +
+  geom_ribbon(aes(ymin = ci_l, ymax = ci_u, fill = condition), alpha = 0.2) +
+  scale_y_continuous(limits = c(0, 1500)) +
+  facet_grid(vars(group), vars(version)) +
+  theme_light(base_size = 16) +
+  xlab("State 4/5/6 visits") +
+  ylab("Reaction time (ms)") +
+  xlim(c(1,9)) +
+  theme(legend.title = element_blank()) +
+  scale_color_viridis(option = "viridis", discrete = TRUE) +
+  scale_fill_viridis(option = "viridis", discrete = TRUE)
+
+```
+
+## Linear regression
+
+```{r}
+linreg_learning_state1_rt_df <- trial_df %>%
+  filter(phase == "learning",
+         state %in% c(1, "1LeftTo2Left", "1LeftTo2Right", "1RightTo3Left", "1RightTo3Right")
+         ) %>%
+  mutate(condition = as.factor(condition),
+         group = as.factor(group),
+         version = as.factor(version)) %>%
+  select(ID,
+         RT,
+         condition,
+         group,
+         version,
+         trial)
+```
+
+```{r}
+
+rt_learning_state1_model <- lmer(data = linreg_learning_state1_rt_df,
+                                 RT ~ group*version*condition*trial + (1 + condition| ID),
+                                 control=lmerControl(optimizer="bobyqa", optCtrl=list(maxfun=1e6)),
+                                 REML = FALSE)
+rt_learning_state1_model_rs <- lmer(data = linreg_learning_state1_rt_df,
+                                 RT ~ group*version*condition*trial + (1 + condition + trial | ID),
+                                 control=lmerControl(optimizer="bobyqa", optCtrl=list(maxfun=1e6)),
+                                 REML = FALSE)
+
+anova(rt_learning_state1_model, rt_learning_state1_model_rs)
+
+tab_model(rt_learning_state1_model, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
+tab_model(rt_learning_state1_model_rs, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
+
+```
