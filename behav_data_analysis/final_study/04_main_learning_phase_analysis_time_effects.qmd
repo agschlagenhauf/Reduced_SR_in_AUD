@@ -29,8 +29,8 @@ sapply(packages, require, character.only = TRUE)
 # set color scheme
 
 # define paths
-data_path <- "~/work/group_folder/B01_FP2_WP3/WP3_DATA/FINAL_STUDY/RDFs"
-#data_path <- "~/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/PhD/04_B01/WP3/WP3_DATA/FINAL_STUDY/RDFs"
+# data_path <- "~/work/group_folder/B01_FP2_WP3/WP3_DATA/FINAL_STUDY/RDFs"
+data_path <- "~/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/PhD/04_B01/WP3/WP3_DATA/FINAL_STUDY/RDFs"
 
 # read dfs
 load(file.path(data_path, "final_data_included.RData"))
@@ -153,6 +153,29 @@ logreg_learning_paths_group_version_condition_env_time_df <- trial_df %>%
          condition_index,
          accumulated_state1_visits,
          environment)
+
+```
+
+#### LogReg: Difference between conditions (sum contrast-coded)
+
+```{r}
+contrasts(logreg_learning_paths_group_version_condition_env_time_df$condition) <- contr.sum(5)
+
+log_model_learning_paths_index_control <- glmer(correct_path ~ group*version*condition*condition_index
+                                               + (1 + condition | ID),
+                                               data = logreg_learning_paths_group_version_condition_env_time_df,
+                                               family = "binomial",
+                                               control=glmerControl(optimizer="bobyqa", optCtrl=list(maxfun=1e6)))
+log_model_learning_paths_index_control_rs <- glmer(correct_path ~ group*version*condition*condition_index
+                                               + (1 + condition + condition_index | ID),
+                                               data = logreg_learning_paths_group_version_condition_env_time_df,
+                                               family = "binomial",
+                                               control=glmerControl(optimizer="bobyqa", optCtrl=list(maxfun=1e6)))
+
+anova(log_model_learning_paths_index_control, log_model_learning_paths_index_control_rs)
+
+tab_model(log_model_learning_paths_index_control, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
+tab_model(log_model_learning_paths_index_control_rs, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
 
 ```
 
@@ -367,6 +390,29 @@ ggplot(learning_correct_paths_group_version_condition_time_df, aes(x=accumulated
 ```
 
 ### Logistic regression
+
+#### LogReg: Difference between conditions (sum contrast-coded)
+
+```{r}
+contrasts(logreg_learning_paths_group_version_condition_env_time_df$condition) <- contr.sum(5)
+
+log_model_learning_paths_trial_control <- glmer(correct_path ~ group*version*condition*accumulated_state1_visits
+                                               + (1 + condition | ID),
+                                               data = logreg_learning_paths_group_version_condition_env_time_df,
+                                               family = "binomial",
+                                               control=glmerControl(optimizer="bobyqa", optCtrl=list(maxfun=1e6)))
+log_model_learning_paths_trial_control_rs <- glmer(correct_path ~ group*version*condition*accumulated_state1_visits
+                                               + (1 + condition + accumulated_state1_visits | ID),
+                                               data = logreg_learning_paths_group_version_condition_env_time_df,
+                                               family = "binomial",
+                                               control=glmerControl(optimizer="bobyqa", optCtrl=list(maxfun=1e6)))
+
+anova(log_model_learning_paths_trial_control, log_model_learning_paths_trial_control_rs)
+
+tab_model(log_model_learning_paths_trial_control, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
+tab_model(log_model_learning_paths_trial_control_rs, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
+
+```
 
 #### LogReg1: Difference from control condition
 
