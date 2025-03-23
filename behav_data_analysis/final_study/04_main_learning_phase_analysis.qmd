@@ -250,6 +250,32 @@ anova(log_model_learning_paths_control, log_model_learning_paths_control_rs)
 tab_model(log_model_learning_paths_control_rs, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
 ```
 
+### LogReg1: Difference from control condition in last 5 trials of learning phase
+
+```{r}
+contrasts(logreg_learning_correct_paths_group_version_condition_df$condition) <- contr.treatment(5, base = 5)
+
+log_model_learning_paths_control <- glmer(correct_path ~ group*version*condition + (1 | ID),
+                                          data = logreg_learning_correct_paths_group_version_condition_df,
+                                          family = "binomial",
+                                          control=glmerControl(optimizer="bobyqa", optCtrl=list(maxfun=1e6)))
+saveRDS(log_model_learning_paths_control, file=file.path(model_path, "log_model_learning_paths_control_last5.rds"))
+log_model_learning_paths_control <- readRDS(file.path(model_path, "log_model_learning_paths_control_last5.rds"))
+
+
+log_model_learning_paths_control_rs <- glmer(correct_path ~ group*version*condition + (1 + condition | ID),
+                                          data = logreg_learning_correct_paths_group_version_condition_df,
+                                          family = "binomial",
+                                          control=glmerControl(optimizer="bobyqa", optCtrl=list(maxfun=1e6)))
+saveRDS(log_model_learning_paths_control_rs, file=file.path(model_path, "log_model_learning_paths_control_rs_last5.rds"))
+log_model_learning_paths_control_rs <- readRDS(file.path(model_path, "log_model_learning_paths_control_rs_last5.rds"))
+
+anova(log_model_learning_paths_control, log_model_learning_paths_control_rs)
+
+tab_model(log_model_learning_paths_control_rs, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
+```
+
+
 ### LogReg2: Difference from goal-state condition
 
 ```{r}

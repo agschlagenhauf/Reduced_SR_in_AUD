@@ -381,8 +381,8 @@ ggplot(learning_correct_paths_group_version_condition_time_df, aes(x=accumulated
   scale_y_continuous(limits = c(0, 110)) +
   facet_grid(vars(group), vars(version)) +
   theme_light(base_size = 16) +
-  xlab("Accumulated state 1 visits") +
-  ylab("% Correct paths") +
+  xlab("Free-choice trial number") +
+  ylab("% Trials where optimal paths") +
   theme(legend.title = element_blank()) +
   scale_color_viridis(option = "viridis", discrete = TRUE) +
   scale_fill_viridis(option = "viridis", discrete = TRUE)

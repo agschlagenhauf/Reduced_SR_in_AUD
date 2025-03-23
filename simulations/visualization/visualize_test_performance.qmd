@@ -235,7 +235,7 @@ examine_non_successful <- full_sr_beta09 %>%
 
 ```
 
-# MB with learned T and different learning rates for w and T
+# MB with learned T and different learning rates for w and T and different inverse temperature parameters
 
 ```{r}
 mb_1 <- read.csv(file.path(data_path, "reduced_sr_nsimulations110_alpha_td0.9_alpha_m0.9_beta0.1_gamma0.9.csv"))
@@ -417,4 +417,193 @@ examine_successful <- mb_3 %>%
 examine_nonsuccessful <- mb_3 %>%
   filter(condition == "reward",
          simulation_number %in% non_successful$simulation_number) 
+```
+
+# Create combined plot
+
+```{r}
+mb <- read.csv(file.path(data_path, "model_based_nsimulations110_alpha_td0.9_alpha_m0.9_beta0.9_gamma0.9.csv"))
+mf <- read.csv(file.path(data_path, "model_free_nsimulations110_alpha_td0.9_alpha_m0.9_beta0.9_gamma0.9.csv"))
+full_sr <- read.csv(file.path(data_path, "full_sr_nsimulations110_alpha_td0.9_alpha_m0.9_beta0.9_gamma0.5.csv"))
+red_sr <- read.csv(file.path(data_path, "reduced_sr_nsimulations110_alpha_td0.9_alpha_m0.9_beta0.9_gamma0.9.csv"))
+random_sr <- read.csv(file.path(data_path, "random_sr_from_mb_wTD_wfeatMfeat_nsimulations110_alpha_td0.9_alpha_m0.9_beta0.9_gamma0.9.csv")) 
+```
+
+```{r}
+# SR
+
+full_sr <- full_sr %>%
+  dplyr::select(simulation_number, condition, phase, trial, state, action, reward) %>%
+  filter(phase %in% c("learning_test", "relearning_test")) %>%
+  mutate(correct_path = case_when((phase == "learning_test" & state == 1 & action == 2 & lead(action) == 2) ~ 1,
+                                   (phase == "learning_test" & state == 1 & action == 2 & lead(action) == 1) ~ 0,
+                                   (phase == "learning_test" & state == 1 & action == 1) ~ 0,
+                                  
+                                   (condition == "control" & phase == "relearning_test" & state == 1 & action == 2 & lead(action) == 2) ~ 1,
+                                   (condition == "control" & phase == "relearning_test" & state == 1 & action == 2 & lead(action) == 1) ~ 0,
+                                   (condition == "control" & phase == "relearning_test" & state == 1 & action == 1) ~ 0,
+                                  
+                                   (condition != "control" & phase == "relearning_test" & state == 1 & action == 1 & lead(action) == 1) ~ 1,
+                                   (condition != "control" & phase == "relearning_test" & state == 1 & action == 1 & lead(action) == 2) ~ 0,
+                                   (condition != "control" & phase == "relearning_test" & state == 1 & action == 2) ~ 0)) %>%
+  filter(state=="1") %>%
+  group_by(simulation_number) %>%
+  filter(phase == "relearning_test" & lag(correct_path) == 1) %>%
+  ungroup() %>%
+  mutate(condition = case_when(
+      condition == "reward" ~ "Reward revaluation",
+      condition == "transition" ~ "Transition revaluation",
+      condition == "goal" ~ "Goal-state revaluation",
+      condition == "policy" ~ "Policy revaluation",
+      condition == "control" ~ "Control")) %>%
+  mutate(condition = fct_relevel(as.factor(condition),
+                                 c("Reward revaluation",
+                                   "Goal-state revaluation",
+                                   "Transition revaluation",
+                                   "Policy revaluation",
+                                   "Control")))
+
+random_sr <- random_sr %>%
+  dplyr::select(simulation_number, condition, phase, trial, state, action, reward) %>%
+  filter(phase %in% c("learning_test", "relearning_test")) %>%
+  mutate(correct_path = case_when((phase == "learning_test" & state == 1 & action == 2 & lead(action) == 2) ~ 1,
+                                   (phase == "learning_test" & state == 1 & action == 2 & lead(action) == 1) ~ 0,
+                                   (phase == "learning_test" & state == 1 & action == 1) ~ 0,
+                                  
+                                   (condition == "control" & phase == "relearning_test" & state == 1 & action == 2 & lead(action) == 2) ~ 1,
+                                   (condition == "control" & phase == "relearning_test" & state == 1 & action == 2 & lead(action) == 1) ~ 0,
+                                   (condition == "control" & phase == "relearning_test" & state == 1 & action == 1) ~ 0,
+                                  
+                                   (condition != "control" & phase == "relearning_test" & state == 1 & action == 1 & lead(action) == 1) ~ 1,
+                                   (condition != "control" & phase == "relearning_test" & state == 1 & action == 1 & lead(action) == 2) ~ 0,
+                                   (condition != "control" & phase == "relearning_test" & state == 1 & action == 2) ~ 0)) %>%
+  filter(state=="1") %>%
+  group_by(simulation_number) %>%
+  filter(phase == "relearning_test" & lag(correct_path) == 1) %>%
+  ungroup() %>%
+  mutate(condition = case_when(
+      condition == "reward" ~ "Reward revaluation",
+      condition == "transition" ~ "Transition revaluation",
+      condition == "goal" ~ "Goal-state revaluation",
+      condition == "policy" ~ "Policy revaluation",
+      condition == "control" ~ "Control")) %>%
+  mutate(condition = fct_relevel(as.factor(condition),
+                                 c("Reward revaluation",
+                                   "Goal-state revaluation",
+                                   "Transition revaluation",
+                                   "Policy revaluation",
+                                   "Control")))
+
+
+```
+
+## Plot test phase performance
+
+```{r}
+# SR
+full_sr_plot_df <- full_sr %>%
+  group_by(condition) %>%
+  summarise(mean_correct = mean(correct_path, na.rm = TRUE),
+            se_correct = sd(correct_path, na.rm = TRUE)/sqrt(n()),
+            ci_l = ci(correct_path, na.rm=TRUE)[2],
+            ci_u = ci(correct_path, na.rm=TRUE)[3],
+            n = n()
+            )
+
+random_sr_plot_df <- random_sr %>%
+  group_by(condition) %>%
+  summarise(mean_correct = mean(correct_path, na.rm = TRUE),
+            se_correct = sd(correct_path, na.rm = TRUE)/sqrt(n()),
+            ci_l = ci(correct_path, na.rm=TRUE)[2],
+            ci_u = ci(correct_path, na.rm=TRUE)[3],
+            n = n()
+            )
+```
+
+```{r}
+# plots full SR
+plot_sr <- ggplot(full_sr_plot_df, aes(x=condition, y=mean_correct*100)) +
+    geom_bar(stat="identity", aes(fill = condition)) +
+    geom_errorbar(aes(ymin=ci_l*100, ymax=ci_u*100),
+                  width=.2,
+                  position=position_dodge(.9)) +
+    scale_y_continuous("% Correct", limits = c(-10, 105)) +
+    theme_light(base_size = 16) +
+    theme(legend.position = "none",
+          axis.title.x=element_blank(),
+          axis.text.x = element_text(angle = 50, vjust = 1, hjust=1)) +
+    scale_fill_viridis(option = "viridis", discrete = TRUE) +
+  ggtitle("SR")
+plot_sr
+
+plot_random_sr <- ggplot(random_sr_plot_df, aes(x=condition, y=mean_correct*100)) +
+    geom_bar(stat="identity", aes(fill = condition)) +
+    geom_errorbar(aes(ymin=ci_l*100, ymax=ci_u*100),
+                  width=.2,
+                  position=position_dodge(.9)) +
+    scale_y_continuous("% Correct", limits = c(-10, 105)) +
+    theme_light(base_size = 16) +
+    theme(legend.position = "none",
+          axis.title.x=element_blank(),
+          axis.text.x = element_text(angle = 50, vjust = 1, hjust=1)) +
+    scale_fill_viridis(option = "viridis", discrete = TRUE) +
+  ggtitle("SR")
+plot_random_sr
+
+plot_sr09 <- ggplot(full_sr_beta09_plot_df, aes(x=condition, y=mean_correct*100)) +
+    geom_bar(stat="identity", aes(fill = condition)) +
+    geom_errorbar(aes(ymin=ci_l*100, ymax=ci_u*100),
+                  width=.2,
+                  position=position_dodge(.9)) +
+    scale_y_continuous("% Correct", limits = c(-10, 105)) +
+    theme_light(base_size = 16) +
+    theme(legend.position = "none",
+          axis.title.x=element_blank(),
+          axis.text.x = element_text(angle = 50, vjust = 1, hjust=1)) +
+    scale_fill_viridis(option = "viridis", discrete = TRUE) +
+  ggtitle("SR beta=.9")
+plot_sr09
+
+
+plot <- ggarrange(plot_sr01, plot_sr05, plot_sr09, nrow=1)
+plot
+```
+
+## Inspect value development
+
+```{r}
+successful <- full_sr_beta09_test %>%
+  filter(condition == "Reward revaluation",
+         action == 1)
+
+non_successful <- full_sr_beta09_test %>%
+  filter(condition == "Reward revaluation",
+         action == 2)
+
+examine_successful <- full_sr_beta09 %>%
+  filter(condition == "reward",
+         simulation_number %in% successful$simulation_number) %>%
+  select(simulation_number,
+         trial,
+         state,
+         action,
+         reward,
+         VS1A1, VS1A2, VS2A1, VS2A2, VS3A1, VS3A2,
+         WS1A1, WS1A2, WS7A1, WS9A1,
+         OS1A1.S2A1, OS1A1.S2A2, OS1A1.S7A1,
+         OS1A2.S3A1, OS1A2.S3A2, OS1A2.S9A1)
+
+examine_non_successful <- full_sr_beta09 %>%
+  filter(condition == "reward",
+         simulation_number %in% non_successful$simulation_number) %>%
+  select(simulation_number,
+         trial,
+         state,
+         action,
+         reward,
+         VS1A1, VS1A2, VS2A1, VS2A2, VS3A1, VS3A2,
+         WS1A1, WS1A2, WS7A1, WS9A1,
+         OS1A1.S2A1, OS1A1.S2A2, OS1A1.S7A1,
+         OS1A2.S3A1, OS1A2.S3A2, OS1A2.S9A1)
+
 ```

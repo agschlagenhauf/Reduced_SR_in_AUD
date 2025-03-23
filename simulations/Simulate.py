@@ -183,7 +183,7 @@ def run_simulations(model, condition, num_simulations):
             forced_choice_switch
         )
 
-        learning_test_action, learning_test_transition_log = model_package.test(learned_parameters)
+        learning_test_state1_action, learning_test_state2_action, learning_test_state3_action, learning_test_transition_log = model_package.test(learned_parameters)
         
         #
         # Relearning Phase
@@ -202,7 +202,7 @@ def run_simulations(model, condition, num_simulations):
             learned_parameters
         )
 
-        relearning_test_action, relearning_test_transition_log = model_package.test(relearned_parameters)
+        relearning_test_state1_action, relearning_test_state2_action, relearning_test_state3_action, relearning_test_transition_log = model_package.test(relearned_parameters)
        
         #
         # Results
@@ -223,12 +223,12 @@ def run_simulations(model, condition, num_simulations):
         transition_log = prefix_all(f"{simulation_number},{model},{condition},", transition_log)
 
         # ecode correctness of test (TRUE = correct)
+        learning_test_result = (learning_test_state1_action == ACTION_RIGHT and learning_test_state3_action == ACTION_RIGHT)
+        
         if condition == "control":
-            learning_test_result = (learning_test_action == ACTION_RIGHT)
-            relearning_test_result = (relearning_test_action == ACTION_RIGHT)
+            relearning_test_result = (relearning_test_state1_action == ACTION_RIGHT and relearning_test_state3_action == ACTION_RIGHT)
         else:
-            learning_test_result = (learning_test_action == ACTION_RIGHT)
-            relearning_test_result = (relearning_test_action == ACTION_LEFT)
+            relearning_test_result = (relearning_test_state1_action == ACTION_LEFT and relearning_test_state2_action == ACTION_LEFT)
 
         simulation_results.append(
             SimulationResult(

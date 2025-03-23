@@ -449,6 +449,7 @@ def relearning(condition, gamma, alpha_td, alpha_m, beta, end_state, rewards, tr
 # Test
 #
 def test(model_parameters):
+    
     '''
     Simulates the test phase by comparing the action values of the two possible starting-state actions. The test state action is assumed to always be
     the higher-value choice.
@@ -465,18 +466,41 @@ def test(model_parameters):
         - transition_log: [str]
     )
     '''
+
     num_pairs, v_state, feat, reduced_feat, weight, reduced_weight = model_parameters
 
-    action_index = np.argmax(v_state[0:2])
+    state1_action_index = np.argmax(v_state[0:2])
+    state2_action_index = np.argmax(v_state[2:4])
+    state3_action_index = np.argmax(v_state[4:6])
 
-    if action_index == 0:
-        action = ACTION_LEFT
-    elif action_index == 1:
-        action = ACTION_RIGHT
+    if state1_action_index == 0:
+        state1_action = ACTION_LEFT
+    elif state1_action_index == 1:
+        state1_action = ACTION_RIGHT
+    else:
+        raise ValueError
+        
+    if state2_action_index == 0:
+        state2_action = ACTION_LEFT
+    elif state2_action_index == 1:
+        state2_action = ACTION_RIGHT
+    else:
+        raise ValueError
+        
+    if state3_action_index == 0:
+        state3_action = ACTION_LEFT
+    elif state3_action_index == 1:
+        state3_action = ACTION_RIGHT
     else:
         raise ValueError
 
     # Transition log_line: trial,state,action,reward
-    transition_log_line = f"1,1,{action},0"
+    state1_transition_log_line = f"1,1,{state1_action},0"
+    if state1_action == ACTION_LEFT:
+        stage2_transition_log_line = f"1,2,{state2_action},0"
+    elif state1_action == ACTION_RIGHT:
+        stage2_transition_log_line = f"1,3,{state3_action},0"
+    else:
+        raise ValueError
 
-    return action, [transition_log_line]
+    return state1_action, state2_action, state3_action, [state1_transition_log_line, stage2_transition_log_line]
