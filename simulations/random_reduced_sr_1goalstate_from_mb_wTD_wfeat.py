@@ -77,6 +77,41 @@ def transform_v_and_w_from_list_to_array(v_state, weight):
 
     return np.array(v_state_new, dtype=np.float64), np.array(weight_new, dtype=np.float64)
 
+#
+# Helper function to reduced M and w after learning phase
+#
+
+def reduce_weight_and_feat(feat, weight, rewards):
+    '''
+    Deletes all columns of the successor matrix and the reward vector
+    that don't correspond to a reward-giving action, converting a full to a reduced successor matrix
+
+    Arguments:
+        - sr: the full successor matrix
+        - rewards: list rewards for each state and action
+        - num_pairs: the number of state-action pairs
+
+    Returns:
+        - reduced_sr: the reduced successor matrix
+        - reduced_weight: the reduced weight vector
+
+    '''
+    reduced_sr = []
+    reduced_weight = []
+
+    flattened_rewards = flatten(rewards)
+
+    for i, reward in enumerate(flattened_rewards):
+        if reward != 0:
+            non_zero_feat_column = feat[:,i]
+            reduced_sr.append(non_zero_feat_column)
+            non_zero_weight = weight[i]
+            reduced_weight.append(non_zero_weight)
+            
+    print(np.transpose(reduced_sr))
+
+    return np.transpose(reduced_sr), reduced_weight
+
 
 #
 # Run Trial MB
@@ -176,6 +211,7 @@ def run_trial_mb(phase, trial_index, gamma, alpha_td, alpha_m, beta, end_state, 
             weight_delta = reward + gamma * v_state[next_state][second_next_move] - \
                            v_state[current_state][next_move]  # get weight prediction error
             weight[current_state][next_move] += alpha_td * weight_delta  # update weight
+            #weight[current_state][next_move] = rewards[current_state][next_move]
 
             ###### Update values of all state-action pairs (Bellman Equation) ######
             # vector of values per state under a given softmax policy (multiplies value of each action available from a state with its probability of being chosen and sums over all actions per state)
@@ -219,6 +255,7 @@ def run_trial_mb(phase, trial_index, gamma, alpha_td, alpha_m, beta, end_state, 
             weight_delta = reward + gamma * v_state[next_state][second_next_move] - \
                            v_state[current_state][next_move]  # get weight prediction error
             weight[current_state][next_move] += alpha_td * weight_delta # update weight
+            #weight[current_state][next_move] = rewards[current_state][next_move]
             
             ###### Update values of all state-action pairs (Bellman Equation) ######
             next_state_values = [np.sum(v_state[state] * softmax(beta, v_state[state])) for state in range(len(rewards))]
@@ -248,6 +285,7 @@ def run_trial_mb(phase, trial_index, gamma, alpha_td, alpha_m, beta, end_state, 
             reward = rewards[current_state][next_move]
             weight_delta = reward - v_state[current_state][next_move]  # get weight prediction error
             weight[current_state][next_move] += alpha_td * weight_delta  # update weight
+            #weight[current_state][next_move] = rewards[current_state][next_move]
 
             ###### Update values of all state-action pairs (Bellman Equation) ######
             next_state_values = [np.sum(v_state[state] * softmax(beta, v_state[state])) for state in range(len(rewards))]
@@ -322,6 +360,7 @@ def run_trial_sr(phase, trial_index, gamma, alpha_td, alpha_m, beta, end_state, 
                 second_next_choice_probs = softmax(beta, second_next_values)
                 second_next_move = rng.choice([0, 1], p=second_next_choice_probs)
             second_next_state = transitions[next_state][second_next_move] - 1
+                    
             
             ###### No update of successor matrix in first state, as we did not transition from anywhere ######
 
@@ -331,11 +370,13 @@ def run_trial_sr(phase, trial_index, gamma, alpha_td, alpha_m, beta, end_state, 
                            v_state[get_flattened_index(transitions, current_state, next_move)]
             
             # scale feature according to Russek et al. 2017
-            feat_scaled = (feat[get_flattened_index(transitions, current_state, next_move)] / np.matmul(
+            denominator = np.matmul(
                 feat[get_flattened_index(transitions, current_state, next_move)],
                 np.transpose(feat[get_flattened_index(transitions, current_state, next_move)])
-            ))
-            
+            )
+
+            feat_scaled = feat[get_flattened_index(transitions, current_state, next_move)] * safe_divide(1, denominator)
+
             weight += alpha_td * weight_delta * feat_scaled
             
             ###### Update values of all state-action pairs ######
@@ -369,7 +410,14 @@ def run_trial_sr(phase, trial_index, gamma, alpha_td, alpha_m, beta, end_state, 
                 second_next_move = rng.choice([0, 1], p=second_next_choice_probs)
             second_next_state = transitions[next_state][second_next_move] - 1
 
-            ###### No update of the successor matrix row correpsonding to last state ######
+            ###### No update of the successor matrix row correpsonding to last state (immediately reduced after MB learning) ######
+            
+            # one_hot = np.zeros(num_pairs)
+            # one_hot[get_flattened_index(transitions, last_state, last_move)] = 1
+            # feat_delta = one_hot + gamma * feat[get_flattened_index(transitions, current_state, next_move)] - feat[
+            #     get_flattened_index(transitions, last_state, last_move)]
+            # feat[get_flattened_index(transitions, last_state,
+            #                          last_move)] += alpha_m * feat_delta
 
             ###### Update weights with TD learning ######
             reward = rewards[current_state][next_move]
@@ -377,11 +425,12 @@ def run_trial_sr(phase, trial_index, gamma, alpha_td, alpha_m, beta, end_state, 
                            v_state[get_flattened_index(transitions, current_state, next_move)]
             
             # scale feature according to Russek et al. 2017
-            feat_scaled = feat[get_flattened_index(transitions, current_state, next_move)] / np.matmul(
+            denominator = np.matmul(
                 feat[get_flattened_index(transitions, current_state, next_move)],
                 np.transpose(feat[get_flattened_index(transitions, current_state, next_move)])
             )
-                
+            feat_scaled = feat[get_flattened_index(transitions, current_state, next_move)] * safe_divide(1, denominator)
+
             weight += alpha_td * weight_delta * feat_scaled
 
             ###### Update values of all state-action pairs ######
@@ -404,16 +453,22 @@ def run_trial_sr(phase, trial_index, gamma, alpha_td, alpha_m, beta, end_state, 
         elif (current_state + 1) == end_state:
 
             ###### No update of the successor matrix row correpsonding to last state ######
+            # one_hot = np.zeros(num_pairs)
+            # one_hot[get_flattened_index(transitions, last_state, last_move)] = 1
+            # feat_delta = one_hot + gamma * feat[get_flattened_index(transitions, current_state, next_move)] - feat[
+            #     get_flattened_index(transitions, last_state, last_move)]
+            # feat[get_flattened_index(transitions, last_state, last_move)] += alpha_m * feat_delta
 
-            ###### In relearning phase: Update weights with TD learning ######
+            ###### Update weights with TD learning ######
             reward = rewards[current_state][next_move]
             weight_delta = reward - v_state[get_flattened_index(transitions, current_state, next_move)]
             
-            feat_scaled = feat[get_flattened_index(transitions, current_state, next_move)] / np.matmul(
+            denominator = np.matmul(
                 feat[get_flattened_index(transitions, current_state, next_move)],
                 np.transpose(feat[get_flattened_index(transitions, current_state, next_move)])
             )
-
+            feat_scaled = feat[get_flattened_index(transitions, current_state, next_move)] * safe_divide(1, denominator)
+                
             weight += alpha_td * weight_delta * feat_scaled
 
             ###### Update values of all state-action pairs ######
@@ -506,10 +561,13 @@ def learning(gamma, alpha_td, alpha_m, beta, end_state, rewards, transitions, mo
 
     # Transform v_state from list to array
     v_state_sr, weight_sr = transform_v_and_w_from_list_to_array(v_state, weight)
+    
+    # create reduced SR
+    reduced_feat, reduced_weight = reduce_weight_and_feat(feat, weight_sr, rewards)
 
     for trial_index, start_state in enumerate(start_states_sr):
         print(f"running SR learning trial {trial_index}")
-        v_state_sr, feat, weight_sr, transition_log_lines = run_trial_sr(
+        v_state_sr, reduced_feat, reduced_weight, transition_log_lines = run_trial_sr(
             phase,
             trial_index,
             gamma,
@@ -524,14 +582,14 @@ def learning(gamma, alpha_td, alpha_m, beta, end_state, rewards, transitions, mo
             transitions,
             num_pairs,
             v_state_sr,
-            feat,
-            weight_sr
+            reduced_feat,
+            reduced_weight
         )
 
         transition_log_lines = prefix_all(f"{trial_index + 1},", transition_log_lines)
         transition_log.extend(transition_log_lines)
 
-    new_params = [num_pairs, v_state_sr, feat, weight_sr]
+    new_params = [num_pairs, v_state_sr, feat, reduced_feat, weight_sr, reduced_weight]
         
     return new_params, transition_log
 
@@ -549,6 +607,7 @@ def update_parameters(condition, rewards, transitions):
         rewards = [[0, 0], [0, 0], [0, 0], [0], [0], [0], [15], [0], [45], [0]]
 
     return rewards, transitions
+
 
 
 def relearning(condition, gamma, alpha_td, alpha_m, beta, end_state, rewards, transitions, model_parameters):
@@ -582,7 +641,7 @@ def relearning(condition, gamma, alpha_td, alpha_m, beta, end_state, rewards, tr
     )
     '''
     # Unpack logging_lists and model parameters into component variables
-    num_pairs, v_state, feat, weight = model_parameters
+    num_pairs, v_state, feat, reduced_feat, weight, reduced_weight = model_parameters
     phase = "relearning"
 
     # Create start states
@@ -597,7 +656,7 @@ def relearning(condition, gamma, alpha_td, alpha_m, beta, end_state, rewards, tr
     # Run trials
     transition_log = []
     for trial_index, start_state in enumerate(start_states):
-        v_state, feat, weight, transition_log_lines = run_trial_sr(
+        v_state, reduced_feat, reduced_weight, transition_log_lines = run_trial_sr(
             phase,
             trial_index,
             gamma,
@@ -612,14 +671,14 @@ def relearning(condition, gamma, alpha_td, alpha_m, beta, end_state, rewards, tr
             transitions,
             num_pairs,
             v_state,
-            feat,
-            weight
+            reduced_feat,
+            reduced_weight
         )
 
         transition_log_lines = prefix_all(f"{trial_index + 1},", transition_log_lines)
         transition_log.extend(transition_log_lines)
 
-    new_params = [num_pairs, v_state, feat, weight]
+    new_params = [num_pairs, v_state, feat, reduced_feat, weight, reduced_weight]
         
     return new_params, transition_log
 
@@ -643,7 +702,7 @@ def test(model_parameters):
     )
     '''
 
-    num_pairs, v_state, feat, weight = model_parameters
+    num_pairs, v_state, feat, reduced_feat, weight, reduced_weight = model_parameters
 
     state1_action_index = np.argmax(v_state[0:2])
     state2_action_index = np.argmax(v_state[2:4])

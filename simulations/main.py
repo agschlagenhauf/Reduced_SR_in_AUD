@@ -17,9 +17,14 @@ SUCCESS_COUNT_FILENAME = "success_counts.txt"
 # Parameters
 #
 
-NUM_SIMULATIONS = 110 # number of participants to simulate
-MODELS = ["random_sr_from_mb_wTD_wfeatMfeat"] # "full_sr", "reduced_sr", "model_based", "model_free"
+NUM_SIMULATIONS = 100 # number of participants to simulate
+MODELS = ["random_sr_from_mb_wTD_wfeat", "random_sr_from_mb_wTD_wnoupdate", "random_sr_from_mb_wTD_wfeatMfeat"] # "full_sr", "reduced_sr", "model_based", "model_free", "random_sr_from_mb_wTD_wfeatMfeat", "random_sr_from_mb_wTD_wnoupdate" "model_based_learnt"
 CONDITIONS = ["control", "reward", "transition", "policy", "goal"] # "control", "reward", "transition", "policy", "goal"
+
+ALPHA_TD = [0.9]
+ALPHA_M = [0.9]
+GAMMA = [0.5]
+BETA = 0.9
 
 #
 # Transition Log Headers
@@ -85,14 +90,26 @@ def get_transition_log_headers():
 
     transition_log_headers["full_sr"] = f"{TRANSITION_LOG_HEADER_PREFIX},weight_delta,{value_strings_joined},{weight_strings_joined},{occupancy_strings_joined}\n"
     transition_log_headers["full_sr_forcedonly"] = f"{TRANSITION_LOG_HEADER_PREFIX},weight_delta,{value_strings_joined},{weight_strings_joined},{occupancy_strings_joined}\n"
-    transition_log_headers["random_sr_from_mb_wtoR_wnoupdate"] = f"{TRANSITION_LOG_HEADER_PREFIX},weight_delta,{value_strings_joined},{weight_strings_joined},{occupancy_strings_joined}\n"
+    
     transition_log_headers["random_sr_from_mb_wTD_wnoupdate"] = f"{TRANSITION_LOG_HEADER_PREFIX},weight_delta,{value_strings_joined},{weight_strings_joined},{occupancy_strings_joined}\n"
-    transition_log_headers["random_sr_from_mb_wtoR_wfeat"] = f"{TRANSITION_LOG_HEADER_PREFIX},weight_delta,{value_strings_joined},{weight_strings_joined},{occupancy_strings_joined}\n"
+    transition_log_headers["random_sr_from_mb_wTD_wnoupdate_late"] = f"{TRANSITION_LOG_HEADER_PREFIX},weight_delta,{value_strings_joined},{weight_strings_joined},{occupancy_strings_joined}\n"
     transition_log_headers["random_sr_from_mb_wTD_wfeat"] = f"{TRANSITION_LOG_HEADER_PREFIX},weight_delta,{value_strings_joined},{weight_strings_joined},{occupancy_strings_joined}\n"
+    transition_log_headers["random_sr_from_mb_wTD_wfeat_late"] = f"{TRANSITION_LOG_HEADER_PREFIX},weight_delta,{value_strings_joined},{weight_strings_joined},{occupancy_strings_joined}\n"
     transition_log_headers["random_sr_from_mb_wTD_wfeatMfeat"] = f"{TRANSITION_LOG_HEADER_PREFIX},weight_delta,{value_strings_joined},{weight_strings_joined},{occupancy_strings_joined}\n"
+    transition_log_headers["random_sr_from_mb_wTD_wfeatMfeat_late"] = f"{TRANSITION_LOG_HEADER_PREFIX},weight_delta,{value_strings_joined},{weight_strings_joined},{occupancy_strings_joined}\n"
+    
     transition_log_headers["reduced_sr"] = f"{TRANSITION_LOG_HEADER_PREFIX},weight_delta,{value_strings_joined},{weight_strings_joined},{occupancy_strings_joined}\n"
+    transition_log_headers["reduced_sr_2goalstates"] = f"{TRANSITION_LOG_HEADER_PREFIX},weight_delta,{value_strings_joined},{weight_strings_joined},{occupancy_strings_joined}\n"
+    transition_log_headers["reduced_sr_4goalstates"] = f"{TRANSITION_LOG_HEADER_PREFIX},weight_delta,{value_strings_joined},{weight_strings_joined},{occupancy_strings_joined}\n"
+    
+    transition_log_headers["random_reduced_sr_1goalstate_from_mb_wTD_wfeat"] = f"{TRANSITION_LOG_HEADER_PREFIX},weight_delta,{value_strings_joined},{weight_strings_joined},{occupancy_strings_joined}\n"
+    transition_log_headers["random_reduced_sr_2goalstates_from_mb_wTD_wfeat"] = f"{TRANSITION_LOG_HEADER_PREFIX},weight_delta,{value_strings_joined},{weight_strings_joined},{occupancy_strings_joined}\n"
+    transition_log_headers["random_reduced_sr_4goalstates_from_mb_wTD_wfeat"] = f"{TRANSITION_LOG_HEADER_PREFIX},weight_delta,{value_strings_joined},{weight_strings_joined},{occupancy_strings_joined}\n"
+    transition_log_headers["random_reduced_sr_4goalstates_from_mb_wTD_wfeat_late"] = f"{TRANSITION_LOG_HEADER_PREFIX},weight_delta,{value_strings_joined},{weight_strings_joined},{occupancy_strings_joined}\n"
+    
     transition_log_headers["model_based"] = f"{TRANSITION_LOG_HEADER_PREFIX},weight_delta,{value_strings_joined},{weight_strings_joined},{transition_strings_joined}\n"
     transition_log_headers["model_based_learnt"] = f"{TRANSITION_LOG_HEADER_PREFIX},weight_delta,{value_strings_joined},{weight_strings_joined},{transition_strings_joined}\n"
+    
     transition_log_headers["model_free"] = f"{TRANSITION_LOG_HEADER_PREFIX},{value_strings_joined}\n"
 
     return transition_log_headers
@@ -100,7 +117,7 @@ def get_transition_log_headers():
 #
 # Main
 #
-def main(num_simulations, models, conditions):
+def main(num_simulations, models, conditions, alpha_td, alpha_m, beta, gamma):
     """
     Runs several simulations for each model and writes results to OUTPUT_DIR.
 
@@ -120,7 +137,7 @@ def main(num_simulations, models, conditions):
             print(f"> Simulating model {GREEN}{format_model(model)}{RESET} for condition {GREEN}{format_condition(condition)}{RESET} ...")
             
             # Simulation results per model and condition: [SimulationResult]
-            simulation_results, alpha_td, alpha_m, beta, gamma = run_simulations(model, condition, num_simulations)
+            simulation_results, alpha_td, alpha_m, beta, gamma = run_simulations(model, condition, num_simulations, alpha_td, alpha_m, beta, gamma)
 
             successful_learning_results = [result for result in simulation_results if result.learning_test_result == True]
 
@@ -173,8 +190,15 @@ def main(num_simulations, models, conditions):
             ])
 
         print("> Done\n")
+        
 
+### EXECUTION: Iterate through parameter values indicated above ###
 if __name__ == "__main__":
-        main(num_simulations=NUM_SIMULATIONS, models=MODELS, conditions=CONDITIONS)
+    
+    for index, ALPHA_TD in enumerate(ALPHA_TD):
+        ALPHA_M = ALPHA_M[index]
+        for GAMMA in GAMMA:
+            main(num_simulations=NUM_SIMULATIONS, models=MODELS, conditions=CONDITIONS, alpha_td=ALPHA_TD, alpha_m=ALPHA_M, beta=BETA, gamma=GAMMA)
+####################################################################
         
         

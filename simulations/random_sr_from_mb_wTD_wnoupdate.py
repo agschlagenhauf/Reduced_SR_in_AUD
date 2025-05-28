@@ -374,14 +374,7 @@ def run_trial_sr(phase, trial_index, gamma, alpha_td, alpha_m, beta, end_state, 
                 second_next_move = rng.choice([0, 1], p=second_next_choice_probs)
             second_next_state = transitions[next_state][second_next_move] - 1
 
-            ###### In relearning phase: Update the successor matrix row correpsonding to last state ######
-            if phase == "relearning":
-                one_hot = np.zeros(num_pairs)
-                one_hot[get_flattened_index(transitions, last_state, last_move)] = 1
-                feat_delta = one_hot + gamma * feat[get_flattened_index(transitions, current_state, next_move)] - feat[
-                    get_flattened_index(transitions, last_state, last_move)]
-                feat[get_flattened_index(transitions, last_state,
-                                         last_move)] += alpha_m * feat_delta
+            ###### No update the successor matrix row correpsonding to last state ######
 
             ###### In relearning phase: Update weights with TD learning ######
             reward = rewards[current_state][next_move]
@@ -416,13 +409,7 @@ def run_trial_sr(phase, trial_index, gamma, alpha_td, alpha_m, beta, end_state, 
         ###### Last state ######
         elif (current_state + 1) == end_state:
 
-            ###### In relearning phase: Update the successor matrix row correpsonding to last state ######
-            if phase == "relearning":
-                one_hot = np.zeros(num_pairs)
-                one_hot[get_flattened_index(transitions, last_state, last_move)] = 1
-                feat_delta = one_hot + gamma * feat[get_flattened_index(transitions, current_state, next_move)] - feat[
-                    get_flattened_index(transitions, last_state, last_move)]
-                feat[get_flattened_index(transitions, last_state, last_move)] += alpha_m * feat_delta
+            ###### No update the successor matrix row correpsonding to last state ######
 
             ###### In relearning phase: Update weights with TD learning ######
             reward = rewards[current_state][next_move]

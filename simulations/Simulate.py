@@ -28,7 +28,7 @@ class SimulationResult:
 #
 # Run Simulations
 #
-def run_simulations(model, condition, num_simulations):
+def run_simulations(model, condition, num_simulations, alpha_td, alpha_m, beta, gamma):
     '''
     Runs a number of simulations of a given model, including the learning, relearning, and test phases.
 
@@ -52,10 +52,6 @@ def run_simulations(model, condition, num_simulations):
     #
     # Initialize default parameters
     #
-    alpha_td = 0.9
-    alpha_m = 0.9
-    gamma = 0.9
-    beta = 0.9
     
     forced_choice_switch = True
     
@@ -142,7 +138,17 @@ def run_simulations(model, condition, num_simulations):
 
             model_parameters = [num_pairs, v_state, init_sr, init_weight]
 
-        elif model in ["random_sr_from_mb_wtoR_wnoupdate", "random_sr_from_mb_wtoR_wfeat", "random_sr_from_mb_wTD_wnoupdate", "random_sr_from_mb_wTD_wfeat", "random_sr_from_mb_wTD_wfeatMfeat"]:
+        elif model in ["random_sr_from_mb_wTD_wnoupdate", 
+                       "random_sr_from_mb_wTD_wnoupdate_late", 
+                       "random_sr_from_mb_wTD_wfeat", 
+                       "random_sr_from_mb_wTD_wfeat_late", 
+                       "random_sr_from_mb_wTD_wfeatMfeat",
+                       "random_sr_from_mb_wTD_wfeatMfeat_late",
+                       
+                       "random_reduced_sr_1goalstate_from_mb_wTD_wfeat",
+                       "random_reduced_sr_2goalstates_from_mb_wTD_wfeat",
+                       "random_reduced_sr_4goalstates_from_mb_wTD_wfeat", 
+                       "random_reduced_sr_4goalstates_from_mb_wTD_wfeat_late"]:
             v_state = []
             init_weight = []
         
@@ -155,11 +161,10 @@ def run_simulations(model, condition, num_simulations):
         
             init_t_counts = np.zeros((num_pairs, num_states))
             init_t_matrix = init_t_counts # normalized transition matrix
-            model_parameters = [num_pairs, v_state, init_t_counts, init_t_matrix, init_weight]  
             
-            print(v_state)
+            model_parameters = [num_pairs, v_state, init_t_counts, init_t_matrix, init_weight]  
 
-        elif model == "reduced_sr":
+        elif model in ["reduced_sr", "reduced_sr_2goalstates", "reduced_sr_4goalstates"]:
             v_state = np.zeros(num_pairs)
             init_weight = np.zeros(num_pairs)
             init_reduced_weight = np.zeros((num_pairs, 2)) # hard-coded number of columns - adapt!

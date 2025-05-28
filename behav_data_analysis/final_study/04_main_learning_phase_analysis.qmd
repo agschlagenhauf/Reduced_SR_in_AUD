@@ -275,7 +275,6 @@ anova(log_model_learning_paths_control, log_model_learning_paths_control_rs)
 tab_model(log_model_learning_paths_control_rs, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
 ```
 
-
 ### LogReg2: Difference from goal-state condition
 
 ```{r}
@@ -721,3 +720,21 @@ anova(rt_correct_learning_state123_model, rt_correct_learning_state123_model_rs,
 tab_model(rt_correct_learning_state123_model_rs2, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
 
 ```
+
+# Percentage of visits to different paths during learning
+```{r}
+learning_paths_group_version_df <- trial_df %>%
+  filter(phase == "learning",
+         state %in% c(1)
+         ) %>%
+  group_by(ID, group, version) %>%
+  summarise(mean_correct = mean(correct_path, na.rm = TRUE),
+            se_correct = sd(correct_path, na.rm = TRUE)/sqrt(n()),
+            ci_l = ci(correct_path, na.rm=TRUE)[2],
+            ci_u = ci(correct_path, na.rm=TRUE)[3],
+            n = n()
+            )
+
+min(learning_paths_group_version_df$mean_correct)
+```
+

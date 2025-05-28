@@ -141,16 +141,18 @@ test_correct_paths_lowrisk_mon_condition_df <- trial_df %>%
 ggplot(test_correct_paths_lowrisk_mon_condition_df, aes(x=condition, y=mean_switch*100)) +
   geom_bar(stat="identity", aes(fill = condition)) +
   geom_errorbar(aes(ymin=ci_l*100, ymax=ci_u*100),
-                width=.3,
+                width=.2,
                 position=position_dodge(.9)) +
-  scale_y_continuous("% Trials with changed preference \n regarding optimal path after re-learning", limits = c(0, 100)) +
-  theme_light(base_size = 16) +
+  scale_y_continuous("% Trials with changed \n path preference after re-learning", limits = c(-5, 105)) +
+  theme_light(base_size = 16, base_family = "Aptos") +
   theme(legend.position = "none",
         axis.title.x=element_blank(),
-        axis.text.x = element_text(angle = 50, vjust = 1, hjust=1)) +
+        axis.text.x = element_text(angle = 50, vjust = 1, hjust=1, size=16)) +
   scale_fill_viridis(option = "viridis", discrete = TRUE)
-```
 
+ggsave(filename = "lowrisk_monetary.png", path = figure_path, width = 3.75, height = 5.5, device='png', dpi=600)
+
+```
 
 ### Histogram of individual differences in performance per condition, group, version
 
@@ -231,6 +233,22 @@ logreg_test_path_group_condition_df_alcohol <- trial_df %>%
          switch_path,
          condition,
          environment)
+```
+
+### ICC
+
+```{r}
+contrasts(logreg_test_path_group_version_condition_df_full$condition) <- contr.treatment(5, base = 3)
+
+m_icc <- glmer(switch_path ~
+                  1 + (1 | ID),
+                data = logreg_test_path_group_version_condition_df_full,
+                family = "binomial",
+                glmerControl(optimizer = "bobyqa", optCtrl=list(maxfun=1e6)))
+
+tab_model(m_icc, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
+
+icc(m_icc)
 ```
 
 ### Model 1: Low-risk drinkers, control version, compare against transition revaluation

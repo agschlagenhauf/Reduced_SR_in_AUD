@@ -172,11 +172,11 @@ def run_trial_mb(phase, trial_index, gamma, alpha_td, alpha_m, beta, end_state, 
             ###### No update of transition matrix in first state, as we did not transition from anywhere ######
 
             ###### Update weights with TD learning ######
-            # reward = rewards[current_state][next_move]
-            # weight_delta = reward - \
-            #                v_state[current_state][next_move]  # get weight prediction error
-            # weight[current_state][next_move] += alpha_td * weight_delta  # update weight
-            weight[current_state][next_move] = rewards[current_state][next_move]
+            reward = rewards[current_state][next_move]
+            weight_delta = reward + gamma * v_state[next_state][second_next_move] - \
+                           v_state[current_state][next_move]  # get weight prediction error
+            weight[current_state][next_move] += alpha_td * weight_delta  # update weight
+            #weight[current_state][next_move] = rewards[current_state][next_move]
 
             ###### Update values of all state-action pairs (Bellman Equation) ######
             # vector of values per state under a given softmax policy (multiplies value of each action available from a state with its probability of being chosen and sums over all actions per state)
@@ -216,11 +216,11 @@ def run_trial_mb(phase, trial_index, gamma, alpha_td, alpha_m, beta, end_state, 
                     t_matrix[index] = row / np.sum(row)
 
             ###### Update weights with TD learning ######
-            # reward = rewards[current_state][next_move]
-            # weight_delta = reward - \
-            #                v_state[current_state][next_move] # get weight prediction error
-            # weight[current_state][next_move] += alpha_td * weight_delta # update weight
-            weight[current_state][next_move] = rewards[current_state][next_move]
+            reward = rewards[current_state][next_move]
+            weight_delta = reward + gamma * v_state[next_state][second_next_move] - \
+                           v_state[current_state][next_move]  # get weight prediction error
+            weight[current_state][next_move] += alpha_td * weight_delta # update weight
+            #weight[current_state][next_move] = rewards[current_state][next_move]
             
             ###### Update values of all state-action pairs (Bellman Equation) ######
             next_state_values = [np.sum(v_state[state] * softmax(beta, v_state[state])) for state in range(len(rewards))]
@@ -247,10 +247,10 @@ def run_trial_mb(phase, trial_index, gamma, alpha_td, alpha_m, beta, end_state, 
                     t_matrix[index] = row / np.sum(row)
 
             ###### Update weights with TD learning ######
-            # reward = rewards[current_state][next_move]
-            # weight_delta = reward - v_state[current_state][next_move]  # get weight prediction error
-            # weight[current_state][next_move] += alpha_td * weight_delta  # update weight
-            weight[current_state][next_move] = rewards[current_state][next_move]
+            reward = rewards[current_state][next_move]
+            weight_delta = reward - v_state[current_state][next_move]  # get weight prediction error
+            weight[current_state][next_move] += alpha_td * weight_delta  # update weight
+            #weight[current_state][next_move] = rewards[current_state][next_move]
 
             ###### Update values of all state-action pairs (Bellman Equation) ######
             next_state_values = [np.sum(v_state[state] * softmax(beta, v_state[state])) for state in range(len(rewards))]
@@ -374,14 +374,7 @@ def run_trial_sr(phase, trial_index, gamma, alpha_td, alpha_m, beta, end_state, 
                 second_next_move = rng.choice([0, 1], p=second_next_choice_probs)
             second_next_state = transitions[next_state][second_next_move] - 1
 
-            ###### In relearning phase: Update the successor matrix row correpsonding to last state ######
-            if phase == "relearning":
-                one_hot = np.zeros(num_pairs)
-                one_hot[get_flattened_index(transitions, last_state, last_move)] = 1
-                feat_delta = one_hot + gamma * feat[get_flattened_index(transitions, current_state, next_move)] - feat[
-                    get_flattened_index(transitions, last_state, last_move)]
-                feat[get_flattened_index(transitions, last_state,
-                                         last_move)] += alpha_m * feat_delta
+            ###### No update the successor matrix row correpsonding to last state ######
 
             ###### In relearning phase: Update weights with TD learning ######
             reward = rewards[current_state][next_move]
@@ -416,13 +409,7 @@ def run_trial_sr(phase, trial_index, gamma, alpha_td, alpha_m, beta, end_state, 
         ###### Last state ######
         elif (current_state + 1) == end_state:
 
-            ###### In relearning phase: Update the successor matrix row correpsonding to last state ######
-            if phase == "relearning":
-                one_hot = np.zeros(num_pairs)
-                one_hot[get_flattened_index(transitions, last_state, last_move)] = 1
-                feat_delta = one_hot + gamma * feat[get_flattened_index(transitions, current_state, next_move)] - feat[
-                    get_flattened_index(transitions, last_state, last_move)]
-                feat[get_flattened_index(transitions, last_state, last_move)] += alpha_m * feat_delta
+            ###### No update the successor matrix row correpsonding to last state ######
 
             ###### In relearning phase: Update weights with TD learning ######
             reward = rewards[current_state][next_move]
@@ -491,8 +478,8 @@ def learning(gamma, alpha_td, alpha_m, beta, end_state, rewards, transitions, mo
     phase = "learning"
 
     ##### Create start states #####
-    start_states_mb = np.ones(4, dtype=np.int8)
-    start_states_sr = np.ones(20, dtype=np.int8)
+    start_states_mb = np.ones(20, dtype=np.int8)
+    start_states_sr = np.ones(4, dtype=np.int8)
     
     # Create random forced choice trials order
     forced_choice_trial_order = [0,1,2,3]

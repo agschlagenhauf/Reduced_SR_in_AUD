@@ -7,7 +7,7 @@ date: 09/25/2024
 format: html
 editor: visual
 toc: TRUE
-code-fold: TRUE
+code-fold: FALSE
 number-sections: TRUE
 embed-resources: true
 execute: 
@@ -39,10 +39,6 @@ load(file.path(data_path, "final_data_included.RData"))
 load(file.path(data_path, "demo_psych_data_included.RData"))
 
 ```
-
-\
-\
-\
 
 #### Inspect relation SR use - psychometric measures
 
@@ -798,3 +794,22 @@ mf_plot <- ggarrange(audit_plot, aud_plot, binge_plot, drinking_days_plot, drink
                      common.legend = TRUE, legend = "top")
 mf_plot
 ```
+
+#### Inspect relation between strategy uses
+
+```{r}
+# sr correlations
+r.values <- rcorr(as.matrix(cbind(individual_mb_slopes, individual_mf_slopes, individual_redsr_slopes, individual_sr_slopes)), type="spearman")$r[1:3,"individual_sr_slopes"]
+r.values
+p.values <- rcorr(as.matrix(cbind(individual_mb_slopes, individual_mf_slopes, individual_redsr_slopes, individual_sr_slopes)), type="spearman")$P[1:3,"individual_sr_slopes"]
+p.adjust(p.values, method = "BH", n = length(p.values))
+
+# red sr correlations
+r.values <- rcorr(as.matrix(cbind(individual_mb_slopes, individual_mf_slopes, individual_redsr_slopes, individual_sr_slopes)), type="spearman")$r[,"individual_redsr_slopes"]
+r.values
+p.values <- rcorr(as.matrix(cbind(individual_mb_slopes, individual_mf_slopes, individual_redsr_slopes, individual_sr_slopes)), type="spearman")$P[,"individual_redsr_slopes"]
+p.adjust(p.values, method = "BH", n = 3)
+```
+
+
+

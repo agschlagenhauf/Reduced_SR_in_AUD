@@ -349,9 +349,6 @@ def learning(gamma, alpha_td, alpha_m, beta, end_state, rewards, transitions, mo
 
     # create reduced SR
     reduced_feat, reduced_weight = reduce_weight_and_feat(feat, weight, rewards)
-    
-    print(reduced_feat)
-    print(reduced_weight)
 
     new_params = [num_pairs, v_state, feat, reduced_feat, weight, reduced_weight]
         
