@@ -116,7 +116,7 @@ learning_paths_condition_condition_index_df %>%
 
 ```{r}
 
-# bar plot
+
 
 ggplot(learning_paths_condition_condition_index_df, aes(x=condition_index, y=mean_correct*100, fill=condition)) +
   geom_bar(stat="identity", aes(fill=condition), position=position_dodge()) +
@@ -374,19 +374,31 @@ learning_correct_paths_group_version_condition_time_df %>%
 ```
 
 ```{r}
+# bar plot
+supp.labs <- c("Low-risk drinkers", "High-risk drinkers", "Non-alcohol context", "Alcohol context")
+names(supp.labs) <- c("Low-risk drinkers", "Harmful drinkers", "Monetary version", "Alcohol version")
 
-ggplot(learning_correct_paths_group_version_condition_time_df, aes(x=accumulated_state1_visits+4, y=mean_correct*100)) +
+
+ggplot(learning_correct_paths_group_version_condition_time_df, aes(x=accumulated_state1_visits+4, y=mean_correct)) +
   geom_line(aes(color=condition), size=1) +
-  geom_ribbon(aes(ymin = ci_l * 100, ymax = ci_u * 100, fill = condition), alpha = 0.2) +
-  scale_y_continuous(limits = c(0, 110)) +
-  facet_grid(vars(group), vars(version)) +
-  theme_light(base_size = 16) +
-  xlab("Free-choice trial number") +
-  ylab("% Trials where optimal paths") +
-  theme(legend.title = element_blank()) +
+  geom_ribbon(aes(ymin = mean_correct-se_correct, ymax = mean_correct+se_correct, fill = condition), alpha = 0.2) +
+  scale_y_continuous(limits = c(0, 1)) +
+  facet_grid(vars(group), vars(version), labeller = as_labeller(supp.labs)) +
+  theme_light(base_size = 16, base_family = "Aptos") +
+  xlab("Learning trial number") +
+  ylab("Proportion of trials with optimal path preference") +
+  theme(legend.position = "right",
+        axis.text.x = element_text(size=16),
+        axis.text.y = element_text(size=16),
+        strip.text.x = element_text(size = 16),
+        strip.text.y = element_text(size = 16),
+        legend.text=element_text(size=16)) +
+  guides(fill=guide_legend(title="Condition"),
+         color=guide_legend(title="Condition")) +
   scale_color_viridis(option = "viridis", discrete = TRUE) +
   scale_fill_viridis(option = "viridis", discrete = TRUE)
 
+ggsave(filename = "suppl_learning_time.png", path = figure_path, width = 11, height = 6, device='png', dpi=600)
 ```
 
 ### Logistic regression

@@ -168,7 +168,7 @@ def run_trial(phase, trial_index, gamma, alpha_td, alpha_m, beta, end_state, sta
                 second_next_move = rng.choice([0, 1], p=second_next_choice_probs)
             second_next_state = transitions[next_state][second_next_move] - 1
 
-            ###### Update the transition counts entry correpsonding to last state, last action, current state, and re-normalize transition matrix ######
+            ###### Update the transition counts entry correpsonding to last state, last action, current state ######
             one_hot = np.zeros(num_states)
             one_hot[current_state] = 1
             t_delta = one_hot - t_matrix[get_flattened_index(transitions, last_state, last_move)]

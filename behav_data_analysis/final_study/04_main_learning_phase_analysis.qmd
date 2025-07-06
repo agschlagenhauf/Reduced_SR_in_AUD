@@ -32,6 +32,8 @@ sapply(packages, require, character.only = TRUE)
 #data_path <- "~/work/group_folder/B01_FP2_WP3/WP3_DATA/FINAL_STUDY/RDFs"
 data_path <- "~/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/PhD/04_B01/WP3/WP3_DATA/FINAL_STUDY/RDFs"
 model_path <- "/Users/milenamusial/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/PhD/04_B01/WP3/WP3_DATA/FINAL_STUDY/model_objects"
+figure_path <- "/Users/milenamusial/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/PhD/04_B01/WP3/Project_Docs/Figures"
+
 
 # read dfs
 load(file.path(data_path, "final_data_included.RData"))
@@ -86,20 +88,27 @@ learning_correct_path_group_version_condition_df %>%
 ```
 
 ```{r}
+supp.labs <- c("Low-risk drinkers", "High-risk drinkers", "Non-alcohol context", "Alcohol context")
+names(supp.labs) <- c("Low-risk drinkers", "Harmful drinkers", "Monetary version", "Alcohol version")
+
 # bar plot
-ggplot(learning_correct_path_group_version_condition_df, aes(x=condition, y=mean_correct*100)) +
+ggplot(learning_correct_path_group_version_condition_df, aes(x=condition, y=mean_correct)) +
   geom_bar(stat="identity", aes(fill = condition)) +
-  geom_errorbar(aes(ymin=ci_l*100, ymax=ci_u*100),
+  geom_errorbar(aes(ymin=mean_correct-se_correct, ymax=mean_correct+se_correct),
                 width=.2,
                 position=position_dodge(.9)) +
-  facet_grid(vars(group), vars(version)) +
-  scale_y_continuous("% Correct paths", limits = c(0, 105)) +
-  theme_light(base_size = 16) +
+  facet_grid(vars(group), vars(version), labeller = as_labeller(supp.labs)) +
+  scale_y_continuous("Proportion of correct paths", limits = c(0, 1.05)) +
+  theme_light(base_size = 16, base_family = "Aptos") +
   theme(legend.position = "none",
         axis.title.x=element_blank(),
-        axis.text.x = element_text(angle = 50, vjust = 1, hjust=1)) +
+        axis.text.x = element_text(angle = 50, vjust = 1, hjust=1, size=16),
+        axis.text.y = element_text(size=16),
+        strip.text.x = element_text(size = 16),
+        strip.text.y = element_text(size = 16)) +
   scale_fill_viridis(option = "viridis", discrete = TRUE)
 
+ggsave(filename = "suppl_learning_average.png", path = figure_path, width = 8, height = 6, device='png', dpi=600)
 ```
 
 ### Performance per environment
@@ -182,6 +191,11 @@ ggplot(learning_paths_group_condition_environment_df, aes(x=environment, y=mean_
 ## Logistic regression
 
 ```{r}
+# Set contrasts
+contrasts(trial_df$group) <- contr.sum(2)*-0.5
+contrasts(trial_df$version) <- contr.sum(2)*-0.5
+### contrast for condition changes from analysis to analysis
+
 logreg_learning_correct_paths_group_version_condition_df <- trial_df %>%
   filter(phase == "learning",
          state == 1,
@@ -201,56 +215,7 @@ logreg_learning_correct_paths_group_version_condition_df <- trial_df %>%
          environment)
 ```
 
-### LogReg: Difference between conditions (sum contrast-coded)
-
-```{r}
-contrasts(logreg_learning_correct_paths_group_version_condition_df$condition) <- contr.sum(5)
-
-log_model_learning_paths_sum <- glmer(correct_path ~ group*version*condition + (1 | ID),
-                                          data = logreg_learning_correct_paths_group_version_condition_df,
-                                          family = "binomial",
-                                          control=glmerControl(optimizer="bobyqa", optCtrl=list(maxfun=1e6)))
-saveRDS(log_model_learning_paths_sum, file=file.path(model_path, "log_model_learning_paths_sum.rds"))
-log_model_learning_paths_sum <- readRDS(file.path(model_path, "log_model_learning_paths_sum.rds"))
-
-log_model_learning_paths_sum_rs <- glmer(correct_path ~ group*version*condition + (1 + condition | ID),
-                                          data = logreg_learning_correct_paths_group_version_condition_df,
-                                          family = "binomial",
-                                          control=glmerControl(optimizer="bobyqa", optCtrl=list(maxfun=1e6)))
-saveRDS(log_model_learning_paths_sum_rs, file=file.path(model_path, "log_model_learning_paths_sum_rs.rds"))
-log_model_learning_paths_sum_rs <- readRDS(file.path(model_path, "log_model_learning_paths_sum_rs.rds"))
-
-anova(log_model_learning_paths_sum, log_model_learning_paths_sum_rs)
-
-tab_model(log_model_learning_paths_sum_rs, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
-```
-
 ### LogReg1: Difference from control condition
-
-```{r}
-contrasts(logreg_learning_correct_paths_group_version_condition_df$condition) <- contr.treatment(5, base = 5)
-
-# log_model_learning_paths_control <- glmer(correct_path ~ group*version*condition + (1 | ID),
-#                                           data = logreg_learning_correct_paths_group_version_condition_df,
-#                                           family = "binomial",
-#                                           control=glmerControl(optimizer="bobyqa", optCtrl=list(maxfun=1e6)))
-# saveRDS(log_model_learning_paths_control, file=file.path(model_path, "log_model_learning_paths_control.rds"))
-log_model_learning_paths_control <- readRDS(file.path(model_path, "log_model_learning_paths_control.rds"))
-
-
-# log_model_learning_paths_control_rs <- glmer(correct_path ~ group*version*condition + (1 + condition | ID),
-#                                           data = logreg_learning_correct_paths_group_version_condition_df,
-#                                           family = "binomial",
-#                                           control=glmerControl(optimizer="bobyqa", optCtrl=list(maxfun=1e6)))
-# saveRDS(log_model_learning_paths_control_rs, file=file.path(model_path, "log_model_learning_paths_control_rs.rds"))
-log_model_learning_paths_control_rs <- readRDS(file.path(model_path, "log_model_learning_paths_control_rs.rds"))
-
-anova(log_model_learning_paths_control, log_model_learning_paths_control_rs)
-
-tab_model(log_model_learning_paths_control_rs, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
-```
-
-### LogReg1: Difference from control condition in last 5 trials of learning phase
 
 ```{r}
 contrasts(logreg_learning_correct_paths_group_version_condition_df$condition) <- contr.treatment(5, base = 5)
@@ -259,16 +224,16 @@ log_model_learning_paths_control <- glmer(correct_path ~ group*version*condition
                                           data = logreg_learning_correct_paths_group_version_condition_df,
                                           family = "binomial",
                                           control=glmerControl(optimizer="bobyqa", optCtrl=list(maxfun=1e6)))
-saveRDS(log_model_learning_paths_control, file=file.path(model_path, "log_model_learning_paths_control_last5.rds"))
-log_model_learning_paths_control <- readRDS(file.path(model_path, "log_model_learning_paths_control_last5.rds"))
+saveRDS(log_model_learning_paths_control, file=file.path(model_path, "log_model_learning_paths_control.rds"))
+log_model_learning_paths_control <- readRDS(file.path(model_path, "log_model_learning_paths_control.rds"))
 
 
 log_model_learning_paths_control_rs <- glmer(correct_path ~ group*version*condition + (1 + condition | ID),
                                           data = logreg_learning_correct_paths_group_version_condition_df,
                                           family = "binomial",
                                           control=glmerControl(optimizer="bobyqa", optCtrl=list(maxfun=1e6)))
-saveRDS(log_model_learning_paths_control_rs, file=file.path(model_path, "log_model_learning_paths_control_rs_last5.rds"))
-log_model_learning_paths_control_rs <- readRDS(file.path(model_path, "log_model_learning_paths_control_rs_last5.rds"))
+saveRDS(log_model_learning_paths_control_rs, file=file.path(model_path, "log_model_learning_paths_control_rs.rds"))
+log_model_learning_paths_control_rs <- readRDS(file.path(model_path, "log_model_learning_paths_control_rs.rds"))
 
 anova(log_model_learning_paths_control, log_model_learning_paths_control_rs)
 
@@ -307,18 +272,18 @@ tab_model(log_model_learning_paths_goalstate_rs, show.est = T, show.stat = T, au
 ```{r}
 contrasts(logreg_learning_correct_paths_group_version_condition_df$condition) <- contr.treatment(5, base = 4)
 
-# log_model_learning_paths_policy <- glmer(correct_path ~ group*version*condition + (1 | ID),
-#                                          data = logreg_learning_correct_paths_group_version_condition_df,
-#                                          family = "binomial",
-#                                          control=glmerControl(optimizer="bobyqa", optCtrl=list(maxfun=1e6)))
-# saveRDS(log_model_learning_paths_policy, file=file.path(model_path, "log_model_learning_paths_policy.rds"))
+log_model_learning_paths_policy <- glmer(correct_path ~ group*version*condition + (1 | ID),
+                                         data = logreg_learning_correct_paths_group_version_condition_df,
+                                         family = "binomial",
+                                         control=glmerControl(optimizer="bobyqa", optCtrl=list(maxfun=1e6)))
+saveRDS(log_model_learning_paths_policy, file=file.path(model_path, "log_model_learning_paths_policy.rds"))
 log_model_learning_paths_policy <- readRDS(file.path(model_path, "log_model_learning_paths_policy.rds"))
 
-# log_model_learning_paths_policy_rs <- glmer(correct_path ~ group*version*condition + (1 + condition | ID),
-#                                          data = logreg_learning_correct_paths_group_version_condition_df,
-#                                          family = "binomial",
-#                                          control=glmerControl(optimizer="bobyqa", optCtrl=list(maxfun=1e6)))
-# saveRDS(log_model_learning_paths_policy_rs, file=file.path(model_path, "log_model_learning_paths_policy_rs.rds"))
+log_model_learning_paths_policy_rs <- glmer(correct_path ~ group*version*condition + (1 + condition | ID),
+                                         data = logreg_learning_correct_paths_group_version_condition_df,
+                                         family = "binomial",
+                                         control=glmerControl(optimizer="bobyqa", optCtrl=list(maxfun=1e6)))
+saveRDS(log_model_learning_paths_policy_rs, file=file.path(model_path, "log_model_learning_paths_policy_rs.rds"))
 log_model_learning_paths_policy_rs <- readRDS(file.path(model_path, "log_model_learning_paths_policy_rs.rds"))
 
 anova(log_model_learning_paths_policy, log_model_learning_paths_policy_rs)
@@ -722,6 +687,7 @@ tab_model(rt_correct_learning_state123_model_rs2, show.est = T, show.stat = T, a
 ```
 
 # Percentage of visits to different paths during learning
+
 ```{r}
 learning_paths_group_version_df <- trial_df %>%
   filter(phase == "learning",
@@ -737,4 +703,3 @@ learning_paths_group_version_df <- trial_df %>%
 
 min(learning_paths_group_version_df$mean_correct)
 ```
-

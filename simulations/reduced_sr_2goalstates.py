@@ -10,7 +10,7 @@ import numpy as np
 import random as rd
 from utilities import *
 
-def reduce_weight_and_feat(feat, weight, rewards):
+def reduce_weight_and_feat(feat, weight):
     '''
     Deletes all columns of the successor matrix and the reward vector
     that don't correspond to a reward-giving action, converting a full to a reduced successor matrix
@@ -28,17 +28,14 @@ def reduce_weight_and_feat(feat, weight, rewards):
     reduced_sr = []
     reduced_weight = []
 
-    flattened_rewards = flatten(rewards)
-
-    for i, reward in enumerate(flattened_rewards):
-        if reward != 0 or i == 12:
+    for i, w in enumerate(weight):
+        if w > 1 or i in [12]:
             non_zero_feat_column = feat[:,i]
             reduced_sr.append(non_zero_feat_column)
             non_zero_weight = weight[i]
             reduced_weight.append(non_zero_weight)
 
     return np.transpose(reduced_sr), reduced_weight
-
 
 def run_trial(phase, trial_index, gamma, alpha_td, alpha_m, beta, end_state, start_state, forced_choice_switch, forced_choice_trial_order, rewards, transitions, num_pairs, v_state, feat, weight):
     '''
@@ -348,7 +345,7 @@ def learning(gamma, alpha_td, alpha_m, beta, end_state, rewards, transitions, mo
         transition_log.extend(transition_log_lines)
 
     # create reduced SR
-    reduced_feat, reduced_weight = reduce_weight_and_feat(feat, weight, rewards)
+    reduced_feat, reduced_weight = reduce_weight_and_feat(feat, weight)
 
     new_params = [num_pairs, v_state, feat, reduced_feat, weight, reduced_weight]
         

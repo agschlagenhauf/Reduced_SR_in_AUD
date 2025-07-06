@@ -369,7 +369,13 @@ def run_trial_sr(phase, trial_index, gamma, alpha_td, alpha_m, beta, end_state, 
                 second_next_move = rng.choice([0, 1], p=second_next_choice_probs)
             second_next_state = transitions[next_state][second_next_move] - 1
 
-            ###### No update of the successor matrix row correpsonding to last state ######
+            ###### In relearning phase: Update the successor matrix row correpsonding to last state ######
+            if phase == "relearning":
+                one_hot = np.zeros(num_pairs)
+                one_hot[get_flattened_index(transitions, last_state, last_move)] = 1
+                feat_delta = one_hot + gamma * feat[get_flattened_index(transitions, current_state, next_move)] - feat[
+                    get_flattened_index(transitions, last_state, last_move)]
+                feat[get_flattened_index(transitions, last_state, last_move)] += alpha_m * feat_delta
 
             ###### Update weights with TD learning ######
             reward = rewards[current_state][next_move]
@@ -403,7 +409,13 @@ def run_trial_sr(phase, trial_index, gamma, alpha_td, alpha_m, beta, end_state, 
         ###### Last state ######
         elif (current_state + 1) == end_state:
 
-            ###### No update of the successor matrix row correpsonding to last state ######
+            ###### In relearning phase: Update the successor matrix row correpsonding to last state ######
+            if phase == "relearning":
+                one_hot = np.zeros(num_pairs)
+                one_hot[get_flattened_index(transitions, last_state, last_move)] = 1
+                feat_delta = one_hot + gamma * feat[get_flattened_index(transitions, current_state, next_move)] - feat[
+                    get_flattened_index(transitions, last_state, last_move)]
+                feat[get_flattened_index(transitions, last_state, last_move)] += alpha_m * feat_delta
 
             ###### In relearning phase: Update weights with TD learning ######
             reward = rewards[current_state][next_move]
@@ -481,7 +493,6 @@ def learning(gamma, alpha_td, alpha_m, beta, end_state, rewards, transitions, mo
     # Run trials
     transition_log = []
     for trial_index, start_state in enumerate(start_states_mb):
-        print(f"running MB learning trial {trial_index}")
         v_state, t_counts, t_matrix, weight, transition_log_lines = run_trial_mb(
             phase,
             trial_index,
@@ -508,7 +519,6 @@ def learning(gamma, alpha_td, alpha_m, beta, end_state, rewards, transitions, mo
     v_state_sr, weight_sr = transform_v_and_w_from_list_to_array(v_state, weight)
 
     for trial_index, start_state in enumerate(start_states_sr):
-        print(f"running SR learning trial {trial_index}")
         v_state_sr, feat, weight_sr, transition_log_lines = run_trial_sr(
             phase,
             trial_index,

@@ -496,7 +496,6 @@ def learning(gamma, alpha_td, alpha_m, beta, end_state, rewards, transitions, mo
     # Run trials
     transition_log = []
     for trial_index, start_state in enumerate(start_states_mb):
-        print(f"running MB learning trial {trial_index}")
         v_state, t_counts, t_matrix, weight, transition_log_lines = run_trial_mb(
             phase,
             trial_index,
@@ -523,7 +522,6 @@ def learning(gamma, alpha_td, alpha_m, beta, end_state, rewards, transitions, mo
     v_state_sr, weight_sr = transform_v_and_w_from_list_to_array(v_state, weight)
 
     for trial_index, start_state in enumerate(start_states_sr):
-        print(f"running SR learning trial {trial_index}")
         v_state_sr, feat, weight_sr, transition_log_lines = run_trial_sr(
             phase,
             trial_index,

@@ -146,7 +146,9 @@ def run_simulations(model, condition, num_simulations, alpha_td, alpha_m, beta, 
                        "random_sr_from_mb_wTD_wfeatMfeat_late",
                        
                        "random_reduced_sr_1goalstate_from_mb_wTD_wfeat",
+                       "random_reduced_sr_1goalstate_from_mb_wTD_wfeat_late",
                        "random_reduced_sr_2goalstates_from_mb_wTD_wfeat",
+                       "random_reduced_sr_2goalstates_from_mb_wTD_wfeat_late",
                        "random_reduced_sr_4goalstates_from_mb_wTD_wfeat", 
                        "random_reduced_sr_4goalstates_from_mb_wTD_wfeat_late"]:
             v_state = []

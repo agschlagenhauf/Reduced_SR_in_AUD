@@ -22,15 +22,16 @@ editor_options:
 rm(list = ls(all = TRUE))
 
 # Load packages
-packages <- c("ggplot2", "dplyr", "tidyr", "kableExtra", "gmodels", "lme4", "sjPlot", "viridis", "forcats")
+packages <- c("ggplot2", "dplyr", "tidyr", "kableExtra", "gmodels", "lme4", "sjPlot", "viridis", "forcats", "performance")
 #install.packages(packages)
 sapply(packages, require, character.only = TRUE)
 
 # set color scheme
 
 # define paths
-#data_path <- "~/work/group_folder/B01_FP2_WP3/WP3_DATA/FINAL_STUDY/RDFs"
-data_path <- "WP3_DATA/FINAL_STUDY/RDFs"
+data_path <- "/Users/milenamusial/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/PhD/04_B01/WP3/WP3_DATA/FINAL_STUDY/RDFs"
+figure_path <- "/Users/milenamusial/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/PhD/04_B01/WP3/Project_Docs/Figures"
+
 
 # read dfs
 load(file.path(data_path, "final_data_included.RData"))
@@ -880,11 +881,11 @@ load(file.path(data_path, "demo_psych_data_included.RData"))
 
 <!-- ``` -->
 
-## Rating score per first state action
+# Plot
 
 ```{r}
 rating_state1_group_version_condition_df <- rating_df %>%
-  group_by(group, version, condition) %>%
+  group_by(condition) %>%
   summarise(n = n(),
             mean_rating_diff = mean(rating_diff_switch_state1, na.rm=T),
             se_rating_diff = sd(rating_diff_switch_state1, na.rm = TRUE)/sqrt(n()),
@@ -893,7 +894,8 @@ rating_state1_group_version_condition_df <- rating_df %>%
             )
 
 rating_state1_group_version_condition_df %>%
-  kable("html") %>%
+  kable("html",
+        digits=2) %>%
   kable_styling(font_size = 18,
                 latex_options = "scale_down")
 ```
@@ -904,19 +906,31 @@ Lower scores = preference for action that was optimal during learning
 
 ```{r}
 # bar plot
+
+# bar plot
+supp.labs <- c("Low-risk drinkers", "High-risk drinkers", "Non-alcohol context", "Alcohol context")
+names(supp.labs) <- c("Low-risk drinkers", "Harmful drinkers", "Monetary version", "Alcohol version")
+
 ggplot(rating_state1_group_version_condition_df, aes(x=condition, y=mean_rating_diff)) +
   geom_bar(stat="identity", aes(fill = condition)) +
-  geom_errorbar(aes(ymin=ci_l, ymax=ci_u), 
+  geom_errorbar(aes(ymin=mean_rating_diff-se_rating_diff, ymax=mean_rating_diff+se_rating_diff), 
                 width=.2,
                 position=position_dodge(.9)) +
-  facet_grid(vars(group), vars(version)) +
-  scale_y_continuous("Perceived value difference \n between state 1 actions", limits = c(-100, 100)) +
-  theme_light(base_size = 16) +
+  facet_grid(vars(group), vars(version), labeller = as_labeller(supp.labs)) +
+  scale_y_continuous("Difference in expected reward per first-state action \n (suboptimal - optimal during learning phase)", limits = c(-100, 100)) +
+  theme_light(base_size = 16, base_family = "Aptos") +
   theme(legend.position = "none",
         axis.title.x=element_blank(),
-        axis.text.x = element_text(angle = 50, vjust = 1, hjust=1)) +
+        axis.text.x = element_text(angle = 50, vjust = 1, hjust=1, size=16),
+        axis.text.y = element_text(size=16),
+        strip.text.x = element_text(size = 16),
+        strip.text.y = element_text(size = 16)) +
   scale_fill_viridis(option = "viridis", discrete = TRUE)
+
+ggsave(filename = "suppl_rating.png", path = figure_path, width = 8, height = 7, device='png', dpi=600)
 ```
+
+## LogReg
 
 ```{r}
 # Prepare LogReg dfs
@@ -930,6 +944,11 @@ linreg_test_rating_group_version_condition_df_full <- rating_df %>%
          ID,
          rating_diff_switch_state1,
          condition)
+
+# Set contrasts
+contrasts(linreg_test_rating_group_version_condition_df_full$group) <- contr.sum(2)*-0.5
+contrasts(linreg_test_rating_group_version_condition_df_full$version) <- contr.sum(2)*-0.5
+
 
 linreg_test_rating_condition_df_lowrisk_control <- rating_df %>%
   drop_na(rating_diff_switch_state1) %>%
@@ -949,6 +968,11 @@ linreg_test_rating_group_condition_df_alcohol <- rating_df %>%
          ID,
          rating_diff_switch_state1,
          condition)
+
+# Set contrasts
+contrasts(linreg_test_rating_group_condition_df_alcohol$group) <- contr.sum(2)*-0.5
+
+
 ```
 
 #### Model 1_expl4d: Low-risk drinkers, control version, compare against transition revaluation
@@ -958,7 +982,10 @@ contrasts(linreg_test_rating_condition_df_lowrisk_control$condition) <- contr.tr
 
 model1_expl4d <- lmer(rating_diff_switch_state1 ~ condition + (1 | ID), data = linreg_test_rating_condition_df_lowrisk_control, REML = F, lmerControl(optimizer = "bobyqa"))
 
-tab_model(model1_expl4d, transform = NULL, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
+tab_model(model1_expl4d, transform = NULL, show.est = T, show.stat = T, show.df = T, df.method = "satterthwaite", auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
+
+check_model(model1_expl4d, check=c("pp_check", "reqq", "qq"))
+
 ```
 
 #### Model 2_expl4b: Low-risk drinkers, control version, compare against policy revaluation
@@ -968,7 +995,35 @@ contrasts(linreg_test_rating_condition_df_lowrisk_control$condition) <- contr.tr
 
 model2_expl4d <- lmer(rating_diff_switch_state1 ~ condition + (1 | ID), data = linreg_test_rating_condition_df_lowrisk_control, REML = F, lmerControl(optimizer = "bobyqa"))
 
-tab_model(model2_expl4d, transform = NULL, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
+tab_model(model2_expl4d, transform = NULL, show.est = T, show.stat = T, show.df = T, df.method = "satterthwaite", auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
+
+check_model(model2_expl4d, check=c("pp_check", "reqq", "qq"))
+```
+
+#### Model 12b_expl4d: Low-risk drinkers, control version, compare against control
+
+```{r}
+contrasts(linreg_test_rating_condition_df_lowrisk_control$condition) <- contr.treatment(5, base = 5)
+
+model12b_expl4d <- lmer(rating_diff_switch_state1 ~ condition + (1 | ID), data = linreg_test_rating_condition_df_lowrisk_control, REML = F, lmerControl(optimizer = "bobyqa"))
+
+tab_model(model12b_expl4d, transform = NULL, show.est = T, show.stat = T, show.df = T, df.method = "satterthwaite", auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
+
+check_model(model12b_expl4d, check=c("pp_check", "reqq", "qq"))
+
+```
+
+#### Model 12c_expl4d: Low-risk drinkers, control version, compare against reward
+
+```{r}
+contrasts(linreg_test_rating_condition_df_lowrisk_control$condition) <- contr.treatment(5, base = 1)
+
+model12c_expl4d <- lmer(rating_diff_switch_state1 ~ condition + (1 | ID), data = linreg_test_rating_condition_df_lowrisk_control, REML = F, lmerControl(optimizer = "bobyqa"))
+
+tab_model(model12c_expl4d, transform = NULL, show.est = T, show.stat = T, show.df = T, df.method = "satterthwaite", auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
+
+check_model(model12c_expl4d, check=c("pp_check", "reqq", "qq"))
+
 ```
 
 #### Model 3_expl4b: Full dataset, compare against transition revaluation
@@ -982,7 +1037,9 @@ model3_expl4d <- lmer(rating_diff_switch_state1 ~
                 data = linreg_test_rating_group_version_condition_df_full,
                 REML = F, lmerControl(optimizer = "bobyqa"))
 
-tab_model(model3_expl4d, transform = NULL, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
+tab_model(model3_expl4d, transform = NULL, show.est = T, show.stat = T, show.df = T, df.method = "satterthwaite",  auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
+
+check_model(model3_expl4d, check=c("pp_check", "reqq", "qq"))
 ```
 
 ##### Inspect interactions
@@ -1033,7 +1090,9 @@ contrasts(linreg_test_rating_group_condition_df_alcohol$condition) <- contr.trea
 
 model4_expl4d <- lmer(rating_diff_switch_state1 ~ condition*group + (1 | ID), data = linreg_test_rating_group_condition_df_alcohol, REML = F, lmerControl(optimizer = "bobyqa"))
 
-tab_model(model4_expl4d, transform = NULL, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
+tab_model(model4_expl4d, transform = NULL, show.est = T, show.stat = T, show.df = T, df.method = "satterthwaite",  auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
+
+check_model(model4_expl4d, check=c("pp_check", "reqq", "qq"))
 ```
 
 ##### Inspect effects per group (n.s.)
@@ -1065,7 +1124,7 @@ model5_expl4d <- lmer(rating_diff_switch_state1 ~ group*version*condition +
                 data = linreg_test_rating_group_version_condition_df_full,
                 REML = F, lmerControl(optimizer = "bobyqa"))
 
-tab_model(model5_expl4d, transform = NULL, show.est = T, show.stat = T, auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
+tab_model(model5_expl4d, transform = NULL, show.est = T, show.stat = T, show.df = T, df.method = "satterthwaite",   auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
 ```
 
 ##### Inspect interactions
@@ -1089,6 +1148,19 @@ contrast(contrasts, list(lowriskcon_harmfulalc = c(-1,0,0,0,0,0,0,0,0,0,0,0,1,0,
                          harmfulcon_harmfulalc = c(0,0,0,0,-1,0,0,0,0,0,0,0,1,0,0,0),
                          lowriskalc_harmfulalc = c(0,0,0,0,0,0,0,0,-1,0,0,0,1,0,0,0)), 
          by=NULL, adjust = "Holm")
+```
+
+#### Model 3b: Full dataset, compare against control
+
+```{r}
+contrasts(linreg_test_rating_group_version_condition_df_full$condition) <- contr.treatment(5, base = 5)
+
+model_control_expl4d <- lmer(rating_diff_switch_state1 ~ group*version*condition +
+                  (1 | ID),
+                data = linreg_test_rating_group_version_condition_df_full,
+                REML = F, lmerControl(optimizer = "bobyqa"))
+
+tab_model(model_control_expl4d, transform = NULL, show.est = T, show.stat = T, show.df = T, df.method = "satterthwaite",   auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
 ```
 
 #### Relation rating score - test choices

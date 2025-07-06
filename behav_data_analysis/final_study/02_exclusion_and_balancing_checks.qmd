@@ -31,6 +31,7 @@ sapply(packages, require, character.only = TRUE)
 # define paths
 # data_path <- "~/work/group_folder/B01_FP2_WP3/WP3_DATA/FINAL_STUDY/RDFs"
 data_path <- "~/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/PhD/04_B01/WP3/WP3_DATA/FINAL_STUDY/RDFs"
+figure_path <- "/Users/milenamusial/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/PhD/04_B01/WP3/Project_Docs/Figures"
 
 # read dfs
 load(file.path(data_path, "final_data_complete.RData"))
@@ -284,6 +285,32 @@ summary %>%
 
 ## Balancing checks
 
+```{r}
+component_df <- component_df %>%
+  mutate(version=factor(version, levels=c("control", "alcohol")),
+         group=factor(group, levels=c("low-risk", "harmful"))) %>%
+  mutate(condition = case_match(condition,
+                            "reward" ~ "Reward revaluation", 
+                            "goal-state" ~ "Goal-state revaluation", 
+                            "transition" ~ "Transition revaluation",
+                            "policy" ~ "Policy revaluation",
+                            "control" ~ "Control condition"),
+         environment = case_match(environment,
+                                  "alternative" ~ "Alternative bar",
+                                  "blue floral" ~ "Blue floral apartment",
+                                  "brauhaus" ~ "Brauhaus",
+                                  "fancy green" ~ "Fancy green bar",
+                                  "hip purple" ~ "Hip purple bar",
+                                  "messy green" ~ "Messy green apartment",
+                                  "orange tile" ~ "Orange tile apartment",
+                                  "red brown" ~ "Red brown apartment",
+                                  "sports bar" ~ "Sports bar",
+                                  "white modern" ~ "White modern apartment")) %>%
+  mutate(condition=factor(condition, levels=c("Reward revaluation", "Goal-state revaluation", "Transition revaluation", "Policy revaluation", "Control condition")),
+         environment=factor(environment, levels=c("Blue floral apartment", "Messy green apartment", "Orange tile apartment", "Red brown apartment", "White modern apartment", 
+                                                  "Alternative bar", "Brauhaus", "Fancy green bar", "Hip purple bar","Sports bar")))
+```
+
 ### Condition index per condition
 
 ```{r}
@@ -309,14 +336,25 @@ index_summary %>%
 ```
 
 ```{r}
+supp.labs <- c("Low-risk drinkers", "High-risk drinkers", "Non-alcohol context", "Alcohol context")
+names(supp.labs) <- c("low-risk", "harmful", "control", "alcohol")
+
 ggplot(balancing_df, aes(x=condition, fill=condition_index)) +
   geom_bar() +
   geom_text(stat = "count", aes(label = ..count..),
             position = position_stack(vjust = 0.5), size = 4) +
-  facet_grid(vars(group), vars(version)) +
-  theme_light(base_size = 16) +
-  theme(axis.text.x = element_text(angle = 50, vjust = 1, hjust=1)) +
+  facet_grid(vars(group), vars(version), labeller = as_labeller(supp.labs)) +
+  labs(fill="Index") +
+  xlab("Condition") +
+  ylab("Number of participants") +
+  theme_light(base_size = 16, base_family = "Aptos") +
+  theme(axis.text.x = element_text(angle = 50, vjust = 1, hjust=1, size=16),
+        axis.text.y = element_text(size=16),
+        strip.text.x = element_text(size = 16),
+        strip.text.y = element_text(size = 16)) +
   scale_fill_viridis(option = "plasma", discrete = TRUE)
+
+ggsave(filename = "balancing_condition_order.png", path = figure_path, width = 9, height = 7, device='png', dpi=600)
 ```
 
 ### Environment per condition
@@ -335,15 +373,26 @@ environment_summary %>%
 ```
 
 ```{r}
+supp.labs <- c("Low-risk drinkers", "High-risk drinkers", "Non-alcohol context", "Alcohol context")
+names(supp.labs) <- c("low-risk", "harmful", "control", "alcohol")
+
 balancing_df %>%
   ggplot(aes(x=condition, fill=environment)) +
   geom_bar() +
   geom_text(stat = "count", aes(label = ..count..),
             position = position_stack(vjust = 0.5), size = 4) +
-  facet_grid(vars(group), vars(version), scales = "free_x") +
-  theme_light(base_size = 16) +
-  theme(axis.text.x = element_text(angle = 50, vjust = 1, hjust=1)) +
-  scale_fill_viridis(option = "turbo", discrete = TRUE)
+  facet_grid(vars(group), vars(version), scales = "free_x", labeller = as_labeller(supp.labs)) +
+  labs(fill="Environment") +
+  xlab("Condition") +
+  ylab("Number of participants") +
+  theme_light(base_size = 16, base_family = "Aptos") +
+  theme(axis.text.x = element_text(angle = 50, vjust = 1, hjust=1, size=16),
+        axis.text.y = element_text(size=16),
+        strip.text.x = element_text(size = 16),
+        strip.text.y = element_text(size = 16)) +
+  scale_fill_viridis(option = "plasma", discrete = TRUE)
+
+ggsave(filename = "balancing_environments.png", path = figure_path, width = 11, height = 7, device='png', dpi=600)
 ```
 
 ```{r}
