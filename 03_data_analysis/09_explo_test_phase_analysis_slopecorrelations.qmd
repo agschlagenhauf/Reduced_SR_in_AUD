@@ -1,0 +1,407 @@
+---
+title: "Explore individual test phase slopes"
+doi: "https://doi.org/10.17605/OSF.IO/9TUZE"
+author: "Milena Musial"
+date: 08/03/2025
+format: html
+editor: visual
+toc: TRUE
+code-fold: TRUE
+warning: FALSE
+number-sections: TRUE
+embed-resources: true
+execute: 
+  warning: FALSE
+editor_options: 
+  chunk_output_type: console
+---
+
+# Set up
+
+```{r}
+rm(list = ls(all = TRUE))
+
+# Load packages
+packages <- c("ggplot2", "dplyr", "tidyr", "kableExtra", "gmodels", "lme4", "sjPlot", "viridis", "forcats", "lmerTest", "car", "PerformanceAnalytics", "emmeans", "corrplot", "Hmisc", "ggpubr")
+#install.packages(packages)
+invisible(lapply(packages, require, character.only = TRUE))
+
+# set color scheme
+custom_colors <- viridis(10, option = "rocket")[c(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)]
+
+# define paths
+#data_path <- "~/work/group_folder/B01_FP2_WP3/WP3_DATA/FINAL_STUDY/RDFs"
+data_path <- "~/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/PhD/04_B01/WP3/WP3_DATA/FINAL_STUDY/RDFs"
+model_path <- "/Users/milenamusial/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/PhD/04_B01/WP3/WP3_DATA/FINAL_STUDY/model_objects"
+figure_path <- "/Users/milenamusial/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/PhD/04_B01/WP3/Project_Docs/Figures"
+
+# read dfs
+load(file.path(data_path, "final_data_included.RData"))
+load(file.path(data_path, "demo_psych_data_included.RData"))
+
+```
+
+# Correlate random-policy SR use with psychometric measures
+
+```{r}
+# load model
+model3_rs_vers <- readRDS(file.path(model_path, "model3_rs_vers_switch.rds"))
+
+# get fixed effects
+fixed_effects <- fixef(model3_rs_vers)
+
+# extract individual slopes for condition (contrast reward vs. transition)
+random_slopes_reward <- ranef(model3_rs_vers)$ID[,"condition1"]
+random_slopes_goal <- ranef(model3_rs_vers)$ID[,"condition2"]
+random_slopes_policy <- ranef(model3_rs_vers)$ID[,"condition4"]
+
+# create binary group and version variables
+dummies <- demo_psych %>%
+  arrange(prolific_ID) %>%
+  mutate(group_binary = ifelse(group == "Harmful drinkers", 0.5, -0.5),
+         version_binary = ifelse(version == "Alcohol version", 0.5, -0.5)) %>%
+  dplyr::select(group_binary, version_binary)
+
+# calculate individual adjusted slopes for condition (contrast reward vs. transition)
+individual_reward_slopes <- fixed_effects["condition1"] +  # Main effect of condition 1
+                    fixed_effects["group1:condition1"] * dummies$group_binary +  # Adjust for group interaction
+                    fixed_effects["version1:condition1"] * dummies$version_binary +  # Adjust for version interaction
+                    fixed_effects["group1:version1:condition1"] * (dummies$group_binary * dummies$version_binary) +  # Three-way interaction
+                    random_slopes_reward  # Add individual deviations
+
+# calculate individual adjusted slopes for condition (contrast reward vs. transition)
+individual_goalstate_slopes <- fixed_effects["condition2"] +  # Main effect of condition 1
+                    fixed_effects["group1:condition2"] * dummies$group_binary +  # Adjust for group interaction
+                    fixed_effects["version1:condition2"] * dummies$version_binary +  # Adjust for version interaction
+                    fixed_effects["group1:version1:condition2"] * (dummies$group_binary * dummies$version_binary) +  # Three-way interaction
+                    random_slopes_goal  # Add individual deviations
+
+# calculate individual adjusted slopes for condition (contrast reward vs. transition)
+individual_policy_slopes <- fixed_effects["condition4"] +  # Main effect of condition 1
+                    fixed_effects["group1:condition4"] * dummies$group_binary +  # Adjust for group interaction
+                    fixed_effects["version1:condition4"] * dummies$version_binary +  # Adjust for version interaction
+                    fixed_effects["group1:version1:condition4"] * (dummies$group_binary * dummies$version_binary) +  # Three-way interaction
+                    random_slopes_policy  # Add individual deviations
+
+slopes_df <- data.frame(individual_reward_slopes, individual_goalstate_slopes, individual_policy_slopes) %>%
+  rowwise() %>%
+  mutate(individual_reward_slopes = as.numeric(individual_reward_slopes),
+         individual_goalstate_slopes = as.numeric(individual_goalstate_slopes),
+         individual_policy_slopes = as.numeric(individual_policy_slopes)) %>%
+  mutate(individual_sr_use = mean(individual_reward_slopes, individual_goalstate_slopes, individual_policy_slopes))
+
+individual_sr_slopes <- slopes_df$individual_sr_use
+
+# select data to correlate with and calculate corrected p-values
+correlation_df_monetary <- demo_psych %>%
+  arrange(prolific_ID) %>%
+  mutate(sr_use = individual_sr_slopes) %>%
+  filter(version == "Monetary version") %>%
+  dplyr::select(audit_sum_pre, aud_sum, drinking_days, drinks_per_day, binge_days, casa_gf_unaware, casa_gf_nonvolitional, uppsp_negative_urgency, uppsp_premeditation, uppsp_perseverance, uppsp_sensation_seeking, uppsp_positive_urgency, oci_total, sr_use)
+
+r.values <- rcorr(as.matrix(correlation_df_monetary), type="spearman")$r[1:13,"sr_use"]
+r.values
+p.values <- rcorr(as.matrix(correlation_df_monetary), type="spearman")$P[1:13,"sr_use"]
+p.adjust(p.values, method = "bonferroni", n = length(p.values))
+
+correlation_df_alcohol <- demo_psych %>%
+  arrange(prolific_ID) %>%
+  mutate(sr_use = individual_sr_slopes) %>%
+  filter(version == "Alcohol version") %>%
+  select(audit_sum_pre, aud_sum, drinking_days, drinks_per_day, binge_days, casa_gf_unaware, casa_gf_nonvolitional, uppsp_negative_urgency, uppsp_premeditation, uppsp_perseverance, uppsp_sensation_seeking, uppsp_positive_urgency, oci_total, sr_use)
+
+r.values <- rcorr(as.matrix(correlation_df_alcohol), type="spearman")$r[1:13,"sr_use"]
+r.values
+p.values <- rcorr(as.matrix(correlation_df_alcohol), type="spearman")$P[1:13,"sr_use"]
+p.adjust(p.values, method = "bonferroni", n = length(p.values))
+
+```
+
+# Plot
+
+```{r}
+correlation_plot_df <- demo_psych %>%
+  arrange(prolific_ID) %>%
+  mutate(sr_use = individual_sr_slopes) %>%
+  dplyr::select(group, version, audit_sum_pre, aud_sum, drinking_days, drinks_per_day, binge_days, casa_gf_unaware, casa_gf_nonvolitional, uppsp_negative_urgency, uppsp_premeditation, uppsp_perseverance, uppsp_sensation_seeking, uppsp_positive_urgency, oci_total, sr_use)
+
+binge_plot <- ggplot(correlation_plot_df, aes(x = binge_days, y = sr_use)) +
+    geom_point(aes(color = version), alpha=0.5) +  # Color by version, shape by group
+    geom_smooth(aes(color = version, fill=version), method = 'lm', alpha = 0.2, size=1.3) +  # Color by version, linetype by group
+    scale_x_continuous("Binge days / past 3 months", limits = c(0, 90)) +
+    scale_y_continuous("(Reduced) \n random-policy SR use", limits = c(-5, 10)) +
+    scale_color_manual(values = c(custom_colors[2], custom_colors[5]),
+                       labels=c("Non-alcohol version", "Alcohol version")) +
+    scale_fill_manual(values = c(custom_colors[2], custom_colors[5])) +
+    theme_light(base_size = 12) +
+    theme(legend.position = "bottom",
+          axis.title = element_text(size = 16),
+          axis.text.x = element_text(size=16),
+          axis.text.y = element_text(size=16),
+          legend.text=element_text(size=16),
+          legend.title = element_blank()) +
+    guides(
+      color = guide_legend(order = 1, override.aes = list(size = 0)),  # Version legend comes first
+      fill = "none")
+binge_plot
+
+audit_plot <- ggplot(correlation_plot_df, aes(x = audit_sum_pre, y = sr_use)) +
+    geom_point(aes(color = version), alpha=0.5) +  # Color by version, shape by group
+    geom_smooth(aes(color = version, fill=version), method = 'lm', alpha = 0.2, size=1.3) +  # Color by version, linetype by group
+    scale_x_continuous("AUDIT score", limits = c(0, 35)) +
+    scale_y_continuous("(Reduced) \n random-policy SR use", limits = c(-5, 10)) +
+    scale_color_manual(values = c(custom_colors[2], custom_colors[5]),
+                       labels=c("Non-alcohol version", "Alcohol version")) +
+    scale_fill_manual(values = c(custom_colors[2], custom_colors[5])) +
+    theme_light(base_size = 12) +
+    theme(legend.position = "bottom",
+          axis.title = element_text(size = 16),
+          axis.text.x = element_text(size=16),
+          axis.text.y = element_text(size=16),
+          legend.text=element_text(size=16),
+          legend.title = element_blank()) +
+    guides(
+      color = guide_legend(order = 1, override.aes = list(size = 0)),  # Version legend comes first
+      fill = "none")
+audit_plot
+
+aud_plot <- ggplot(correlation_plot_df, aes(x = aud_sum, y = sr_use)) +
+    geom_point(aes(color = version), alpha=0.5) +  # Color by version, shape by group
+    geom_smooth(aes(color = version, fill=version), method = 'lm', alpha = 0.2, size=1.3) +  # Color by version, linetype by group
+    scale_x_continuous("AUD criteria", limits = c(0, 10)) +
+    scale_y_continuous("(Reduced) \n random-policy SR use", limits = c(-5, 10)) +
+    scale_color_manual(values = c(custom_colors[2], custom_colors[5]),
+                       labels=c("Non-alcohol version", "Alcohol version")) +
+    scale_fill_manual(values = c(custom_colors[2], custom_colors[5])) +
+    theme_light(base_size = 12) +
+    theme(legend.position = "bottom",
+          axis.title = element_text(size = 16),
+          axis.text.x = element_text(size=16),
+          axis.text.y = element_text(size=16),
+          legend.text=element_text(size=16),
+          legend.title = element_blank()) +
+    guides(
+      color = guide_legend(order = 1, override.aes = list(size = 0)),  # Version legend comes first
+      fill = "none")
+aud_plot
+
+drinking_days_plot <- ggplot(correlation_plot_df, aes(x = drinking_days, y = sr_use)) +
+    geom_point(aes(color = version), alpha=0.5) +  # Color by version, shape by group
+    geom_smooth(aes(color = version, fill=version), method = 'lm', alpha = 0.2, size=1.3) +  # Color by version, linetype by group
+    scale_x_continuous("Drinking days / past 3 months", limits = c(0, 92)) +
+    scale_y_continuous("(Reduced) \n random-policy SR use", limits = c(-5, 10)) +
+    scale_color_manual(values = c(custom_colors[2], custom_colors[5]),
+                       labels=c("Non-alcohol version", "Alcohol version")) +
+    scale_fill_manual(values = c(custom_colors[2], custom_colors[5])) +
+    theme_light(base_size = 12) +
+    theme(legend.position = "bottom",
+          axis.title = element_text(size = 16),
+          axis.text.x = element_text(size=16),
+          axis.text.y = element_text(size=16),
+          legend.text=element_text(size=16),
+          legend.title = element_blank()) +
+    guides(
+      color = guide_legend(order = 1, override.aes = list(size = 0)),  # Version legend comes first
+      fill = "none")
+drinking_days_plot
+
+drinks_per_day_plot <- ggplot(correlation_plot_df, aes(x = drinks_per_day, y = sr_use)) +
+    geom_point(aes(color = version), alpha=0.5) +  # Color by version, shape by group
+    geom_smooth(aes(color = version, fill=version), method = 'lm', alpha = 0.2, size=1.3) +  # Color by version, linetype by group
+    scale_x_continuous("Drinks / drinking day / past 3 months", limits = c(0, 50)) +
+    scale_y_continuous("(Reduced) \n random-policy SR use", limits = c(-5, 10)) +
+    scale_color_manual(values = c(custom_colors[2], custom_colors[5]),
+                       labels=c("Non-alcohol version", "Alcohol version")) +
+    scale_fill_manual(values = c(custom_colors[2], custom_colors[5])) +
+    theme_light(base_size = 12) +
+    theme(legend.position = "bottom",
+          axis.title = element_text(size = 16),
+          axis.text.x = element_text(size=16),
+          axis.text.y = element_text(size=16),
+          legend.text=element_text(size=16),
+          legend.title = element_blank()) +
+    guides(
+      color = guide_legend(order = 1, override.aes = list(size = 0)),  # Version legend comes first
+      fill = "none")
+drinks_per_day_plot
+
+casa_unaware_plot <- ggplot(correlation_plot_df, aes(x = casa_gf_unaware, y = sr_use)) +
+    geom_point(aes(color = version), alpha=0.5) +  # Color by version, shape by group
+    geom_smooth(aes(color = version, fill=version), method = 'lm', alpha = 0.2, size=1.3) +  # Color by version, linetype by group
+    scale_x_continuous("CASA unaware", limits = c(0, 11)) +
+    scale_y_continuous("(Reduced) \n random-policy SR use", limits = c(-5, 10)) +
+    scale_color_manual(values = c(custom_colors[2], custom_colors[5]),
+                       labels=c("Non-alcohol version", "Alcohol version")) +
+    scale_fill_manual(values = c(custom_colors[2], custom_colors[5])) +
+    theme_light(base_size = 12) +
+    theme(legend.position = "bottom",
+          axis.title = element_text(size = 16),
+          axis.text.x = element_text(size=16),
+          axis.text.y = element_text(size=16),
+          legend.text=element_text(size=16),
+          legend.title = element_blank()) +
+    guides(
+      color = guide_legend(order = 1, override.aes = list(size = 0)),  # Version legend comes first
+      fill = "none")
+casa_unaware_plot
+
+casa_nonvolitional_plot <- ggplot(correlation_plot_df, aes(x = casa_gf_nonvolitional, y = sr_use)) +
+    geom_point(aes(color = version), alpha=0.5) +  # Color by version, shape by group
+    geom_smooth(aes(color = version, fill=version), method = 'lm', alpha = 0.2, size=1.3) +  # Color by version, linetype by group
+    scale_x_continuous("CASA nonvolitional", limits = c(0, 10)) +
+    scale_y_continuous("(Reduced) \n random-policy SR use", limits = c(-5, 10)) +
+    scale_color_manual(values = c(custom_colors[2], custom_colors[5]),
+                       labels=c("Non-alcohol version", "Alcohol version")) +
+    scale_fill_manual(values = c(custom_colors[2], custom_colors[5])) +
+    theme_light(base_size = 12) +
+    theme(legend.position = "bottom",
+          axis.title = element_text(size = 16),
+          axis.text.x = element_text(size=16),
+          axis.text.y = element_text(size=16),
+          legend.text=element_text(size=16),
+          legend.title = element_blank()) +
+    guides(
+      color = guide_legend(order = 1, override.aes = list(size = 0)),  # Version legend comes first
+      fill = "none")
+casa_nonvolitional_plot
+
+uppsp_negurg_plot <- ggplot(correlation_plot_df, aes(x = uppsp_negative_urgency, y = sr_use)) +
+    geom_point(aes(color = version), alpha=0.5) +  # Color by version, shape by group
+    geom_smooth(aes(color = version, fill=version), method = 'lm', alpha = 0.2, size=1.3) +  # Color by version, linetype by group
+    scale_x_continuous("UPPS-P negative urgency", limits = c(1, 4)) +
+    scale_y_continuous("(Reduced) \n random-policy SR use", limits = c(-5, 10)) +
+    scale_color_manual(values = c(custom_colors[2], custom_colors[5]),
+                       labels=c("Non-alcohol version", "Alcohol version")) +
+    scale_fill_manual(values = c(custom_colors[2], custom_colors[5])) +
+    theme_light(base_size = 12) +
+    theme(legend.position = "bottom",
+          axis.title = element_text(size = 16),
+          axis.text.x = element_text(size=16),
+          axis.text.y = element_text(size=16),
+          legend.text=element_text(size=16),
+          legend.title = element_blank()) +
+    guides(
+      color = guide_legend(order = 1, override.aes = list(size = 0)),  # Version legend comes first
+      fill = "none")
+uppsp_negurg_plot
+
+uppsp_premed_plot <- ggplot(correlation_plot_df, aes(x = uppsp_premeditation, y = sr_use)) +
+    geom_point(aes(color = version), alpha=0.5) +  # Color by version, shape by group
+    geom_smooth(aes(color = version, fill=version), method = 'lm', alpha = 0.2, size=1.3) +  # Color by version, linetype by group
+    scale_x_continuous("UPPS-P premeditation", limits = c(1, 4)) +
+    scale_y_continuous("(Reduced) \n random-policy SR use", limits = c(-5, 10)) +
+    scale_color_manual(values = c(custom_colors[2], custom_colors[5]),
+                       labels=c("Non-alcohol version", "Alcohol version")) +
+    scale_fill_manual(values = c(custom_colors[2], custom_colors[5])) +
+    theme_light(base_size = 12) +
+    theme(legend.position = "bottom",
+          axis.title = element_text(size = 16),
+          axis.text.x = element_text(size=16),
+          axis.text.y = element_text(size=16),
+          legend.text=element_text(size=16),
+          legend.title = element_blank()) +
+    guides(
+      color = guide_legend(order = 1, override.aes = list(size = 0)),  # Version legend comes first
+      fill = "none")
+uppsp_premed_plot
+
+uppsp_pers_plot <- ggplot(correlation_plot_df, aes(x = uppsp_perseverance, y = sr_use)) +
+    geom_point(aes(color = version), alpha=0.5) +  # Color by version, shape by group
+    geom_smooth(aes(color = version, fill=version), method = 'lm', alpha = 0.2, size=1.3) +  # Color by version, linetype by group
+    scale_x_continuous("UPPS-P perseverance", limits = c(1, 4)) +
+    scale_y_continuous("(Reduced) \n random-policy SR use", limits = c(-5, 10)) +
+    scale_color_manual(values = c(custom_colors[2], custom_colors[5]),
+                       labels=c("Non-alcohol version", "Alcohol version")) +
+    scale_fill_manual(values = c(custom_colors[2], custom_colors[5])) +
+    theme_light(base_size = 12) +
+    theme(legend.position = "bottom",
+          axis.title = element_text(size = 16),
+          axis.text.x = element_text(size=16),
+          axis.text.y = element_text(size=16),
+          legend.text=element_text(size=16),
+          legend.title = element_blank()) +
+    guides(
+      color = guide_legend(order = 1, override.aes = list(size = 0)),  # Version legend comes first
+      fill = "none")
+uppsp_pers_plot
+
+uppsp_sens_plot <- ggplot(correlation_plot_df, aes(x = uppsp_sensation_seeking, y = sr_use)) +
+    geom_point(aes(color = version), alpha=0.5) +  # Color by version, shape by group
+    geom_smooth(aes(color = version, fill=version), method = 'lm', alpha = 0.2, size=1.3) +  # Color by version, linetype by group
+    scale_x_continuous("UPPS-P sensation seeking", limits = c(1, 4)) +
+    scale_y_continuous("(Reduced) \n random-policy SR use", limits = c(-5, 10)) +
+    scale_color_manual(values = c(custom_colors[2], custom_colors[5]),
+                       labels=c("Non-alcohol version", "Alcohol version")) +
+    scale_fill_manual(values = c(custom_colors[2], custom_colors[5])) +
+    theme_light(base_size = 12) +
+    theme(legend.position = "bottom",
+          axis.title = element_text(size = 16),
+          axis.text.x = element_text(size=16),
+          axis.text.y = element_text(size=16),
+          legend.text=element_text(size=16),
+          legend.title = element_blank()) +
+    guides(
+      color = guide_legend(order = 1, override.aes = list(size = 0)),  # Version legend comes first
+      fill = "none")
+uppsp_sens_plot
+
+uppsp_posurg_plot <- ggplot(correlation_plot_df, aes(x = uppsp_positive_urgency, y = sr_use)) +
+    geom_point(aes(color = version), alpha=0.5) +  # Color by version, shape by group
+    geom_smooth(aes(color = version, fill=version), method = 'lm', alpha = 0.2, size=1.3) +  # Color by version, linetype by group
+    scale_x_continuous("UPPS-P positive urgency", limits = c(1, 4)) +
+    scale_y_continuous("(Reduced) \n random-policy SR use", limits = c(-5, 10)) +
+    scale_color_manual(values = c(custom_colors[2], custom_colors[5]),
+                       labels=c("Non-alcohol version", "Alcohol version")) +
+    scale_fill_manual(values = c(custom_colors[2], custom_colors[5])) +
+    theme_light(base_size = 12) +
+    theme(legend.position = "bottom",
+          axis.title = element_text(size = 16),
+          axis.text.x = element_text(size=16),
+          axis.text.y = element_text(size=16),
+          legend.text=element_text(size=16),
+          legend.title = element_blank()) +
+    guides(
+      color = guide_legend(order = 1, override.aes = list(size = 0)),  # Version legend comes first
+      fill = "none")
+uppsp_posurg_plot
+
+oci_plot <- ggplot(correlation_plot_df, aes(x = oci_total, y = sr_use)) +
+    geom_point(aes(color = version), alpha=0.5) +  # Color by version, shape by group
+    geom_smooth(aes(color = version, fill=version), method = 'lm', alpha = 0.2, size=1.3) +  # Color by version, linetype by group
+    scale_x_continuous("OCI-R score", limits = c(0, 65)) +
+    scale_y_continuous("(Reduced) \n random-policy SR use", limits = c(-5, 10)) +
+    scale_color_manual(values = c(custom_colors[2], custom_colors[5]),
+                       labels=c("Non-alcohol version", "Alcohol version")) +
+    scale_fill_manual(values = c(custom_colors[2], custom_colors[5])) +
+    theme_light(base_size = 12) +
+    theme(legend.position = "bottom",
+          axis.title = element_text(size = 16),
+          axis.text.x = element_text(size=16),
+          axis.text.y = element_text(size=16),
+          legend.text=element_text(size=16),
+          legend.title = element_blank()) +
+    guides(
+      color = guide_legend(order = 1, override.aes = list(size = 0)),  # Version legend comes first
+      fill = "none")
+oci_plot
+
+blank <- ggplot() + theme_void()
+
+# combined plot
+sr_plot <- ggarrange(audit_plot, aud_plot, binge_plot, drinking_days_plot, drinks_per_day_plot, casa_unaware_plot, casa_nonvolitional_plot, uppsp_negurg_plot, uppsp_premed_plot, uppsp_pers_plot, uppsp_sens_plot, uppsp_posurg_plot, blank, oci_plot, blank,
+                     common.legend = TRUE, legend = "bottom",
+                     nrow=5, ncol=3) + bgcolor("white") + rremove("grid")
+sr_plot
+
+ggsave(filename = "suppl_explo_slopes.png", path = figure_path, width = 14, height = 16, device='png', dpi=600)
+```
+
+# Inspect relation between strategy uses
+
+```{r}
+# sr correlations
+r.values <- rcorr(as.matrix(cbind(slopes_df$individual_reward_slopes, slopes_df$individual_goalstate_slopes, slopes_df$individual_policy_slopes)), type="spearman")$r[1:3,3]
+r.values
+p.values <- rcorr(as.matrix(cbind(slopes_df$individual_reward_slopes, slopes_df$individual_goalstate_slopes, slopes_df$individual_policy_slopes)), type="spearman")$P[1:3,3]
+p.adjust(p.values, method = "bonferroni", n = length(p.values))
+```

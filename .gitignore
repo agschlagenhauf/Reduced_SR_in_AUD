@@ -5,12 +5,9 @@ venv
 .Rhistory
 .RData
 .DS_Store
-behav_data_analysis/**/*.html
-behav_data_analysis/**/*.rmarkdown
-behav_data_analysis/**/*_files
+*.html
+*.rmarkdown
+*_files
 results
-behav_data_analysis/final_study/09_main_learning_phase_analysis_files
-behav_data_analysis/final_study/09_main_test_phase_analysis_files
-behav_data_analysis/final_study/11_explo2_test_phase_analysis_extremeAUDIT_files
-behav_data_analysis/final_study/html
+html
 .spyproject

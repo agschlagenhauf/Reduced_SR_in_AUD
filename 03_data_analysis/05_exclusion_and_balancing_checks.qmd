@@ -1,13 +1,13 @@
 ---
-title: "Reduced Successor Representation in AUD"
-subtitle: "Conformatory and exploratory behavioral data analyses"
+title: "Exclusion & balancing checks"
 doi: "https://doi.org/10.17605/OSF.IO/9TUZE"
 author: "Milena Musial"
-date: 09/25/2024
+date: 08/03/2025
 format: html
 editor: visual
 toc: TRUE
 code-fold: TRUE
+warning: FALSE
 number-sections: TRUE
 embed-resources: true
 execute: 
@@ -265,7 +265,7 @@ save(demo_psych, file = file.path(data_path, "demo_psych_data_included.RData"))
 save(trial_df, component_df, rating_df, file = file.path(data_path, "final_data_included.RData"))
 ```
 
-### Further analyses based on (according to preregistered criteria)
+### Further analyses based on
 
 ```{r}
 summary <- component_df %>%

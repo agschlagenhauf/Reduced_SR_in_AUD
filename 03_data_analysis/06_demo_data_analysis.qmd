@@ -1,12 +1,12 @@
 ---
-title: "Demographic and psychometric data"
+title: "Demographic and psychometric data analyses"
 doi: "https://doi.org/10.17605/OSF.IO/9TUZE"
 author: "Milena Musial"
-date: 01/29/2025
+date: 08/03/2025
 format: html
 editor: visual
 toc: TRUE
-code-fold: FALSE
+code-fold: TRUE
 warning: FALSE
 number-sections: TRUE
 embed-resources: true
@@ -23,7 +23,7 @@ rm(list = ls(all = TRUE))
 # Load packages
 packages <- c("ggplot2", "dplyr", "tidyr", "kableExtra", "gmodels", "lme4", "sjPlot", "lmerTest", "viridis")
 #install.packages(packages)
-lapply(packages, library, character.only = TRUE)
+invisible(lapply(packages, library, character.only = TRUE))
 
 # define paths
 #demo_path <- "~/work/group_folder/B01_FP2_WP3/WP3_DATA/FINAL_STUDY/RDFs"
@@ -200,7 +200,7 @@ chisq.test(table_employ_version, simulate.p.value = F)
 
 ```{r}
 psych_table <- demo_psych %>%
-  group_by(group) %>%
+  group_by(group, version) %>%
   summarise(
     mean_audit = mean(audit_sum_pre, na.rm = TRUE),
     sd_audit = sd(audit_sum_pre, na.rm = TRUE),
@@ -233,18 +233,18 @@ psych_table <- demo_psych %>%
     sd_casa_nonvol = sd(casa_gf_nonvolitional, na.rm = TRUE),
     mean_casa_unaware = mean(casa_gf_unaware, na.rm = TRUE),
     sd_casa_unaware = sd(casa_gf_unaware, na.rm = TRUE),
-    mean_uppsp = mean(uppsp_total, na.rm = TRUE),
-    sd_uppsp = sd(uppsp_total, na.rm = TRUE),
+    mean_uppsp_posurgency = mean(uppsp_positive_urgency, na.rm = TRUE),
+    sd_uppsp_posurgency = sd(uppsp_positive_urgency, na.rm = TRUE),
+    mean_uppsp_premed = mean(uppsp_premeditation, na.rm = TRUE),
+    sd_uppsp_premed = sd(uppsp_premeditation, na.rm = TRUE),
+    mean_uppsp_pers = mean(uppsp_perseverance, na.rm = TRUE),
+    sd_uppsp_pers = sd(uppsp_perseverance, na.rm = TRUE),
+    mean_uppsp_sens = mean(uppsp_sensation_seeking, na.rm = TRUE),
+    sd_uppsp_sens = sd(uppsp_sensation_seeking, na.rm = TRUE),
+    mean_uppsp_negurgency = mean(uppsp_negative_urgency, na.rm = TRUE),
+    sd_uppsp_negurgency = sd(uppsp_negative_urgency, na.rm = TRUE),
     mean_oci = mean(oci_total, na.rm = TRUE),
     sd_oci = sd(oci_total, na.rm = TRUE),
-    mean_dmq_social = mean(dmq_social, na.rm = TRUE),
-    sd_dmq_social = sd(dmq_social, na.rm = TRUE),
-    mean_dmq_enhancement = mean(dmq_enhancement, na.rm = TRUE),
-    sd_dmq_enhancement = sd(dmq_enhancement, na.rm = TRUE),
-    mean_dmq_coping = mean(dmq_coping, na.rm = TRUE),
-    sd_dmq_coping = sd(dmq_coping, na.rm = TRUE),
-    mean_dmq_conformity = mean(dmq_conformity, na.rm = TRUE),
-    sd_dmq_conformity = sd(dmq_conformity, na.rm = TRUE),
     .groups = "drop"
   ) 
 
@@ -412,8 +412,28 @@ tab_model(model_casa_nonvol, show.stat = T, show.df = T)
 ## UPPSP
 
 ```{r}
-model_uppsp <- lm(uppsp_total ~ group*version, data=demo_psych)
-tab_model(model_uppsp, show.stat = T, show.df = T)
+model_uppsp_posurgency <- lm(uppsp_positive_urgency ~ group*version, data=demo_psych)
+tab_model(model_uppsp_posurgency, show.stat = T, show.df = T)
+```
+
+```{r}
+model_uppsp_negurgency <- lm(uppsp_negative_urgency ~ group*version, data=demo_psych)
+tab_model(model_uppsp_negurgency, show.stat = T, show.df = T)
+```
+
+```{r}
+model_uppsp_premed <- lm(uppsp_premeditation ~ group*version, data=demo_psych)
+tab_model(model_uppsp_premed, show.stat = T, show.df = T)
+```
+
+```{r}
+model_uppsp_pers <- lm(uppsp_perseverance ~ group*version, data=demo_psych)
+tab_model(model_uppsp_pers, show.stat = T, show.df = T)
+```
+
+```{r}
+model_uppsp_sens <- lm(uppsp_sensation_seeking ~ group*version, data=demo_psych)
+tab_model(model_uppsp_sens, show.stat = T, show.df = T)
 ```
 
 ## OCI
@@ -421,28 +441,6 @@ tab_model(model_uppsp, show.stat = T, show.df = T)
 ```{r}
 model_oci <- lm(oci_total ~ group*version, data=demo_psych)
 tab_model(model_oci, show.stat = T, show.df = T)
-```
-
-## DMQ
-
-```{r}
-model_dmq_social <- lm(dmq_social ~ group*version, data=demo_psych)
-tab_model(model_dmq_social, show.stat = T, show.df = T)
-```
-
-```{r}
-model_dmq_enhance <- lm(dmq_enhancement ~ group*version, data=demo_psych)
-tab_model(model_dmq_enhance, show.stat = T, show.df = T)
-```
-
-```{r}
-model_dmq_coping <- lm(dmq_coping ~ group*version, data=demo_psych)
-tab_model(model_dmq_coping, show.stat = T, show.df = T)
-```
-
-```{r}
-model_dmq_conformity <- lm(dmq_conformity ~ group*version, data=demo_psych)
-tab_model(model_dmq_conformity, show.stat = T, show.df = T)
 ```
 
 # Get NAs

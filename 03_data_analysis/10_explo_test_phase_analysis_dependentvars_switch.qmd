@@ -1,13 +1,13 @@
 ---
-title: "Reduced Successor Representation in AUD"
-subtitle: "Conformatory and exploratory behavioral data analyses"
+title: "Explore rating phase data"
 doi: "https://doi.org/10.17605/OSF.IO/9TUZE"
 author: "Milena Musial"
-date: 09/25/2024
+date: 08/03/2025
 format: html
 editor: visual
 toc: TRUE
 code-fold: TRUE
+warning: FALSE
 number-sections: TRUE
 embed-resources: true
 execute: 
@@ -22,9 +22,9 @@ editor_options:
 rm(list = ls(all = TRUE))
 
 # Load packages
-packages <- c("ggplot2", "dplyr", "tidyr", "kableExtra", "gmodels", "lme4", "sjPlot", "viridis", "forcats", "performance")
+packages <- c("ggplot2", "dplyr", "tidyr", "kableExtra", "gmodels", "lme4", "sjPlot", "viridis", "forcats", "performance", "emmeans")
 #install.packages(packages)
-sapply(packages, require, character.only = TRUE)
+invisible(lapply(packages, require, character.only = TRUE))
 
 # set color scheme
 
@@ -885,7 +885,7 @@ load(file.path(data_path, "demo_psych_data_included.RData"))
 
 ```{r}
 rating_state1_group_version_condition_df <- rating_df %>%
-  group_by(condition) %>%
+  group_by(group, version, condition) %>%
   summarise(n = n(),
             mean_rating_diff = mean(rating_diff_switch_state1, na.rm=T),
             se_rating_diff = sd(rating_diff_switch_state1, na.rm = TRUE)/sqrt(n()),
@@ -1044,43 +1044,18 @@ check_model(model3_expl4d, check=c("pp_check", "reqq", "qq"))
 
 ##### Inspect interactions
 
-```{r}
-plot_model(model3_expl4d, type = "pred", terms = c("condition", "group", "version"), bias_correction = F) + theme(axis.text.x = element_text(angle = 50, vjust = 1, hjust=1))
-```
+<!-- ```{r} -->
+<!-- plot_model(model3_expl4d, type = "pred", terms = c("condition", "group", "version"), bias_correction = F) + theme(axis.text.x = element_text(angle = 50, vjust = 1, hjust=1)) -->
+<!-- ``` -->
 
 ```{r}
 # get marginal means
-mmeans <- emmeans(model3_expl4d, specs = ~ condition|group*version, ref="Transition revaluation", type="response")
+mmeans <- emmeans(model3_expl4d, specs = ~ condition|version, ref="Transition revaluation", type="response")
 mmeans
 
 # contrasts between marginal means per group and version
-contrasts <- contrast(mmeans, "trt.vs.ctrl", ref=3, adjust = NULL)
+contrasts <- contrast(mmeans, "trt.vs.ctrl", ref=3, adjust = "bonferroni")
 contrasts
-
-# contrast between contrasts per group and version
-contrast(contrasts, list(lowriskcon_harmfulalc = c(-1,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0),
-                         harmfulcon_lowriskalc = c(0,0,0,0,-1,0,0,0,1,0,0,0,0,0,0,0),
-                         harmfulcon_harmfulalc = c(0,0,0,0,-1,0,0,0,0,0,0,0,1,0,0,0),
-                         lowriskalc_harmfulalc = c(0,0,0,0,0,0,0,0,-1,0,0,0,1,0,0,0)), 
-         by=NULL, adjust = "Holm")
-
-# just to check if contrasts correct
-# contrast(contrasts, "pairwise", by=NULL, adjust = NULL)
-```
-
-#### Inspect MB contributions
-
-```{r}
-# get marginal means
-mmeans <- emmeans(model3_expl4d, specs = ~ condition|group*version, ref="Transition revaluation", type="response")
-mmeans
-
-# get differences in transition revaluation performance between groups and versions
-contrast(mmeans, list(lowriskcon_harmfulalc = c(0,0,-1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0),
-                      harmfulcon_lowriskalc = c(0,0,0,0,0,0,0,-1,0,0,0,0,1,0,0,0,0,0,0,0),
-                      harmfulcon_harmfulalc = c(0,0,0,0,0,0,0,-1,0,0,0,0,0,0,0,0,0,1,0,0),
-                      lowriskalc_harmfulalc = c(0,0,0,0,0,0,0,0,0,0,0,0,-1,0,0,0,0,1,0,0)), 
-         ref=3, adjust = "Holm", by=NULL)
 ```
 
 #### Model 4_expl4b: Alcohol context, compare against reward revaluation
@@ -1095,24 +1070,24 @@ tab_model(model4_expl4d, transform = NULL, show.est = T, show.stat = T, show.df 
 check_model(model4_expl4d, check=c("pp_check", "reqq", "qq"))
 ```
 
-##### Inspect effects per group (n.s.)
+<!-- ##### Inspect effects per group (n.s.) -->
 
-```{r}
-plot_model(model4_expl4d, type = "pred", terms = c("condition", "group"), bias_correction = F) + theme(axis.text.x = element_text(angle = 50, vjust = 1, hjust=1))
-```
+<!-- ```{r} -->
+<!-- plot_model(model4_expl4d, type = "pred", terms = c("condition", "group"), bias_correction = F) + theme(axis.text.x = element_text(angle = 50, vjust = 1, hjust=1)) -->
+<!-- ``` -->
 
-```{r}
-# get marginal means
-mmeans <- emmeans(model4_expl4d, specs = ~ condition|group, ref="Transition revaluation", type="response")
-mmeans
+<!-- ```{r} -->
+<!-- # get marginal means -->
+<!-- mmeans <- emmeans(model4_expl4d, specs = ~ condition|group, ref="Transition revaluation", type="response") -->
+<!-- mmeans -->
 
-# contrasts between marginal means per group and version
-contrasts <- contrast(mmeans, "trt.vs.ctrl", ref=1, adjust = NULL)
-contrasts
+<!-- # contrasts between marginal means per group and version -->
+<!-- contrasts <- contrast(mmeans, "trt.vs.ctrl", ref=1, adjust = NULL) -->
+<!-- contrasts -->
 
-# contrast between contrasts per group and version
-contrast(contrasts, list(lowrisk_harmful = c(-1,0,0,0,1,0,0,0)), by=NULL)
-```
+<!-- # contrast between contrasts per group and version -->
+<!-- contrast(contrasts, list(lowrisk_harmful = c(-1,0,0,0,1,0,0,0)), by=NULL) -->
+<!-- ``` -->
 
 #### Model 5_expl4b: Full dataset, compare against reward revaluation
 
@@ -1129,25 +1104,32 @@ tab_model(model5_expl4d, transform = NULL, show.est = T, show.stat = T, show.df 
 
 ##### Inspect interactions
 
-```{r}
-plot_model(model5_expl4d, type = "pred", terms = c("condition", "group", "version"), bias_correction = F) + theme(axis.text.x = element_text(angle = 50, vjust = 1, hjust=1))
-```
+<!-- ```{r} -->
+<!-- plot_model(model5_expl4d, type = "pred", terms = c("condition", "group", "version"), bias_correction = F) + theme(axis.text.x = element_text(angle = 50, vjust = 1, hjust=1)) -->
+<!-- ``` -->
 
 ```{r}
-# get marginal means
-mmeans <- emmeans(model5_expl4d, specs = ~ condition|group*version, ref="Reward revaluation", type="response")
+# contrasts per group
+mmeans <- emmeans(model5_expl4d, specs = ~ condition|group, ref="Reward revaluation", type="response")
 mmeans
 
-# contrasts between marginal means per group and version
-contrasts <- contrast(mmeans, "trt.vs.ctrl", ref=1, adjust = NULL)
+contrasts <- contrast(mmeans, 
+                      list(goal_reward = c(-1, 1, 0, 0, 0),
+                           control_reward = c(-1, 0, 0, 0, 1)),
+                      adjust = "bonferroni")
 contrasts
 
-# contrast between contrasts per group and version
-contrast(contrasts, list(lowriskcon_harmfulalc = c(-1,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0),
-                         harmfulcon_lowriskalc = c(0,0,0,0,-1,0,0,0,1,0,0,0,0,0,0,0),
-                         harmfulcon_harmfulalc = c(0,0,0,0,-1,0,0,0,0,0,0,0,1,0,0,0),
-                         lowriskalc_harmfulalc = c(0,0,0,0,0,0,0,0,-1,0,0,0,1,0,0,0)), 
-         by=NULL, adjust = "Holm")
+# contrasts per version
+mmeans <- emmeans(model5_expl4d, specs = ~ condition|version, ref="Reward revaluation", type="response")
+mmeans
+
+contrasts <- contrast(mmeans, 
+                      list(transition_reward = c(-1, 0, 1, 0, 0),
+                           control_reward = c(-1, 0, 0, 0, 1)),
+                      adjust = NULL)
+contrasts
+
+
 ```
 
 #### Model 3b: Full dataset, compare against control
@@ -1161,6 +1143,31 @@ model_control_expl4d <- lmer(rating_diff_switch_state1 ~ group*version*condition
                 REML = F, lmerControl(optimizer = "bobyqa"))
 
 tab_model(model_control_expl4d, transform = NULL, show.est = T, show.stat = T, show.df = T, df.method = "satterthwaite",   auto.label = FALSE, CSS = list(css.table = '+font-size: 14;'))
+```
+
+##### Inspect interactions
+
+```{r}
+# contrasts per group
+mmeans <- emmeans(model_control_expl4d, specs = ~ condition|group, ref="Reward revaluation", type="response")
+mmeans
+
+contrasts <- contrast(mmeans, 
+                      list(reward_control = c(1, 0, 0, 0, -1),
+                           policy_control = c(0, 0, 0, 1, -1)),
+                      adjust = "bonferroni")
+contrasts
+
+# contrasts per version
+mmeans <- emmeans(model_control_expl4d, specs = ~ condition|version, ref="Reward revaluation", type="response")
+mmeans
+
+contrasts <- contrast(mmeans, 
+                      "trt.vs.ctrl", ref=5,
+                      adjust = NULL)
+contrasts
+
+
 ```
 
 #### Relation rating score - test choices
